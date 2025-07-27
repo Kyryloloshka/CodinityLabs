@@ -1,0 +1,36 @@
+services:
+  api-gateway:
+    build:
+      context: ./apps/api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway-dev
+    ports:
+      - "3000:3000"
+    depends_on:
+      - auth-service
+    networks:
+      - kpi-network-dev
+    restart: unless-stopped
+    volumes:
+      - ./apps/api-gateway:/app
+      - /app/node_modules
+    command: ["pnpm", "start:dev"]
+
+  auth-service:
+    build:
+      context: ./apps/auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service-dev
+    ports:
+      - "8100:8100"
+    networks:
+      - kpi-network-dev
+    restart: unless-stopped
+    volumes:
+      - ./apps/auth-service:/app
+      - /app/node_modules
+    command: ["pnpm", "start:dev"]
+
+networks:
+  kpi-network-dev:
+    driver: bridge 
