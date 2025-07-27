@@ -18,7 +18,8 @@
     "docker:logs": "docker compose logs -f",
     "docker:dev": "docker compose -f docker-compose.dev.yml up -d",
     "docker:dev:down": "docker compose -f docker-compose.dev.yml down",
-    "docker:dev:logs": "docker compose -f docker-compose.dev.yml logs -f"
+    "docker:dev:logs": "docker compose -f docker-compose.dev.yml logs -f",
+    "prisma:studio": "./scripts/dev-db.sh studio"
   },
   "keywords": [],
   "author": "",

@@ -1,0 +1,161 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  ParseUUIDPipe,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiBody,
+  ApiOkResponse,
+  ApiNotFoundResponse,
+  ApiBadRequestResponse,
+  ApiInternalServerErrorResponse,
+} from '@nestjs/swagger';
+import { AssignmentsService } from './assignments.service';
+import { SubmissionDto, CreateSubmissionDto } from './dto/submission.dto';
+
+@ApiTags('Submissions')
+@Controller('submissions')
+export class SubmissionsController {
+  constructor(private readonly assignmentsService: AssignmentsService) {}
+
+  @Get()
+  @ApiOperation({
+    summary: 'Get all submissions',
+    description: 'Get all submissions from Assignment Service',
+  })
+  @ApiOkResponse({
+    description: 'All submissions successfully retrieved',
+    type: [SubmissionDto],
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error',
+  })
+  async findAll(): Promise<SubmissionDto[]> {
+    return this.assignmentsService.findAllSubmissions();
+  }
+
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Get submission by ID',
+    description: 'Get submission by unique identifier from Assignment Service',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Унікальний ідентифікатор подання',
+    example: '89d47645-d28e-480c-8de7-a41b556fa93c',
+  })
+  @ApiOkResponse({
+    description: 'Submission successfully found',
+    type: SubmissionDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Submission not found',
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error',
+  })
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<SubmissionDto> {
+    return this.assignmentsService.findSubmissionById(id);
+  }
+
+  @Get('user/:userId')
+  @ApiOperation({
+    summary: 'Get submissions by user',
+    description: 'Get all submissions for a specific user',
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'User identifier',
+    example: 'user123',
+  })
+  @ApiOkResponse({
+    description: 'User submissions successfully retrieved',
+    type: [SubmissionDto],
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error',
+  })
+  async findByUser(@Param('userId') userId: string): Promise<SubmissionDto[]> {
+    return this.assignmentsService.findSubmissionsByUser(userId);
+  }
+
+  @Get('assignment/:assignmentId')
+  @ApiOperation({
+    summary: 'Get submissions by assignment',
+    description: 'Get all submissions for a specific assignment',
+  })
+  @ApiParam({
+    name: 'assignmentId',
+    description: 'Assignment identifier',
+    example: 'a82940b0-cff0-42df-b4c4-0ff66a2a30fc',
+  })
+  @ApiOkResponse({
+    description: 'Assignment submissions successfully retrieved',
+    type: [SubmissionDto],
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error',
+  })
+  async findByAssignment(
+    @Param('assignmentId', ParseUUIDPipe) assignmentId: string,
+  ): Promise<SubmissionDto[]> {
+    return this.assignmentsService.findSubmissionsByAssignment(assignmentId);
+  }
+
+  @Post()
+  @ApiOperation({
+    summary: 'Create submission',
+    description: 'Create new submission through Assignment Service',
+  })
+  @ApiBody({
+    type: CreateSubmissionDto,
+    description: 'Submission data to create',
+  })
+  @ApiOkResponse({
+    description: 'Submission successfully created',
+    type: SubmissionDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid data provided',
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error',
+  })
+  async create(
+    @Body() createSubmissionDto: CreateSubmissionDto,
+  ): Promise<SubmissionDto> {
+    return this.assignmentsService.createSubmission(createSubmissionDto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({
+    summary: 'Delete submission',
+    description: 'Delete submission through Assignment Service',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Unique submission identifier',
+    example: '89d47645-d28e-480c-8de7-a41b556fa93c',
+  })
+  @ApiOkResponse({
+    description: 'Submission successfully deleted',
+  })
+  @ApiNotFoundResponse({
+    description: 'Submission not found',
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error',
+  })
+  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    return this.assignmentsService.removeSubmission(id);
+  }
+}

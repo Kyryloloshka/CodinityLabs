@@ -1,0 +1,72 @@
+### Assignment Service API Examples
+
+### 1. Створити завдання
+POST http://localhost:3002/assignments
+Content-Type: application/json
+
+{
+  "title": "Функція для обчислення факторіалу",
+  "description": "Напишіть функцію, яка обчислює факторіал числа n. Факторіал числа n (позначається як n!) - це добуток всіх натуральних чисел від 1 до n включно.",
+  "difficulty": 3,
+  "deadline": "2024-12-31T23:59:59.000Z",
+  "testCases": [
+    {
+      "input": "5",
+      "expected": "120",
+      "description": "Факторіал числа 5"
+    },
+    {
+      "input": "0",
+      "expected": "1",
+      "description": "Факторіал числа 0"
+    },
+    {
+      "input": "1",
+      "expected": "1",
+      "description": "Факторіал числа 1"
+    }
+  ]
+}
+
+### 2. Отримати всі завдання
+GET http://localhost:3002/assignments
+
+### 3. Отримати завдання за ID
+GET http://localhost:3002/assignments/{{assignmentId}}
+
+### 4. Оновити завдання
+PATCH http://localhost:3002/assignments/{{assignmentId}}
+Content-Type: application/json
+
+{
+  "title": "Оновлена назва завдання",
+  "difficulty": 4
+}
+
+### 5. Створити подання рішення
+POST http://localhost:3002/submissions
+Content-Type: application/json
+
+{
+  "userId": "user123",
+  "assignmentId": "{{assignmentId}}",
+  "code": "function factorial(n) {\n  if (n === 0 || n === 1) return 1;\n  return n * factorial(n - 1);\n}\n\nconsole.log(factorial(5));"
+}
+
+### 6. Отримати всі подання
+GET http://localhost:3002/submissions
+
+### 7. Отримати подання за ID
+GET http://localhost:3002/submissions/{{submissionId}}
+
+### 8. Отримати подання користувача
+GET http://localhost:3002/submissions/user/user123
+
+### 9. Отримати подання завдання
+GET http://localhost:3002/submissions/assignment/{{assignmentId}}
+
+### 10. Видалити завдання
+DELETE http://localhost:3002/assignments/{{assignmentId}}
+
+### 11. Видалити подання
+DELETE http://localhost:3002/submissions/{{submissionId}} 

@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Assignment {
+  id          String      @id @default(uuid())
+  title       String
+  description String
+  difficulty  Int
+  deadline    DateTime
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  testCases   TestCase[]
+  submissions Submission[]
+
+  @@map("assignments")
+}
+
+model TestCase {
+  id           String   @id @default(uuid())
+  input        String
+  expected     String
+  description  String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  assignmentId String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("test_cases")
+}
+
+model Submission {
+  id           String   @id @default(uuid())
+  userId       String
+  assignmentId String
+  code         String
+  eslintReport Json?
+  testResults  Json?
+  score        Float?
+  status       SubmissionStatus @default(PENDING)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@map("submissions")
+}
+
+enum SubmissionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+} 

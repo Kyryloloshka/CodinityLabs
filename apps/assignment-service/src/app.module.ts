@@ -1,0 +1,19 @@
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { PrismaModule } from './prisma/prisma.module';
+import { AssignmentModule } from './assignments/assignment.module';
+import { SubmissionModule } from './submissions/submission.module';
+import { HealthController } from './health.controller';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    PrismaModule,
+    AssignmentModule,
+    SubmissionModule,
+  ],
+  controllers: [HealthController],
+})
+export class AppModule {}

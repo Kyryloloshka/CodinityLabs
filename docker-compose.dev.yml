@@ -1,35 +1,86 @@
 services:
+  # PostgreSQL database for development
+  postgres-dev:
+    image: postgres:16-alpine
+    container_name: postgres-dev
+    environment:
+      POSTGRES_DB: kpi_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks:
+      - kpi-network-dev
+    restart: unless-stopped
+
   api-gateway:
     build:
       context: ./apps/api-gateway
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: api-gateway-dev
     ports:
       - "3000:3000"
     depends_on:
       - auth-service
+      - assignment-service
     networks:
       - kpi-network-dev
     restart: unless-stopped
     volumes:
       - ./apps/api-gateway:/app
       - /app/node_modules
-    command: ["pnpm", "start:dev"]
+    environment:
+      - NODE_ENV=development
+      - AUTH_SERVICE_URL=http://auth-service-dev:8100
+      - ASSIGNMENT_SERVICE_URL=http://assignment-service-dev:3002
+    command: ["npm", "run", "start:dev"]
 
   auth-service:
     build:
       context: ./apps/auth-service
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: auth-service-dev
     ports:
       - "8100:8100"
+    depends_on:
+      - postgres-dev
     networks:
       - kpi-network-dev
     restart: unless-stopped
     volumes:
       - ./apps/auth-service:/app
       - /app/node_modules
-    command: ["pnpm", "start:dev"]
+      - ./apps/auth-service/prisma:/app/prisma
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-dev:5432/kpi_dev
+    command: ["npm", "run", "start:dev"]
+
+  assignment-service:
+    build:
+      context: ./apps/assignment-service
+      dockerfile: Dockerfile.dev
+    container_name: assignment-service-dev
+    ports:
+      - "3002:3002"
+    depends_on:
+      - postgres-dev
+    networks:
+      - kpi-network-dev
+    restart: unless-stopped
+    volumes:
+      - ./apps/assignment-service:/app
+      - /app/node_modules
+      - ./apps/assignment-service/prisma:/app/prisma
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-dev:5432/kpi_dev
+    command: ["npm", "run", "start:dev"]
+
+volumes:
+  postgres_dev_data:
 
 networks:
   kpi-network-dev:

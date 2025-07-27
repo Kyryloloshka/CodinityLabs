@@ -1,9 +1,9 @@
 services:
   postgres:
-    image: postgres:15
-    container_name: auth-postgres
+    image: postgres:16-alpine
+    container_name: kpi-postgres
     environment:
-      POSTGRES_DB: auth_db
+      POSTGRES_DB: kpi_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
     ports:
@@ -14,7 +14,7 @@ services:
       - kpi-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d auth_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d kpi_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -28,6 +28,7 @@ services:
       - "3000:3000"
     depends_on:
       - auth-service
+      - assignment-service
     networks:
       - kpi-network
     restart: unless-stopped
@@ -37,8 +38,11 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    env_file:
-      - apps/api-gateway/.env
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - AUTH_SERVICE_URL=http://auth-service:8100
+      - ASSIGNMENT_SERVICE_URL=http://assignment-service:3002
 
   auth-service:
     build:
@@ -59,8 +63,32 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    env_file:
-      - apps/auth-service/.env
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:password@kpi-postgres:5432/kpi_db
+
+  assignment-service:
+    build:
+      context: ./apps/assignment-service
+      dockerfile: Dockerfile
+    container_name: assignment-service
+    ports:
+      - "3002:3002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - kpi-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:password@kpi-postgres:5432/kpi_db
 
 networks:
   kpi-network:

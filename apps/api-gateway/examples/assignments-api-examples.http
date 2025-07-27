@@ -1,0 +1,73 @@
+### API Gateway - Assignment Service Integration Examples
+
+### 1. Get all assignments
+GET http://localhost:3000/assignments
+
+### 2. Get assignment by ID
+GET http://localhost:3000/assignments/a82940b0-cff0-42df-b4c4-0ff66a2a30fc
+
+### 3. Create new assignment
+POST http://localhost:3000/assignments
+Content-Type: application/json
+
+{
+  "title": "Функція для обчислення суми масиву",
+  "description": "Напишіть функцію, яка обчислює суму всіх елементів масиву.",
+  "difficulty": 2,
+  "deadline": "2024-12-31T23:59:59.000Z",
+  "testCases": [
+    {
+      "input": "[1, 2, 3, 4, 5]",
+      "expected": "15",
+      "description": "Сума масиву [1, 2, 3, 4, 5]"
+    },
+    {
+      "input": "[]",
+      "expected": "0",
+      "description": "Сума порожнього масиву"
+    }
+  ]
+}
+
+### 4. Update assignment
+PATCH http://localhost:3000/assignments/a82940b0-cff0-42df-b4c4-0ff66a2a30fc
+Content-Type: application/json
+
+{
+  "title": "Оновлена назва завдання",
+  "difficulty": 4
+}
+
+### 5. Delete assignment
+DELETE http://localhost:3000/assignments/a82940b0-cff0-42df-b4c4-0ff66a2a30fc
+
+### 6. Get all submissions
+GET http://localhost:3000/submissions
+
+### 7. Get submission by ID
+GET http://localhost:3000/submissions/89d47645-d28e-480c-8de7-a41b556fa93c
+
+### 8. Get submissions by user
+GET http://localhost:3000/submissions/user/user123
+
+### 9. Get submissions by assignment
+GET http://localhost:3000/submissions/assignment/a82940b0-cff0-42df-b4c4-0ff66a2a30fc
+
+### 10. Create new submission
+POST http://localhost:3000/submissions
+Content-Type: application/json
+
+{
+  "userId": "user123",
+  "assignmentId": "a82940b0-cff0-42df-b4c4-0ff66a2a30fc",
+  "code": "function factorial(n) {\n  if (n === 0 || n === 1) return 1;\n  return n * factorial(n - 1);\n}"
+}
+
+### 11. Delete submission
+DELETE http://localhost:3000/submissions/89d47645-d28e-480c-8de7-a41b556fa93c
+
+### 12. Health check
+GET http://localhost:3000/health
+
+### 13. Swagger documentation
+GET http://localhost:3000/api 

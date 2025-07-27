@@ -6,6 +6,7 @@ import { HealthController } from './health.controller';
 import { AppConfigService } from './config/config.service';
 import { envValidationSchema } from './config/env.validation';
 import { AuthModule } from './auth/auth.module';
+import { AssignmentsModule } from './assignments/assignments.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AuthModule } from './auth/auth.module';
     TerminusModule,
     HttpModule,
     AuthModule,
+    AssignmentsModule,
   ],
   controllers: [HealthController],
   providers: [AppConfigService],

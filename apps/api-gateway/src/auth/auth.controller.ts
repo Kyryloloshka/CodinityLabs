@@ -16,7 +16,6 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
-  ApiCreatedResponse,
   ApiOkResponse,
   ApiNotFoundResponse,
   ApiConflictResponse,
@@ -24,11 +23,7 @@ import {
   ApiInternalServerErrorResponse,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import {
-  CreateUserDto,
-  UpdateUserDto,
-  UserResponseDto,
-} from '../common/dto/user.dto';
+import { UpdateUserDto, UserResponseDto } from '../common/dto/user.dto';
 import {
   LoginDto,
   RegisterDto,
@@ -47,15 +42,15 @@ export class AuthController {
 
   @Get()
   @ApiOperation({
-    summary: 'Отримати всіх користувачів',
-    description: 'Повертає список всіх користувачів через Auth Service',
+    summary: 'Get all users',
+    description: 'Get all users from Auth Service',
   })
   @ApiOkResponse({
-    description: 'Список користувачів успішно отримано',
+    description: 'All users successfully retrieved',
     type: [UserResponseDto],
   })
   @ApiInternalServerErrorResponse({
-    description: 'Внутрішня помилка сервера',
+    description: 'Internal server error',
   })
   async findAll(): Promise<UserResponseDto[]> {
     return this.authService.findAllUsers();
@@ -63,9 +58,8 @@ export class AuthController {
 
   @Get(':id')
   @ApiOperation({
-    summary: 'Отримати користувача за ID',
-    description:
-      'Повертає користувача за унікальним ідентифікатором через Auth Service',
+    summary: 'Get user by ID',
+    description: 'Get user by unique identifier from Auth Service',
   })
   @ApiParam({
     name: 'id',
@@ -73,14 +67,14 @@ export class AuthController {
     example: '3e8ba423-72cc-4aa0-a0db-93ef0b3c34b1',
   })
   @ApiOkResponse({
-    description: 'Користувача успішно знайдено',
+    description: 'User successfully found',
     type: UserResponseDto,
   })
   @ApiNotFoundResponse({
-    description: 'Користувача не знайдено',
+    description: 'User not found',
   })
   @ApiInternalServerErrorResponse({
-    description: 'Внутрішня помилка сервера',
+    description: 'Internal server error',
   })
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
@@ -90,33 +84,33 @@ export class AuthController {
 
   @Patch(':id')
   @ApiOperation({
-    summary: 'Оновити користувача',
-    description: 'Оновлює дані існуючого користувача через Auth Service',
+    summary: 'Update user',
+    description: 'Update existing user data through Auth Service',
   })
   @ApiParam({
     name: 'id',
-    description: 'Унікальний ідентифікатор користувача',
+    description: 'Unique user identifier',
     example: '3e8ba423-72cc-4aa0-a0db-93ef0b3c34b1',
   })
   @ApiBody({
     type: UpdateUserDto,
-    description: 'Дані для оновлення користувача',
+    description: 'Data to update user',
   })
   @ApiOkResponse({
-    description: 'Користувача успішно оновлено',
+    description: 'User successfully updated',
     type: UserResponseDto,
   })
   @ApiNotFoundResponse({
-    description: 'Користувача не знайдено',
+    description: 'User not found',
   })
   @ApiConflictResponse({
-    description: 'Користувач з таким email вже існує',
+    description: 'User with this email already exists',
   })
   @ApiBadRequestResponse({
-    description: 'Невірні дані запиту',
+    description: 'Invalid request data',
   })
   @ApiInternalServerErrorResponse({
-    description: 'Внутрішня помилка сервера',
+    description: 'Internal server error',
   })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -128,53 +122,51 @@ export class AuthController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
-    summary: 'Видалити користувача',
-    description:
-      'Видаляє користувача за унікальним ідентифікатором через Auth Service',
+    summary: 'Delete user',
+    description: 'Delete user by unique identifier through Auth Service',
   })
   @ApiParam({
     name: 'id',
-    description: 'Унікальний ідентифікатор користувача',
+    description: 'Unique user identifier',
     example: '3e8ba423-72cc-4aa0-a0db-93ef0b3c34b1',
   })
   @ApiResponse({
     status: 204,
-    description: 'Користувача успішно видалено',
+    description: 'User successfully deleted',
   })
   @ApiNotFoundResponse({
-    description: 'Користувача не знайдено',
+    description: 'User not found',
   })
   @ApiInternalServerErrorResponse({
-    description: 'Внутрішня помилка сервера',
+    description: 'Internal server error',
   })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     await this.authService.deleteUser(id);
   }
 
-  // Авторизаційні ендпоінти
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Вхід в систему',
-    description: 'Авторизація користувача за email та паролем',
+    summary: 'Login',
+    description: 'Login user by email and password',
   })
   @ApiBody({
     type: LoginDto,
-    description: 'Дані для входу',
+    description: 'Login data',
   })
   @ApiResponse({
     status: 200,
-    description: 'Успішний вхід',
+    description: 'Successful login',
     type: ApiSuccessResponseDto<AuthResponseDto>,
   })
   @ApiResponse({
     status: 401,
-    description: 'Невірні облікові дані',
+    description: 'Invalid credentials',
     type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 400,
-    description: 'Невірні дані запиту',
+    description: 'Invalid request data',
     type: ApiErrorResponseDto,
   })
   async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
@@ -184,26 +176,26 @@ export class AuthController {
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
-    summary: 'Реєстрація користувача',
-    description: 'Створення нового облікового запису',
+    summary: 'Register',
+    description: 'Create new user account',
   })
   @ApiBody({
     type: RegisterDto,
-    description: 'Дані для реєстрації',
+    description: 'Registration data',
   })
   @ApiResponse({
     status: 201,
-    description: 'Користувача створено',
+    description: 'User created',
     type: ApiSuccessResponseDto<AuthResponseDto>,
   })
   @ApiResponse({
     status: 409,
-    description: 'Користувач з таким email вже існує',
+    description: 'User with this email already exists',
     type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 400,
-    description: 'Невірні дані запиту',
+    description: 'Invalid request data',
     type: ApiErrorResponseDto,
   })
   async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
@@ -212,21 +204,21 @@ export class AuthController {
 
   @Post('verify')
   @ApiOperation({
-    summary: 'Верифікація токена',
-    description: 'Перевірка валідності JWT токена',
+    summary: 'Token verification',
+    description: 'Check the validity of the JWT token',
   })
   @ApiBody({
     type: VerifyTokenDto,
-    description: 'Дані для верифікації токена',
+    description: 'Data for token verification',
   })
   @ApiResponse({
     status: 200,
-    description: 'Токен валідний',
+    description: 'Token is valid',
     type: ApiSuccessResponseDto<{ valid: boolean; payload: unknown }>,
   })
   @ApiResponse({
     status: 401,
-    description: 'Невірний токен',
+    description: 'Invalid token',
     type: ApiErrorResponseDto,
   })
   async verifyToken(
