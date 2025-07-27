@@ -29,38 +29,21 @@ import {
   UpdateUserDto,
   UserResponseDto,
 } from '../common/dto/user.dto';
+import {
+  LoginDto,
+  RegisterDto,
+  AuthResponseDto,
+  VerifyTokenDto,
+} from './dto/auth.dto';
+import {
+  ApiSuccessResponseDto,
+  ApiErrorResponseDto,
+} from '../common/dto/api-response.dto';
 
-@ApiTags('Користувачі (API Gateway)')
+@ApiTags('Auth')
 @Controller('users')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({
-    summary: 'Створити нового користувача',
-    description: 'Створює нового користувача через Auth Service',
-  })
-  @ApiBody({
-    type: CreateUserDto,
-    description: 'Дані для створення користувача',
-  })
-  @ApiCreatedResponse({
-    description: 'Користувача успішно створено',
-    type: UserResponseDto,
-  })
-  @ApiConflictResponse({
-    description: 'Користувач з таким email вже існує',
-  })
-  @ApiBadRequestResponse({
-    description: 'Невірні дані запиту',
-  })
-  @ApiInternalServerErrorResponse({
-    description: 'Внутрішня помилка сервера',
-  })
-  async create(@Body() createUserDto: CreateUserDto): Promise<UserResponseDto> {
-    return this.authService.createUser(createUserDto);
-  }
 
   @Get()
   @ApiOperation({
@@ -166,5 +149,89 @@ export class AuthController {
   })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     await this.authService.deleteUser(id);
+  }
+
+  // Авторизаційні ендпоінти
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Вхід в систему',
+    description: 'Авторизація користувача за email та паролем',
+  })
+  @ApiBody({
+    type: LoginDto,
+    description: 'Дані для входу',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Успішний вхід',
+    type: ApiSuccessResponseDto<AuthResponseDto>,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Невірні облікові дані',
+    type: ApiErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Невірні дані запиту',
+    type: ApiErrorResponseDto,
+  })
+  async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
+    return this.authService.login(loginDto);
+  }
+
+  @Post('register')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Реєстрація користувача',
+    description: 'Створення нового облікового запису',
+  })
+  @ApiBody({
+    type: RegisterDto,
+    description: 'Дані для реєстрації',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Користувача створено',
+    type: ApiSuccessResponseDto<AuthResponseDto>,
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Користувач з таким email вже існує',
+    type: ApiErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Невірні дані запиту',
+    type: ApiErrorResponseDto,
+  })
+  async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
+    return this.authService.register(registerDto);
+  }
+
+  @Post('verify')
+  @ApiOperation({
+    summary: 'Верифікація токена',
+    description: 'Перевірка валідності JWT токена',
+  })
+  @ApiBody({
+    type: VerifyTokenDto,
+    description: 'Дані для верифікації токена',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Токен валідний',
+    type: ApiSuccessResponseDto<{ valid: boolean; payload: unknown }>,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Невірний токен',
+    type: ApiErrorResponseDto,
+  })
+  async verifyToken(
+    @Body() verifyTokenDto: VerifyTokenDto,
+  ): Promise<{ valid: boolean; payload: unknown }> {
+    return this.authService.verifyToken(verifyTokenDto);
   }
 }

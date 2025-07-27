@@ -1,7 +1,6 @@
 import {
   Controller,
   Get,
-  Post,
   Body,
   Patch,
   Param,
@@ -16,7 +15,6 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
-  ApiCreatedResponse,
   ApiOkResponse,
   ApiNotFoundResponse,
   ApiConflictResponse,
@@ -24,11 +22,7 @@ import {
   ApiInternalServerErrorResponse,
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
-import {
-  CreateUserDto,
-  UpdateUserDto,
-  UserResponseDto,
-} from '../common/dto/user.dto';
+import { UpdateUserDto, UserResponseDto } from '../common/dto/user.dto';
 import {
   UserSuccessResponseDto,
   UsersListSuccessResponseDto,
@@ -40,43 +34,6 @@ import { ApiSuccessResponse } from '../common/interfaces/error.interface';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({
-    summary: 'Створити нового користувача',
-    description: 'Створює нового користувача з валідацією даних',
-  })
-  @ApiBody({
-    type: CreateUserDto,
-    description: 'Дані для створення користувача',
-  })
-  @ApiCreatedResponse({
-    description: 'Користувача успішно створено',
-    type: UserSuccessResponseDto,
-  })
-  @ApiConflictResponse({
-    description: 'Користувач з таким email вже існує',
-    type: ApiErrorResponseDto,
-  })
-  @ApiBadRequestResponse({
-    description: 'Невірні дані запиту',
-    type: ApiErrorResponseDto,
-  })
-  @ApiInternalServerErrorResponse({
-    description: 'Внутрішня помилка сервера',
-    type: ApiErrorResponseDto,
-  })
-  async create(
-    @Body() createUserDto: CreateUserDto,
-  ): Promise<ApiSuccessResponse<UserResponseDto>> {
-    const user = await this.usersService.create(createUserDto);
-    return {
-      success: true,
-      data: user,
-      message: 'Користувача успішно створено',
-    };
-  }
 
   @Get()
   @ApiOperation({

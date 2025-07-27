@@ -32,11 +32,6 @@ async function bootstrap() {
     .setTitle('API Gateway')
     .setDescription('API Gateway для мікросервісної архітектури')
     .setVersion('1.0')
-    .addTag(
-      'Користувачі (API Gateway)',
-      'Операції з користувачами через Auth Service',
-    )
-    .addTag('Health', 'Перевірка стану сервісів')
     .addBearerAuth()
     .build();
 

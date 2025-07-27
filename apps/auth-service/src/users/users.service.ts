@@ -16,6 +16,7 @@ import {
   UserAlreadyExistsException,
   DatabaseException,
 } from '../common/exceptions/custom.exceptions';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UsersService {
@@ -34,9 +35,12 @@ export class UsersService {
         throw new UserAlreadyExistsException(createUserDto.email);
       }
 
+      // Хешуємо пароль
+      const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+
       const createUserData: CreateUserData = {
         email: createUserDto.email,
-        password: createUserDto.password,
+        password: hashedPassword,
         role: createUserDto.role,
         name: createUserDto.name,
       };
@@ -81,6 +85,15 @@ export class UsersService {
       return user ? this.mapToUserResponse(user) : null;
     } catch (error) {
       throw new DatabaseException('find user by email', error);
+    }
+  }
+
+  async findByEmailWithPassword(email: string): Promise<User | null> {
+    try {
+      const user = await this.userRepository.findByEmail(email);
+      return user;
+    } catch (error) {
+      throw new DatabaseException('find user by email with password', error);
     }
   }
 

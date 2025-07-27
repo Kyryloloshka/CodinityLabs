@@ -7,6 +7,12 @@ import {
   UpdateUserDto,
   UserResponseDto,
 } from '../common/dto/user.dto';
+import {
+  LoginDto,
+  RegisterDto,
+  AuthResponseDto,
+  VerifyTokenDto,
+} from './dto/auth.dto';
 
 interface ErrorResponse {
   error?: {
@@ -185,6 +191,104 @@ export class AuthService {
 
       throw new HttpException(
         errorResponse?.error?.message || 'Failed to delete user',
+        status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async login(loginDto: LoginDto): Promise<AuthResponseDto> {
+    try {
+      const { data } = await firstValueFrom(
+        this.httpService.post<AuthResponseDto>(
+          `${this.authServiceUrl}/auth/login`,
+          loginDto,
+        ),
+      );
+      return data;
+    } catch (error: unknown) {
+      const status = this.getErrorStatus(error);
+      const errorResponse = this.getErrorResponse(error);
+
+      if (status === 401) {
+        throw new HttpException(
+          errorResponse?.error?.message || 'Invalid credentials',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      if (status === 400) {
+        throw new HttpException(
+          errorResponse?.error?.message || 'Invalid input data',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      throw new HttpException(
+        errorResponse?.error?.message || 'Failed to login',
+        status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
+    try {
+      const { data } = await firstValueFrom(
+        this.httpService.post<AuthResponseDto>(
+          `${this.authServiceUrl}/auth/register`,
+          registerDto,
+        ),
+      );
+      return data;
+    } catch (error: unknown) {
+      const status = this.getErrorStatus(error);
+      const errorResponse = this.getErrorResponse(error);
+
+      if (status === 409) {
+        throw new HttpException(
+          errorResponse?.error?.message ||
+            'User with this email already exists',
+          HttpStatus.CONFLICT,
+        );
+      }
+
+      if (status === 400) {
+        throw new HttpException(
+          errorResponse?.error?.message || 'Invalid input data',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      throw new HttpException(
+        errorResponse?.error?.message || 'Failed to register user',
+        status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async verifyToken(
+    verifyTokenDto: VerifyTokenDto,
+  ): Promise<{ valid: boolean; payload: unknown }> {
+    try {
+      const { data } = await firstValueFrom(
+        this.httpService.post<{ valid: boolean; payload: unknown }>(
+          `${this.authServiceUrl}/auth/verify`,
+          verifyTokenDto,
+        ),
+      );
+      return data;
+    } catch (error: unknown) {
+      const status = this.getErrorStatus(error);
+      const errorResponse = this.getErrorResponse(error);
+
+      if (status === 401) {
+        throw new HttpException(
+          errorResponse?.error?.message || 'Invalid token',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      throw new HttpException(
+        errorResponse?.error?.message || 'Failed to verify token',
         status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
