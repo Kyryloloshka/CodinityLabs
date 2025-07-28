@@ -16,6 +16,7 @@ model Assignment {
   description String
   difficulty  Int
   deadline    DateTime
+  teacherId   String      // ID викладача, який створив завдання
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   testCases   TestCase[]

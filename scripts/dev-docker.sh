@@ -15,8 +15,9 @@ echo "📝 Setting up environment files..."
 if [ ! -f "apps/auth-service/.env" ]; then
     echo "Creating auth-service .env..."
     cat > apps/auth-service/.env << EOF
-DATABASE_URL="postgresql://postgres:postgres@postgres-dev:5432/kpi_dev"
-JWT_SECRET="your-super-secret-jwt-key"
+DATABASE_URL="postgresql://postgres:postgres@postgres-auth:5432/auth_db"
+JWT_SECRET="your-super-secret-jwt-key-that-is-at-least-32-characters-long"
+JWT_EXPIRES_IN="24h"
 PORT=8100
 NODE_ENV=development
 EOF
@@ -26,8 +27,8 @@ fi
 if [ ! -f "apps/assignment-service/.env" ]; then
     echo "Creating assignment-service .env..."
     cat > apps/assignment-service/.env << EOF
-DATABASE_URL="postgresql://postgres:postgres@postgres-dev:5432/kpi_dev"
-PORT=3002
+DATABASE_URL="postgresql://postgres:postgres@postgres-assignment:5432/assignment_db"
+PORT=8200
 NODE_ENV=development
 EOF
 fi
@@ -37,7 +38,7 @@ if [ ! -f "apps/api-gateway/.env" ]; then
     echo "Creating api-gateway .env..."
     cat > apps/api-gateway/.env << EOF
 AUTH_SERVICE_URL=http://auth-service-dev:8100
-ASSIGNMENT_SERVICE_URL=http://assignment-service-dev:3002
+ASSIGNMENT_SERVICE_URL=http://assignment-service-dev:8200
 PORT=3000
 NODE_ENV=development
 EOF
@@ -53,7 +54,7 @@ docker compose -f docker-compose.dev.yml up --build -d
 
 # Wait for services to be ready
 echo "⏳ Waiting for services to be ready..."
-sleep 10
+sleep 15
 
 # Show service status
 echo "📊 Service status:"
@@ -62,10 +63,12 @@ docker compose -f docker-compose.dev.yml ps
 echo "✅ All services are running!"
 echo ""
 echo "🌐 Services available at:"
+echo "  - Frontend Client: http://localhost:4200"
 echo "  - API Gateway: http://localhost:3000"
 echo "  - Auth Service: http://localhost:8100"
-echo "  - Assignment Service: http://localhost:3002"
-echo "  - PostgreSQL: localhost:5432"
+echo "  - Assignment Service: http://localhost:8200"
+echo "  - Auth Database: localhost:5433"
+echo "  - Assignment Database: localhost:5434"
 echo ""
 echo "📝 To view logs: docker compose -f docker-compose.dev.yml logs -f"
 echo "🛑 To stop: docker compose -f docker-compose.dev.yml down" 

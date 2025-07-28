@@ -35,6 +35,9 @@ export class CreateAssignmentDto {
   @IsDateString()
   deadline: string;
 
+  @IsString()
+  teacherId: string;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateTestCaseDto)

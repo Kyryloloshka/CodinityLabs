@@ -37,6 +37,15 @@ export class AssignmentController {
     );
   }
 
+  @Get('teacher/:teacherId')
+  async findByTeacher(@Param('teacherId') teacherId: string) {
+    const assignments = await this.assignmentService.findByTeacher(teacherId);
+    return ApiResponseDto.success(
+      assignments,
+      'Teacher assignments retrieved successfully',
+    );
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const assignment = await this.assignmentService.findOne(id);

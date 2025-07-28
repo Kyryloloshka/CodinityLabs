@@ -6,10 +6,12 @@
 
 Система складається з наступних мікросервісів:
 
+- **Frontend Client** (порт 4200) - Nuxt.js веб-додаток
 - **API Gateway** (порт 3000) - головний API endpoint
 - **Auth Service** (порт 8100) - аутентифікація та авторизація
-- **Assignment Service** (порт 3002) - управління завданнями та поданнями
-- **PostgreSQL** (порт 5432) - база даних
+- **Assignment Service** (порт 8200) - управління завданнями та поданнями
+- **Auth Database** (порт 5433) - PostgreSQL для auth-service
+- **Assignment Database** (порт 5434) - PostgreSQL для assignment-service
 
 ## 🚀 Швидкий старт
 
@@ -34,19 +36,16 @@ cp apps/api-gateway/.env.example apps/api-gateway/.env
 
 ### Варіант 2: Локальний запуск
 
-#### Налаштування бази даних
+#### Налаштування баз даних
 ```bash
-# Запуск PostgreSQL в Docker
-docker run -d \
-  --name postgres-dev \
-  -e POSTGRES_DB=kpi_dev \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=postgres \
-  -p 5432:5432 \
-  postgres:16-alpine
+# Запуск всіх сервісів з окремими базами даних
+./scripts/dev-docker.sh
 
-# Налаштування міграцій
-./scripts/setup-db.sh
+# Скидання всіх баз даних та міграцій
+./scripts/reset-databases.sh
+
+# Ініціалізація міграцій
+./scripts/init-migrations.sh
 ```
 
 #### Запуск сервісів
@@ -67,12 +66,46 @@ pnpm install
 pnpm start:dev
 ```
 
-## 📋 Доступні скрипти
+## 📋 Доступні команди
 
+### 🚀 PNPM команди (рекомендовано)
+```bash
+# Розробка
+pnpm dev:start          # Запуск всіх сервісів в Docker
+pnpm dev:restart        # Перезапуск всіх сервісів
+pnpm db:status          # Перевірка стану всіх сервісів
+pnpm db:reset           # Скидання всіх баз даних
+pnpm db:init            # Ініціалізація міграцій
+
+# Prisma Studio
+pnpm studio:all         # Запуск Prisma Studio для обох баз
+pnpm studio:auth        # Тільки Auth Database Studio
+pnpm studio:assignment  # Тільки Assignment Database Studio
+pnpm studio:stop        # Зупинка всіх Prisma Studio
+
+# Prisma команди
+pnpm prisma:generate    # Генерація Prisma Client для всіх сервісів
+pnpm prisma:migrate:auth # Міграція для auth-service
+pnpm prisma:migrate:assignment # Міграція для assignment-service
+```
+
+### 📜 Прямі скрипти
 - `./scripts/dev-docker.sh` - запуск всіх сервісів в Docker (розробка)
 - `./scripts/prod-docker.sh` - запуск всіх сервісів в Docker (продакшен)
-- `./scripts/setup-db.sh` - налаштування бази даних та міграцій
+- `./scripts/dev-client.sh` - запуск тільки фронтенду в Docker (розробка)
+- `./scripts/reset-databases.sh` - скидання всіх баз даних та міграцій
+- `./scripts/init-migrations.sh` - ініціалізація міграцій для обох сервісів
+- `./scripts/check-status.sh` - перевірка стану всіх сервісів
 - `./scripts/dev-assignment.sh` - запуск assignment-service локально
+
+### 🗄️ Prisma Studio (Управління базами даних)
+
+- `./scripts/prisma-studio-all.sh` - запуск Prisma Studio для обох баз даних
+- `./scripts/prisma-studio-auth.sh` - запуск Prisma Studio для auth бази даних
+- `./scripts/prisma-studio-assignment.sh` - запуск Prisma Studio для assignment бази даних
+- `./scripts/stop-prisma-studio.sh` - зупинка всіх Prisma Studio процесів
+
+📖 **Повний довідник**: [PNPM_COMMANDS.md](./PNPM_COMMANDS.md)
 
 ## 🌐 API Endpoints
 
@@ -110,7 +143,7 @@ pnpm start:dev
 - `POST /users/verify` - перевірка токена
 - `GET /health` - перевірка стану
 
-#### Assignment Service (http://localhost:3002)
+#### Assignment Service (http://localhost:8200)
 - `GET /assignments` - список завдань
 - `GET /assignments/:id` - отримання завдання
 - `POST /assignments` - створення завдання
@@ -124,30 +157,64 @@ pnpm start:dev
 - `DELETE /submissions/:id` - видалення подання
 - `GET /health` - перевірка стану
 
-## 🗄️ База даних
+## 🗄️ Бази даних
 
-### Схема
+### Auth Database (порт 5433)
 - **users** - користувачі системи
+
+### Assignment Database (порт 5434)
 - **assignments** - завдання
 - **test_cases** - тестові випадки
 - **submissions** - подання рішень
 
 ### Міграції
 ```bash
-# Для auth-service
-cd apps/auth-service
-pnpm db:migrate
+# Автоматична ініціалізація міграцій
+./scripts/init-migrations.sh
 
-# Для assignment-service
-cd apps/assignment-service
-pnpm db:migrate
+# Ручна ініціалізація для auth-service
+docker exec auth-service-dev npx prisma migrate dev --name init_auth_schema
+
+# Ручна ініціалізація для assignment-service
+docker exec assignment-service-dev npx prisma migrate dev --name init_assignment_schema
 ```
+
+### 🗄️ Prisma Studio (Візуальне управління БД)
+
+Prisma Studio надає веб-інтерфейс для управління базами даних:
+
+```bash
+# Запуск Prisma Studio для обох баз даних
+./scripts/prisma-studio-all.sh
+
+# Запуск тільки для auth бази даних
+./scripts/prisma-studio-auth.sh
+
+# Запуск тільки для assignment бази даних
+./scripts/prisma-studio-assignment.sh
+
+# Зупинка всіх Prisma Studio процесів
+./scripts/stop-prisma-studio.sh
+```
+
+**Доступні URL:**
+- **Auth Database Studio**: http://localhost:5555
+- **Assignment Database Studio**: http://localhost:5556
+
+**Можливості Prisma Studio:**
+- 📊 Перегляд всіх таблиць та даних
+- ✏️ Редагування записів
+- ➕ Додавання нових записів
+- 🗑️ Видалення записів
+- 🔍 Фільтрація та пошук
+- 📈 Статистика таблиць
 
 ## 🛠️ Розробка
 
 ### Структура проекту
 ```
 ├── apps/
+│   ├── client/               # Frontend додаток (Nuxt.js)
 │   ├── api-gateway/          # API Gateway
 │   ├── auth-service/         # Сервіс аутентифікації
 │   └── assignment-service/   # Сервіс завдань
@@ -157,6 +224,7 @@ pnpm db:migrate
 ```
 
 ### Технології
+- **Frontend**: Nuxt.js, Vue 3, TypeScript
 - **Backend**: NestJS, TypeScript
 - **Database**: PostgreSQL, Prisma
 - **Containerization**: Docker, Docker Compose
@@ -184,7 +252,7 @@ pnpm format
 
 ### Створення завдання
 ```bash
-curl -X POST http://localhost:3002/assignments \
+curl -X POST http://localhost:8200/assignments \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Факторіал",
@@ -203,7 +271,7 @@ curl -X POST http://localhost:3002/assignments \
 
 ### Подання рішення
 ```bash
-curl -X POST http://localhost:3002/submissions \
+curl -X POST http://localhost:8200/submissions \
   -H "Content-Type: application/json" \
   -d '{
     "userId": "user123",
@@ -218,7 +286,7 @@ curl -X POST http://localhost:3002/submissions \
 
 #### Auth Service (.env)
 ```env
-DATABASE_URL="postgresql://postgres:password@localhost:5432/kpi_db"
+DATABASE_URL="postgresql://postgres:postgres@postgres-auth:5432/auth_db"
 JWT_SECRET="your-super-secret-jwt-key"
 PORT=8100
 NODE_ENV=development
@@ -226,8 +294,8 @@ NODE_ENV=development
 
 #### Assignment Service (.env)
 ```env
-DATABASE_URL="postgresql://postgres:password@localhost:5432/kpi_db"
-PORT=3002
+DATABASE_URL="postgresql://postgres:postgres@postgres-assignment:5432/assignment_db"
+PORT=8200
 NODE_ENV=development
 ```
 
@@ -253,14 +321,16 @@ docker-compose build --no-cache
 docker-compose logs -f
 ```
 
-### Проблеми з базою даних
+### Проблеми з базами даних
 ```bash
-# Скидання бази даних
-docker-compose down -v
-docker volume rm kpi-course-work_postgres_data
+# Скидання всіх баз даних
+./scripts/reset-databases.sh
 
-# Перезапуск з чистою базою
+# Перезапуск з чистими базами
 ./scripts/dev-docker.sh
+
+# Ініціалізація міграцій
+./scripts/init-migrations.sh
 ```
 
 ## 📄 Ліцензія

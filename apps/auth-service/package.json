@@ -25,6 +25,10 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "db:push": "prisma db push",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "prisma:db:push": "prisma db push",
     "setup:env": "./scripts/setup-env.sh"
   },
   "dependencies": {

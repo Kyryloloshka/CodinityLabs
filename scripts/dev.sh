@@ -26,8 +26,10 @@ echo "📦 Building and starting services..."
 docker-compose -f docker-compose.dev.yml up --build
 
 echo "✅ Development environment is ready!"
+echo "🌐 Frontend Client: http://localhost:4200"
 echo "📱 API Gateway: http://localhost:3000"
 echo "🔐 Auth Service: http://localhost:8100"
+echo "📝 Assignment Service: http://localhost:8200"
 echo "🗄️  PostgreSQL: localhost:5432"
 echo ""
 echo "Press Ctrl+C to stop the environment" 

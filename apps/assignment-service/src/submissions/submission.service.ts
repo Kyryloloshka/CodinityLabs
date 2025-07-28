@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
 import { SubmissionNotFoundException } from '../common/exceptions/custom.exceptions';
-import { SubmissionStatus } from '@prisma/client';
+import { SubmissionStatus, Prisma } from '@prisma/client';
 
 @Injectable()
 export class SubmissionService {
@@ -81,7 +81,7 @@ export class SubmissionService {
   async updateStatus(
     id: string,
     status: SubmissionStatus,
-    testResults?: any,
+    testResults?: Prisma.InputJsonValue,
     score?: number,
   ) {
     await this.findOne(id);

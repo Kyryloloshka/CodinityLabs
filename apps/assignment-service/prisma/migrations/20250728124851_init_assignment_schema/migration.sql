@@ -8,6 +8,7 @@ CREATE TABLE "assignments" (
     "description" TEXT NOT NULL,
     "difficulty" INTEGER NOT NULL,
     "deadline" TIMESTAMP(3) NOT NULL,
+    "teacherId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

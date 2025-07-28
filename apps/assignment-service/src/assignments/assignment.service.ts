@@ -38,6 +38,20 @@ export class AssignmentService {
     });
   }
 
+  async findByTeacher(teacherId: string) {
+    return this.prisma.assignment.findMany({
+      where: { teacherId },
+      include: {
+        testCases: true,
+        _count: {
+          select: {
+            submissions: true,
+          },
+        },
+      },
+    });
+  }
+
   async findOne(id: string) {
     const assignment = await this.prisma.assignment.findUnique({
       where: { id },

@@ -1,19 +1,57 @@
 services:
-  # PostgreSQL database for development
-  postgres-dev:
+  # PostgreSQL database for auth service
+  postgres-auth:
     image: postgres:16-alpine
-    container_name: postgres-dev
+    container_name: postgres-auth-dev
     environment:
-      POSTGRES_DB: kpi_dev
+      POSTGRES_DB: auth_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
-      - postgres_dev_data:/var/lib/postgresql/data
+      - postgres_auth_data:/var/lib/postgresql/data
     networks:
       - kpi-network-dev
     restart: unless-stopped
+
+  # PostgreSQL database for assignment service
+  postgres-assignment:
+    image: postgres:16-alpine
+    container_name: postgres-assignment-dev
+    environment:
+      POSTGRES_DB: assignment_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_assignment_data:/var/lib/postgresql/data
+    networks:
+      - kpi-network-dev
+    restart: unless-stopped
+
+  # Frontend client
+  client:
+    build:
+      context: ./apps/client
+      dockerfile: Dockerfile.dev
+    container_name: client-dev
+    ports:
+      - "4200:4200"
+    networks:
+      - kpi-network-dev
+    restart: unless-stopped
+    volumes:
+      - ./apps/client:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - NITRO_HOST=0.0.0.0
+      - NITRO_PORT=4200
+      - API_BASE_URL=http://localhost:3000
+      - AUTH_SERVICE_URL=http://localhost:8100
+    command: ["pnpm", "dev"]
 
   api-gateway:
     build:
@@ -34,7 +72,7 @@ services:
     environment:
       - NODE_ENV=development
       - AUTH_SERVICE_URL=http://auth-service-dev:8100
-      - ASSIGNMENT_SERVICE_URL=http://assignment-service-dev:3002
+      - ASSIGNMENT_SERVICE_URL=http://assignment-service-dev:8200
     command: ["npm", "run", "start:dev"]
 
   auth-service:
@@ -44,8 +82,9 @@ services:
     container_name: auth-service-dev
     ports:
       - "8100:8100"
+      - "5555:5555"
     depends_on:
-      - postgres-dev
+      - postgres-auth
     networks:
       - kpi-network-dev
     restart: unless-stopped
@@ -55,7 +94,8 @@ services:
       - ./apps/auth-service/prisma:/app/prisma
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=postgresql://postgres:postgres@postgres-dev:5432/kpi_dev
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-auth:5432/auth_db
+      - PORT=8100
     command: ["npm", "run", "start:dev"]
 
   assignment-service:
@@ -64,9 +104,10 @@ services:
       dockerfile: Dockerfile.dev
     container_name: assignment-service-dev
     ports:
-      - "3002:3002"
+      - "8200:8200"
+      - "5556:5556"
     depends_on:
-      - postgres-dev
+      - postgres-assignment
     networks:
       - kpi-network-dev
     restart: unless-stopped
@@ -76,11 +117,13 @@ services:
       - ./apps/assignment-service/prisma:/app/prisma
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=postgresql://postgres:postgres@postgres-dev:5432/kpi_dev
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-assignment:5432/assignment_db
+      - PORT=8200
     command: ["npm", "run", "start:dev"]
 
 volumes:
-  postgres_dev_data:
+  postgres_auth_data:
+  postgres_assignment_data:
 
 networks:
   kpi-network-dev:

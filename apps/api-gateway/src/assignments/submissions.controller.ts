@@ -6,6 +6,8 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -16,12 +18,16 @@ import {
   ApiNotFoundResponse,
   ApiBadRequestResponse,
   ApiInternalServerErrorResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { AssignmentsService } from './assignments.service';
 import { SubmissionDto, CreateSubmissionDto } from './dto/submission.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Submissions')
 @Controller('submissions')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class SubmissionsController {
   constructor(private readonly assignmentsService: AssignmentsService) {}
 

@@ -7,6 +7,8 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,6 +19,7 @@ import {
   ApiNotFoundResponse,
   ApiBadRequestResponse,
   ApiInternalServerErrorResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { AssignmentsService } from './assignments.service';
 import {
@@ -24,9 +27,12 @@ import {
   CreateAssignmentDto,
   UpdateAssignmentDto,
 } from './dto/assignment.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Assignments')
 @Controller('assignments')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class AssignmentsController {
   constructor(private readonly assignmentsService: AssignmentsService) {}
 
@@ -44,6 +50,29 @@ export class AssignmentsController {
   })
   async findAll(): Promise<AssignmentDto[]> {
     return this.assignmentsService.findAll();
+  }
+
+  @Get('teacher/:teacherId')
+  @ApiOperation({
+    summary: 'Get assignments by teacher',
+    description: 'Get all assignments created by a specific teacher',
+  })
+  @ApiParam({
+    name: 'teacherId',
+    description: 'Teacher identifier',
+    example: 'teacher123',
+  })
+  @ApiOkResponse({
+    description: 'Teacher assignments successfully retrieved',
+    type: [AssignmentDto],
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error',
+  })
+  async findByTeacher(
+    @Param('teacherId') teacherId: string,
+  ): Promise<AssignmentDto[]> {
+    return this.assignmentsService.findByTeacher(teacherId);
   }
 
   @Get(':id')

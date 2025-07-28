@@ -61,6 +61,12 @@ export class AuthResponseDto {
   accessToken: string;
 
   @ApiProperty({
+    description: 'JWT refresh токен',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
+  refreshToken: string;
+
+  @ApiProperty({
     description: 'Тип токена',
     example: 'Bearer',
   })
@@ -68,7 +74,7 @@ export class AuthResponseDto {
 
   @ApiProperty({
     description: 'Час життя токена в секундах',
-    example: 3600,
+    example: 900,
   })
   expiresIn: number;
 

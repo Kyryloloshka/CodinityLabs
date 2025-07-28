@@ -16,7 +16,12 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { LoginDto, RegisterDto, AuthResponseDto } from '../common/dto/auth.dto';
+import {
+  LoginDto,
+  RegisterDto,
+  AuthResponseDto,
+  RefreshTokenDto,
+} from '../common/dto/auth.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import {
   ApiSuccessResponseDto,
@@ -84,6 +89,32 @@ export class AuthController {
   })
   async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
     return this.authService.register(registerDto);
+  }
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Оновити токен доступу',
+    description: 'Отримання нового access token за допомогою refresh token',
+  })
+  @ApiBody({
+    type: RefreshTokenDto,
+    description: 'Refresh токен',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Токен оновлено',
+    type: ApiSuccessResponseDto<AuthResponseDto>,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Невірний refresh токен',
+    type: ApiErrorResponseDto,
+  })
+  async refreshToken(
+    @Body() refreshTokenDto: RefreshTokenDto,
+  ): Promise<AuthResponseDto> {
+    return this.authService.refreshToken(refreshTokenDto);
   }
 
   @Get('profile')

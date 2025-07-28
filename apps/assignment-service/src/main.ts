@@ -19,4 +19,8 @@ async function bootstrap() {
   await app.listen(port);
   console.log(`Assignment service is running on port ${port}`);
 }
-bootstrap();
+
+bootstrap().catch((error) => {
+  console.error('Failed to start assignment service:', error);
+  process.exit(1);
+});

@@ -88,6 +88,12 @@ export class AssignmentDto {
   deadline: string;
 
   @ApiProperty({
+    description: 'ID викладача',
+    example: 'teacher123',
+  })
+  teacherId: string;
+
+  @ApiProperty({
     description: 'Дата створення',
     example: '2025-07-27T15:00:02.332Z',
   })
@@ -171,6 +177,13 @@ export class CreateAssignmentDto {
   deadline: string;
 
   @ApiProperty({
+    description: 'ID викладача',
+    example: 'teacher123',
+  })
+  @IsString()
+  teacherId: string;
+
+  @ApiProperty({
     description: 'Тестові випадки',
     type: [CreateTestCaseDto],
   })
@@ -186,6 +199,7 @@ export class UpdateAssignmentDto {
     example: 'Оновлена назва завдання',
     required: false,
   })
+  @IsString()
   title?: string;
 
   @ApiProperty({
@@ -193,6 +207,7 @@ export class UpdateAssignmentDto {
     example: 'Оновлений опис завдання',
     required: false,
   })
+  @IsString()
   description?: string;
 
   @ApiProperty({
@@ -202,6 +217,9 @@ export class UpdateAssignmentDto {
     maximum: 10,
     required: false,
   })
+  @IsInt()
+  @Min(1)
+  @Max(10)
   difficulty?: number;
 
   @ApiProperty({
@@ -209,12 +227,24 @@ export class UpdateAssignmentDto {
     example: '2024-12-31T23:59:59.000Z',
     required: false,
   })
+  @IsDateString()
   deadline?: string;
+
+  @ApiProperty({
+    description: 'ID викладача',
+    example: 'teacher123',
+    required: false,
+  })
+  @IsString()
+  teacherId?: string;
 
   @ApiProperty({
     description: 'Тестові випадки',
     type: [CreateTestCaseDto],
     required: false,
   })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateTestCaseDto)
   testCases?: CreateTestCaseDto[];
 }
