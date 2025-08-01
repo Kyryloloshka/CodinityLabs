@@ -15,7 +15,7 @@
       <UButton
         @click="navigateTo('/assignments/create')"
         variant="solid"
-        color="blue"
+        color="primary"
       >
         <UIcon name="i-heroicons-plus" class="mr-2 h-4 w-4" />
         Створити завдання
@@ -32,19 +32,45 @@
         />
       </div>
       <div class="flex gap-2">
-        <USelect
+        <select
           v-model="difficultyFilter"
-          :options="difficultyOptions"
-          placeholder="Складність"
-          class="w-40"
-        />
-        <USelect
+          class="w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="">Всі складності</option>
+          <option value="1">Складність 1</option>
+          <option value="2">Складність 2</option>
+          <option value="3">Складність 3</option>
+          <option value="4">Складність 4</option>
+          <option value="5">Складність 5</option>
+          <option value="6">Складність 6</option>
+          <option value="7">Складність 7</option>
+          <option value="8">Складність 8</option>
+          <option value="9">Складність 9</option>
+          <option value="10">Складність 10</option>
+        </select>
+        <select
           v-model="statusFilter"
-          :options="statusOptions"
-          placeholder="Статус"
-          class="w-40"
-        />
+          class="w-40 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="">Всі статуси</option>
+          <option value="active">Активні</option>
+          <option value="completed">Завершені</option>
+        </select>
+        <UButton
+          v-if="hasActiveFilters"
+          @click="clearFilters"
+          variant="ghost"
+          color="gray"
+        >
+          <UIcon name="i-heroicons-x-mark" class="h-4 w-4" />
+          Очистити
+        </UButton>
       </div>
+    </div>
+
+    <!-- Індикатор результатів -->
+    <div v-if="hasActiveFilters" class="mb-4 text-sm text-gray-600">
+      Знайдено {{ filteredAssignments.length }} з {{ assignments.length }} завдань
     </div>
 
     <!-- Завантаження -->
@@ -86,6 +112,12 @@
                 >
                   Складність: {{ assignment.difficulty }}/10
                 </UBadge>
+                <UBadge
+                  :color="isAssignmentActive(assignment) ? 'success' : 'error'"
+                  variant="subtle"
+                >
+                  {{ isAssignmentActive(assignment) ? 'Активне' : 'Завершене' }}
+                </UBadge>
               </div>
               
               <p class="text-gray-600 mb-4 line-clamp-2">
@@ -114,7 +146,7 @@
                 <UButton
                   @click="viewAssignment(assignment)"
                   variant="ghost"
-                  color="blue"
+                  color="primary"
                 >
                   <UIcon name="i-heroicons-eye" class="mr-1 h-4 w-4" />
                   Переглянути
@@ -122,7 +154,7 @@
                 <UButton
                   @click="submitAssignment(assignment)"
                   variant="solid"
-                  color="green"
+                  color="success"
                 >
                   <UIcon name="i-heroicons-paper-airplane" class="mr-1 h-4 w-4" />
                   Здати
@@ -134,7 +166,7 @@
                 <UButton
                   @click="viewAssignment(assignment)"
                   variant="ghost"
-                  color="blue"
+                  color="primary"
                 >
                   <UIcon name="i-heroicons-eye" class="mr-1 h-4 w-4" />
                   Переглянути
@@ -142,7 +174,7 @@
                 <UButton
                   @click="editAssignment(assignment)"
                   variant="ghost"
-                  color="yellow"
+                  color="warning"
                 >
                   <UIcon name="i-heroicons-pencil" class="mr-1 h-4 w-4" />
                   Редагувати
@@ -150,7 +182,7 @@
                 <UButton
                   @click="deleteAssignment(assignment)"
                   variant="ghost"
-                  color="red"
+                  color="error"
                 >
                   <UIcon name="i-heroicons-trash" class="mr-1 h-4 w-4" />
                   Видалити
@@ -175,7 +207,7 @@
         <UButton
           @click="navigateTo('/assignments/create')"
           variant="solid"
-          color="blue"
+          color="primary"
         >
           <UIcon name="i-heroicons-plus" class="mr-2 h-4 w-4" />
           Створити завдання
@@ -210,6 +242,7 @@ const isTeacher = computed(() => authStore.user?.role === 'TEACHER')
 const filteredAssignments = computed(() => {
   let filtered = assignments.value
 
+  // Фільтр по пошуку
   if (searchQuery.value) {
     filtered = filtered.filter(assignment =>
       assignment.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
@@ -217,32 +250,27 @@ const filteredAssignments = computed(() => {
     )
   }
 
+  // Фільтр по складності
   if (difficultyFilter.value) {
     filtered = filtered.filter(assignment => assignment.difficulty === parseInt(difficultyFilter.value))
   }
 
+  // Фільтр по статусу
+  if (statusFilter.value) {
+    const now = new Date()
+    filtered = filtered.filter(assignment => {
+      const deadline = new Date(assignment.deadline)
+      if (statusFilter.value === 'active') {
+        return deadline > now
+      } else if (statusFilter.value === 'completed') {
+        return deadline <= now
+      }
+      return true
+    })
+  }
+
   return filtered
 })
-
-const difficultyOptions = [
-  { label: 'Всі', value: '' },
-  { label: '1', value: '1' },
-  { label: '2', value: '2' },
-  { label: '3', value: '3' },
-  { label: '4', value: '4' },
-  { label: '5', value: '5' },
-  { label: '6', value: '6' },
-  { label: '7', value: '7' },
-  { label: '8', value: '8' },
-  { label: '9', value: '9' },
-  { label: '10', value: '10' }
-]
-
-const statusOptions = [
-  { label: 'Всі', value: '' },
-  { label: 'Активні', value: 'active' },
-  { label: 'Завершені', value: 'completed' }
-]
 
 const loadAssignments = async () => {
   try {
@@ -263,10 +291,10 @@ const loadAssignments = async () => {
 }
 
 const getDifficultyColor = (difficulty: number) => {
-  if (difficulty <= 3) return 'green'
-  if (difficulty <= 6) return 'yellow'
-  if (difficulty <= 8) return 'orange'
-  return 'red'
+  if (difficulty <= 3) return 'success'
+  if (difficulty <= 6) return 'warning'
+  if (difficulty <= 8) return 'warning'
+  return 'error'
 }
 
 const formatDate = (dateString: string) => {
@@ -300,6 +328,22 @@ const deleteAssignment = async (assignment: any) => {
 
 const submitAssignment = (assignment: any) => {
   navigateTo(`/assignments/${assignment.id}/submit`)
+}
+
+const isAssignmentActive = (assignment: any) => {
+  const now = new Date()
+  const deadline = new Date(assignment.deadline)
+  return deadline > now
+}
+
+const hasActiveFilters = computed(() => {
+  return searchQuery.value || difficultyFilter.value || statusFilter.value
+})
+
+const clearFilters = () => {
+  searchQuery.value = ''
+  difficultyFilter.value = ''
+  statusFilter.value = ''
 }
 
 // Завантаження даних при монтуванні

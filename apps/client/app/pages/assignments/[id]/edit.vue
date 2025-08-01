@@ -11,7 +11,7 @@
           </div>
           
           <div class="flex gap-2">
-            <UButton to="/assignments" variant="ghost" color="gray">
+            <UButton to="/assignments" variant="ghost" color="neutral">
               <UIcon name="i-heroicons-arrow-left" class="mr-2 h-4 w-4" />
               Назад
             </UButton>
@@ -58,7 +58,7 @@
                 <UTextarea
                   v-model="form.description"
                   placeholder="Опишіть завдання детально"
-                  rows="6"
+                  :rows="6"
                   required
                 />
               </div>
@@ -96,7 +96,7 @@
                   <UButton
                     @click="addTestCase"
                     variant="ghost"
-                    color="blue"
+                    color="primary"
                     icon="i-heroicons-plus"
                     size="sm"
                   >
@@ -121,7 +121,7 @@
                     <UButton
                       @click="removeTestCase(index)"
                       variant="ghost"
-                      color="red"
+                      color="error"
                       icon="i-heroicons-trash"
                       size="sm"
                     >
@@ -162,7 +162,7 @@
             <UButton
               @click="navigateTo('/assignments')"
               variant="ghost"
-              color="gray"
+              color="neutral"
             >
               <UIcon name="i-heroicons-x-mark" class="mr-2 h-4 w-4" />
               Скасувати
@@ -170,7 +170,7 @@
             <UButton
               type="submit"
               variant="solid"
-              color="blue"
+              color="primary"
               :loading="saving"
             >
               <UIcon name="i-heroicons-check" class="mr-2 h-4 w-4" />

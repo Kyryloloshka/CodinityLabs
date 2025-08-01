@@ -39,7 +39,17 @@ if [ ! -f "apps/api-gateway/.env" ]; then
     cat > apps/api-gateway/.env << EOF
 AUTH_SERVICE_URL=http://auth-service-dev:8100
 ASSIGNMENT_SERVICE_URL=http://assignment-service-dev:8200
+CHECKER_SERVICE_URL=http://checker-service-dev:8300
 PORT=3000
+NODE_ENV=development
+EOF
+fi
+
+# Checker service
+if [ ! -f "apps/checker-service/.env" ]; then
+    echo "Creating checker-service .env..."
+    cat > apps/checker-service/.env << EOF
+PORT=8300
 NODE_ENV=development
 EOF
 fi
@@ -67,6 +77,7 @@ echo "  - Frontend Client: http://localhost:4200"
 echo "  - API Gateway: http://localhost:3000"
 echo "  - Auth Service: http://localhost:8100"
 echo "  - Assignment Service: http://localhost:8200"
+echo "  - Checker Service: http://localhost:8300"
 echo "  - Auth Database: localhost:5433"
 echo "  - Assignment Database: localhost:5434"
 echo ""

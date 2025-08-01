@@ -9,6 +9,7 @@ import {
   UpdateAssignmentDto,
 } from './dto/assignment.dto';
 import { SubmissionDto, CreateSubmissionDto } from './dto/submission.dto';
+import { CheckDto, CheckResultDto } from './dto/checker.dto';
 
 interface ApiResponse<T> {
   data: T;
@@ -36,6 +37,14 @@ export class AssignmentsService {
       throw new Error('ASSIGNMENT_SERVICE_URL is not defined');
     }
     this.assignmentServiceUrl = url;
+  }
+
+  private get checkerServiceUrl(): string {
+    const url = this.configService.get<string>('CHECKER_SERVICE_URL');
+    if (!url) {
+      throw new Error('CHECKER_SERVICE_URL is not defined');
+    }
+    return url;
   }
 
   async findAll(): Promise<AssignmentDto[]> {
@@ -274,6 +283,31 @@ export class AssignmentsService {
       }
       throw new HttpException(
         'Failed to delete submission',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // Checker service methods
+  async checkCode(checkDto: CheckDto): Promise<CheckResultDto> {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post<CheckResultDto>(
+          `${this.checkerServiceUrl}/check`,
+          checkDto,
+        ),
+      );
+      return response.data;
+    } catch (error: unknown) {
+      if (isAxiosError(error) && error.response?.status === 400) {
+        const errorData = error.response.data as ErrorResponse;
+        throw new HttpException(
+          errorData.message || 'Invalid code data',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      throw new HttpException(
+        'Failed to check code',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

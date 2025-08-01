@@ -113,6 +113,26 @@ services:
       - DATABASE_URL=postgresql://postgres:password@kpi-postgres:5432/kpi_db
       - PORT=8200
 
+  checker-service:
+    build:
+      context: ./apps/checker-service
+      dockerfile: Dockerfile
+    container_name: checker-service
+    ports:
+      - "8300:8300"
+    networks:
+      - kpi-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8300/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    environment:
+      - NODE_ENV=production
+      - PORT=8300
+
 networks:
   kpi-network:
     driver: bridge

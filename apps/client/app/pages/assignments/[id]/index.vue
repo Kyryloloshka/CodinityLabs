@@ -37,7 +37,7 @@
           
           <!-- Кнопки дій -->
           <div class="flex gap-2">
-            <UButton to="/assignments" variant="ghost" color="gray">
+            <UButton to="/assignments" variant="ghost" color="neutral">
               <UIcon name="i-heroicons-arrow-left" class="mr-2 h-4 w-4" />
               Назад
             </UButton>
@@ -46,7 +46,7 @@
               <UButton
                 @click="navigateTo(`/assignments/${assignmentId}/submit`)"
                 variant="solid"
-                color="green"
+                color="success"
               >
                 <UIcon name="i-heroicons-paper-airplane" class="mr-2 h-4 w-4" />
                 Здати рішення
@@ -57,7 +57,7 @@
               <UButton
                 @click="editAssignment"
                 variant="solid"
-                color="yellow"
+                color="warning"
               >
                 <UIcon name="i-heroicons-pencil" class="mr-2 h-4 w-4" />
                 Редагувати
@@ -86,7 +86,7 @@
           >
             <div class="flex items-center justify-between mb-2">
               <h3 class="font-medium text-gray-900">Тест {{ index + 1 }}</h3>
-              <UBadge color="blue" variant="subtle">Тестовий випадок</UBadge>
+              <UBadge color="primary" variant="subtle">Тестовий випадок</UBadge>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
@@ -206,19 +206,19 @@ const loadSubmissions = async () => {
 }
 
 const getDifficultyColor = (difficulty: number) => {
-  if (difficulty <= 3) return 'green'
-  if (difficulty <= 6) return 'yellow'
-  if (difficulty <= 8) return 'orange'
-  return 'red'
+  if (difficulty <= 3) return 'success'
+  if (difficulty <= 6) return 'warning'
+  if (difficulty <= 8) return 'warning'
+  return 'error'
 }
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'PENDING': return 'gray'
-    case 'PROCESSING': return 'yellow'
-    case 'COMPLETED': return 'green'
-    case 'FAILED': return 'red'
-    default: return 'gray'
+    case 'PENDING': return 'info'
+    case 'PROCESSING': return 'warning'
+    case 'COMPLETED': return 'success'
+    case 'FAILED': return 'error'
+    default: return 'neutral'
   }
 }
 

@@ -11,7 +11,7 @@
           </div>
           
           <div class="flex gap-2">
-            <UButton to="/assignments" variant="ghost" color="gray">
+            <UButton to="/assignments" variant="ghost" color="neutral">
               <UIcon name="i-heroicons-arrow-left" class="mr-2 h-4 w-4" />
               Назад
             </UButton>
@@ -79,7 +79,7 @@
             >
               <div class="flex items-center justify-between mb-2">
                 <h3 class="font-medium text-gray-900">Тест {{ index + 1 }}</h3>
-                <UBadge color="blue" variant="subtle">Тестовий випадок</UBadge>
+                <UBadge color="primary" variant="subtle">Тестовий випадок</UBadge>
               </div>
               
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
@@ -113,7 +113,7 @@
                 <UTextarea
                   v-model="submissionCode"
                   placeholder="Напишіть ваш код тут..."
-                  rows="15"
+                  :rows="15"
                   class="font-mono w-full"
                   required
                 />
@@ -128,7 +128,7 @@
               <UButton
                 @click="navigateTo(`/assignments/${assignmentId}`)"
                 variant="ghost"
-                color="gray"
+                color="neutral"
               >
                 <UIcon name="i-heroicons-x-mark" class="mr-2 h-4 w-4" />
                 Скасувати
@@ -136,7 +136,7 @@
               <UButton
                 type="submit"
                 variant="solid"
-                color="green"
+                color="success"
                 :loading="submitting"
               >
                 <UIcon name="i-heroicons-paper-airplane" class="mr-2 h-4 w-4" />

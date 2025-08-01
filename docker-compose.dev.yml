@@ -63,6 +63,7 @@ services:
     depends_on:
       - auth-service
       - assignment-service
+      - checker-service
     networks:
       - kpi-network-dev
     restart: unless-stopped
@@ -73,7 +74,8 @@ services:
       - NODE_ENV=development
       - AUTH_SERVICE_URL=http://auth-service-dev:8100
       - ASSIGNMENT_SERVICE_URL=http://assignment-service-dev:8200
-    command: ["npm", "run", "start:dev"]
+      - CHECKER_SERVICE_URL=http://checker-service-dev:8300
+    command: ["pnpm", "start:dev"]
 
   auth-service:
     build:
@@ -96,7 +98,7 @@ services:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://postgres:postgres@postgres-auth:5432/auth_db
       - PORT=8100
-    command: ["npm", "run", "start:dev"]
+    command: ["pnpm", "start:dev"]
 
   assignment-service:
     build:
@@ -119,6 +121,24 @@ services:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://postgres:postgres@postgres-assignment:5432/assignment_db
       - PORT=8200
+    command: ["npm", "run", "start:dev"]
+
+  checker-service:
+    build:
+      context: ./apps/checker-service
+      dockerfile: Dockerfile.dev
+    container_name: checker-service-dev
+    ports:
+      - "8300:8300"
+    networks:
+      - kpi-network-dev
+    restart: unless-stopped
+    volumes:
+      - ./apps/checker-service:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=8300
     command: ["npm", "run", "start:dev"]
 
 volumes:

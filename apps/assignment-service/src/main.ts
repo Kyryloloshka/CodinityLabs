@@ -15,7 +15,7 @@ async function bootstrap() {
 
   app.enableCors();
 
-  const port = process.env.PORT || 3002;
+  const port = process.env.PORT || 8200;
   await app.listen(port);
   console.log(`Assignment service is running on port ${port}`);
 }

@@ -27,6 +27,7 @@ import {
   CreateAssignmentDto,
   UpdateAssignmentDto,
 } from './dto/assignment.dto';
+import { CheckDto, CheckResultDto } from './dto/checker.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Assignments')
@@ -181,5 +182,28 @@ export class AssignmentsController {
   })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.assignmentsService.remove(id);
+  }
+
+  @Post('check')
+  @ApiOperation({
+    summary: 'Check code',
+    description: 'Check code using Checker Service',
+  })
+  @ApiBody({
+    type: CheckDto,
+    description: 'Code and test cases to check',
+  })
+  @ApiOkResponse({
+    description: 'Code check completed successfully',
+    type: CheckResultDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid code data provided',
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error',
+  })
+  async checkCode(@Body() checkDto: CheckDto): Promise<CheckResultDto> {
+    return this.assignmentsService.checkCode(checkDto);
   }
 }

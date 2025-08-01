@@ -1,7 +1,5 @@
 <template>
-  <div class="min-h-screen">
-    <slot />
-  </div>
+  <slot />
 </template>
 
 <script setup lang="ts">
