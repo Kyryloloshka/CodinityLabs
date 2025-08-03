@@ -20,12 +20,12 @@ echo 'JWT_EXPIRES_IN=24h' >> apps/auth-service/.env.local
 
 # API Gateway - для Docker
 echo 'NODE_ENV=development' > apps/api-gateway/.env
-echo 'PORT=3000' >> apps/api-gateway/.env
+echo 'PORT=5000' >> apps/api-gateway/.env
 echo 'AUTH_SERVICE_URL=http://auth-service:8100' >> apps/api-gateway/.env
 
 # API Gateway - для локальної розробки
 echo 'NODE_ENV=development' > apps/api-gateway/.env.local
-echo 'PORT=3000' >> apps/api-gateway/.env.local
+echo 'PORT=5000' >> apps/api-gateway/.env.local
 echo 'AUTH_SERVICE_URL=http://localhost:8100' >> apps/api-gateway/.env.local
 
 echo "✅ Всі файли конфігурації створені!"

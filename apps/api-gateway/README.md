@@ -91,9 +91,9 @@ src/
 
 ```env
 NODE_ENV=development|production
-PORT=3000
+PORT=5000
 AUTH_SERVICE_URL=http://auth-service:8100
-ASSIGNMENT_SERVICE_URL=http://assignment-service:3002
+ASSIGNMENT_SERVICE_URL=http://assignment-service:8200
 ```
 
 ### Валідація
@@ -123,7 +123,7 @@ docker compose up api-gateway
 
 ## Документація
 
-Swagger документація доступна за адресою: `http://localhost:3000/api`
+Swagger документація доступна за адресою: `http://localhost:5000/api`
 
 ## Тестування
 

@@ -69,6 +69,37 @@ interface CreateSubmission {
   code: string
 }
 
+interface CheckCodeRequest {
+  code: string
+  testCases: {
+    input: string
+    expected: string
+    description: string
+  }[]
+}
+
+interface LintError {
+  ruleId: string
+  severity: number
+  message: string
+  line: number
+  column: number
+}
+
+interface TestResult {
+  passed: boolean
+  actual: string
+  expected: string
+  description: string
+  input: string
+}
+
+interface CheckCodeResponse {
+  lint: LintError[]
+  tests: TestResult[]
+  score: number
+}
+
 export const useAssignments = () => {
   const { get, post, patch, delete: del } = useApi()
 
@@ -191,6 +222,17 @@ export const useAssignments = () => {
     }
   }
 
+  // Перевірка коду
+  const checkCode = async (request: CheckCodeRequest): Promise<CheckCodeResponse> => {
+    try {
+      const response = await post<CheckCodeResponse>('/assignments/check', request)
+      return response
+    } catch (error) {
+      console.error('Error checking code:', error)
+      throw error
+    }
+  }
+
   return {
     getAssignments,
     getTeacherAssignments,
@@ -202,6 +244,7 @@ export const useAssignments = () => {
     getUserSubmissions,
     getAssignmentSubmissions,
     createSubmission,
-    deleteSubmission
+    deleteSubmission,
+    checkCode
   }
 } 

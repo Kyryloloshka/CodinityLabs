@@ -1,5 +1,5 @@
 # Nuxt configuration for Docker development
 devServer.host=0.0.0.0
-devServer.port=4200
+devServer.port=3000
 nitro.host=0.0.0.0
-nitro.port=4200 
+nitro.port=3000 

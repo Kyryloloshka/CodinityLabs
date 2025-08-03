@@ -32,8 +32,8 @@ echo ""
 echo "🌐 Service Health Checks:"
 
 # Check API Gateway
-echo "API Gateway (http://localhost:3000):"
-if curl -s http://localhost:3000/health > /dev/null; then
+echo "API Gateway (http://localhost:5000):"
+if curl -s http://localhost:5000/health > /dev/null; then
     echo "  ✅ Healthy"
 else
     echo "  ❌ Unhealthy"
@@ -56,8 +56,8 @@ else
 fi
 
 # Check Frontend
-echo "Frontend Client (http://localhost:4200):"
-if curl -s http://localhost:4200 > /dev/null; then
+echo "Frontend Client (http://localhost:3000):"
+if curl -s http://localhost:3000 > /dev/null; then
     echo "  ✅ Healthy"
 else
     echo "  ❌ Unhealthy"
@@ -84,8 +84,8 @@ fi
 
 echo ""
 echo "📝 Available endpoints:"
-echo "  - Frontend: http://localhost:4200"
-echo "  - API Gateway: http://localhost:3000"
+echo "  - Frontend: http://localhost:3000"
+echo "  - API Gateway: http://localhost:5000"
 echo "  - Auth Service: http://localhost:8100"
 echo "  - Assignment Service: http://localhost:8200"
 echo "  - Auth Database: localhost:5433"

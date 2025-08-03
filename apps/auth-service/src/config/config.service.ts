@@ -13,11 +13,19 @@ export class AppConfigService {
     return this.configService.get<string>('NODE_ENV')!;
   }
 
-  get jwtSecret(): string {
-    return this.configService.get<string>('JWT_SECRET')!;
+  get jwtAccessSecret(): string {
+    return this.configService.get<string>('JWT_ACCESS_SECRET')!;
   }
 
-  get jwtExpiresIn(): string {
-    return this.configService.get<string>('JWT_EXPIRES_IN')!;
+  get jwtRefreshSecret(): string {
+    return this.configService.get<string>('JWT_REFRESH_SECRET')!;
+  }
+
+  get jwtAccessExpiresIn(): string {
+    return this.configService.get<string>('JWT_ACCESS_EXPIRES_IN')!;
+  }
+
+  get jwtRefreshExpiresIn(): string {
+    return this.configService.get<string>('JWT_REFRESH_EXPIRES_IN')!;
   }
 }

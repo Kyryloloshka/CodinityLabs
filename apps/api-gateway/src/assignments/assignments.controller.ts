@@ -32,15 +32,13 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Assignments')
 @Controller('assignments')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
 export class AssignmentsController {
   constructor(private readonly assignmentsService: AssignmentsService) {}
 
   @Get()
   @ApiOperation({
     summary: 'Get all assignments',
-    description: 'Get all assignments from Assignment Service',
+    description: 'Get all assignments from Assignment Service (public access)',
   })
   @ApiOkResponse({
     description: 'All assignments successfully retrieved',
@@ -54,6 +52,8 @@ export class AssignmentsController {
   }
 
   @Get('teacher/:teacherId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get assignments by teacher',
     description: 'Get all assignments created by a specific teacher',
@@ -79,7 +79,8 @@ export class AssignmentsController {
   @Get(':id')
   @ApiOperation({
     summary: 'Get assignment by ID',
-    description: 'Get assignment by unique identifier from Assignment Service',
+    description:
+      'Get assignment by unique identifier from Assignment Service (public access)',
   })
   @ApiParam({
     name: 'id',
@@ -103,6 +104,8 @@ export class AssignmentsController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Create assignment',
     description: 'Create new assignment through Assignment Service',
@@ -128,6 +131,8 @@ export class AssignmentsController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Update assignment',
     description: 'Update existing assignment through Assignment Service',
@@ -162,6 +167,8 @@ export class AssignmentsController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Delete assignment',
     description: 'Delete assignment through Assignment Service',
@@ -185,6 +192,8 @@ export class AssignmentsController {
   }
 
   @Post('check')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Check code',
     description: 'Check code using Checker Service',

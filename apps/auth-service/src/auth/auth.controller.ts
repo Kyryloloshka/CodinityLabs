@@ -117,6 +117,31 @@ export class AuthController {
     return this.authService.refreshToken(refreshTokenDto);
   }
 
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Вихід з системи',
+    description: 'Видалення refresh token користувача',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Успішний вихід',
+    type: ApiSuccessResponseDto<{ message: string }>,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Невірний токен',
+    type: ApiErrorResponseDto,
+  })
+  async logout(
+    @Request() req: { user: { sub: string } },
+  ): Promise<{ message: string }> {
+    await this.authService.logout(req.user.sub);
+    return { message: 'Успішний вихід з системи' };
+  }
+
   @Get('profile')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -136,7 +161,7 @@ export class AuthController {
   })
   @ApiResponse({
     status: 401,
-    description: 'Неавторизований доступ',
+    description: 'Невірний токен',
     type: ApiErrorResponseDto,
   })
   getProfile(@Request() req: { user: unknown }) {

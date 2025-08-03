@@ -9,7 +9,6 @@ interface User {
 
 interface AuthTokens {
   accessToken: string
-  refreshToken: string
   expiresIn: number
 }
 
@@ -29,10 +28,9 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null as User | null,
     accessToken: null as string | null,
-    refreshToken: null as string | null,
     isAuthenticated: false,
     isLoading: false,
-    isInitialized: false, // Новий стан для відстеження ініціалізації
+    isInitialized: false,
   }),
 
   getters: {
@@ -41,74 +39,67 @@ export const useAuthStore = defineStore('auth', {
 
   actions: {
     async login(credentials: LoginCredentials) {
-      this.isLoading = true
-      
       try {
         const config = useRuntimeConfig()
-        const response = await $fetch<AuthTokens & { user: User }>(`${config.public.authServiceUrl}/auth/login`, {
+        const response = await $fetch<AuthTokens & { user: User }>(`${config.public.apiBaseUrl}/users/login`, {
           method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: credentials,
+          credentials: 'include',
         })
 
         this.setAuthData(response)
         return { success: true }
-      } catch (error: unknown) {
+      } catch (error) {
         console.error('Login error:', error)
-        const errorMessage = error && typeof error === 'object' && 'data' in error 
-          ? (error.data as { message?: string })?.message || 'Помилка входу в систему'
-          : 'Помилка входу в систему'
-        return { 
-          success: false, 
-          error: errorMessage
+        if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
+          return { success: false, error: 'Invalid email or password' }
         }
-      } finally {
-        this.isLoading = false
+        return { success: false, error: 'Login error' }
       }
     },
 
     async register(credentials: RegisterCredentials) {
-      this.isLoading = true
-      
       try {
         const config = useRuntimeConfig()
-        const response = await $fetch<AuthTokens & { user: User }>(`${config.public.authServiceUrl}/auth/register`, {
+        const response = await $fetch<AuthTokens & { user: User }>(`${config.public.apiBaseUrl}/users/register`, {
           method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: credentials,
+          credentials: 'include',
         })
 
         this.setAuthData(response)
         return { success: true }
-      } catch (error: unknown) {
+      } catch (error) {
         console.error('Register error:', error)
-        const errorMessage = error && typeof error === 'object' && 'data' in error 
-          ? (error.data as { message?: string })?.message || 'Помилка реєстрації'
-          : 'Помилка реєстрації'
-        return { 
-          success: false, 
-          error: errorMessage
+        if (error && typeof error === 'object' && 'status' in error && error.status === 409) {
+          return { success: false, error: 'User with this email already exists' }
         }
-      } finally {
-        this.isLoading = false
+        return { success: false, error: 'Registration error' }
       }
     },
 
     async refreshAccessToken() {
-      if (!this.refreshToken) {
-        this.logout()
-        return false
-      }
-
       try {
         const config = useRuntimeConfig()
-        const response = await $fetch<AuthTokens & { user: User }>(`${config.public.authServiceUrl}/auth/refresh`, {
+        const response = await $fetch<AuthTokens & { user: User }>(`${config.public.apiBaseUrl}/users/refresh`, {
           method: 'POST',
-          body: { refreshToken: this.refreshToken },
+          credentials: 'include',
         })
 
         this.setAuthData(response)
         return true
       } catch (error) {
         console.error('Token refresh error:', error)
+        if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
+          this.logout()
+          return false
+        }
         this.logout()
         return false
       }
@@ -117,13 +108,9 @@ export const useAuthStore = defineStore('auth', {
     setAuthData(data: AuthTokens & { user: User }) {
       this.user = data.user
       this.accessToken = data.accessToken
-      this.refreshToken = data.refreshToken
       this.isAuthenticated = true
 
-      // Зберігаємо в localStorage
       if (import.meta.client) {
-        localStorage.setItem('accessToken', data.accessToken)
-        localStorage.setItem('refreshToken', data.refreshToken)
         localStorage.setItem('user', JSON.stringify(data.user))
       }
     },
@@ -131,34 +118,29 @@ export const useAuthStore = defineStore('auth', {
     logout() {
       this.user = null
       this.accessToken = null
-      this.refreshToken = null
       this.isAuthenticated = false
 
-      // Очищаємо localStorage
       if (import.meta.client) {
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('refreshToken')
         localStorage.removeItem('user')
+      }
+
+      if (import.meta.client) {
+        document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
       }
     },
 
     async initializeAuth() {
       if (import.meta.client) {
-        const accessToken = localStorage.getItem('accessToken')
-        const refreshToken = localStorage.getItem('refreshToken')
         const userStr = localStorage.getItem('user')
 
-        if (accessToken && refreshToken && userStr) {
-          this.accessToken = accessToken
-          this.refreshToken = refreshToken
+        if (userStr) {
           this.user = JSON.parse(userStr)
           this.isAuthenticated = true
           
-                  // Спробуємо перевірити токен
-        const isValid = await this.validateToken()
-        if (!isValid) {
-          this.logout()
-        }
+          const refreshed = await this.refreshAccessToken()
+          if (!refreshed) {
+            this.logout()
+          }
         }
         
         this.isInitialized = true
@@ -174,15 +156,23 @@ export const useAuthStore = defineStore('auth', {
 
       try {
         const config = useRuntimeConfig()
-        await $fetch(`${config.public.authServiceUrl}/auth/profile`, {
+        await $fetch(`${config.public.apiBaseUrl}/users/profile`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${this.accessToken}`,
           },
+          credentials: 'include',
         })
         return true
       } catch (error) {
         console.error('Token validation error:', error)
+        if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
+          const refreshed = await this.refreshAccessToken()
+          if (!refreshed) {
+            this.logout()
+          }
+          return refreshed
+        }
         return false
       }
     },

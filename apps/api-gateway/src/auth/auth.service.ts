@@ -293,4 +293,94 @@ export class AuthService {
       );
     }
   }
+
+  async refreshToken(refreshToken: string): Promise<AuthResponseDto> {
+    try {
+      const { data } = await firstValueFrom(
+        this.httpService.post<AuthResponseDto>(
+          `${this.authServiceUrl}/auth/refresh`,
+          { refreshToken },
+        ),
+      );
+      return data;
+    } catch (error: unknown) {
+      const status = this.getErrorStatus(error);
+      const errorResponse = this.getErrorResponse(error);
+
+      if (status === 401) {
+        throw new HttpException(
+          errorResponse?.error?.message || 'Invalid refresh token',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      throw new HttpException(
+        errorResponse?.error?.message || 'Failed to refresh token',
+        status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getProfile(token: string): Promise<UserResponseDto> {
+    try {
+      const { data } = await firstValueFrom(
+        this.httpService.get<UserResponseDto>(
+          `${this.authServiceUrl}/auth/profile`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        ),
+      );
+      return data;
+    } catch (error: unknown) {
+      const status = this.getErrorStatus(error);
+      const errorResponse = this.getErrorResponse(error);
+
+      if (status === 401) {
+        throw new HttpException(
+          errorResponse?.error?.message || 'Invalid token',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      throw new HttpException(
+        errorResponse?.error?.message || 'Failed to get profile',
+        status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async logout(token: string): Promise<{ message: string }> {
+    try {
+      const { data } = await firstValueFrom(
+        this.httpService.post<{ message: string }>(
+          `${this.authServiceUrl}/auth/logout`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        ),
+      );
+      return data;
+    } catch (error: unknown) {
+      const status = this.getErrorStatus(error);
+      const errorResponse = this.getErrorResponse(error);
+
+      if (status === 401) {
+        throw new HttpException(
+          errorResponse?.error?.message || 'Invalid token',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      throw new HttpException(
+        errorResponse?.error?.message || 'Failed to logout',
+        status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

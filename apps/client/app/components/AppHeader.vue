@@ -24,6 +24,24 @@
             Вийти
           </UButton>
         </div>
+        <div v-else class="flex items-center space-x-4">
+          <UButton
+            to="/login"
+            variant="ghost"
+            color="primary"
+            size="sm"
+          >
+            Увійти
+          </UButton>
+          <UButton
+            to="/register"
+            variant="solid"
+            color="primary"
+            size="sm"
+          >
+            Реєстрація
+          </UButton>
+        </div>
       </div>
     </div>
   </header>

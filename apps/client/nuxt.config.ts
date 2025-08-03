@@ -18,13 +18,12 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      apiBaseUrl: process.env.API_BASE_URL || 'http://localhost:3000',
-      authServiceUrl: process.env.AUTH_SERVICE_URL || 'http://localhost:8100',
+      apiBaseUrl: process.env.API_BASE_URL || 'http://localhost:5000',
     }
   },
   devServer: {
     host: '0.0.0.0',
-    port: 4200
+    port: 3000
   },
   ui: {
     global: true,

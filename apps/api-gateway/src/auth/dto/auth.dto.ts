@@ -65,6 +65,42 @@ export class AuthResponseDto {
   accessToken: string;
 
   @ApiProperty({
+    description: 'JWT refresh токен',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
+  refreshToken: string;
+
+  @ApiProperty({
+    description: 'Тип токена',
+    example: 'Bearer',
+  })
+  tokenType: string;
+
+  @ApiProperty({
+    description: 'Час життя токена в секундах',
+    example: 3600,
+  })
+  expiresIn: number;
+
+  @ApiProperty({
+    description: 'Інформація про користувача',
+  })
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    role: UserRole;
+  };
+}
+
+export class ClientAuthResponseDto {
+  @ApiProperty({
+    description: 'JWT токен доступу',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
+  accessToken: string;
+
+  @ApiProperty({
     description: 'Тип токена',
     example: 'Bearer',
   })

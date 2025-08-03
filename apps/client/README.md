@@ -74,8 +74,8 @@ pnpm preview
 ## Змінні середовища
 
 ```env
-API_BASE_URL=http://localhost:3000
-AUTH_SERVICE_URL=http://localhost:3001
+API_BASE_URL=http://localhost:5000
+AUTH_SERVICE_URL=http://localhost:8100
 ```
 
 ## Технології

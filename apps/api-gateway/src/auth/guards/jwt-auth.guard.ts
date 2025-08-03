@@ -19,11 +19,9 @@ interface AuthenticatedRequest extends Request {
 }
 
 interface AuthResponse {
-  data: {
-    id: string;
-    email: string;
-    role: string;
-  };
+  id: string;
+  email: string;
+  role: string;
 }
 
 function isAxiosError(error: unknown): error is AxiosError<unknown> {
@@ -67,7 +65,7 @@ export class JwtAuthGuard implements CanActivate {
       );
 
       // Додаємо користувача до request
-      request.user = response.data.data;
+      request.user = response.data;
       return true;
     } catch (error: unknown) {
       if (isAxiosError(error)) {

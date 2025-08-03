@@ -6,6 +6,9 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
+  Req,
+  Res,
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
@@ -14,26 +17,35 @@ import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiParam,
   ApiBody,
+  ApiParam,
+  ApiBearerAuth,
   ApiOkResponse,
   ApiNotFoundResponse,
   ApiConflictResponse,
-  ApiBadRequestResponse,
   ApiInternalServerErrorResponse,
 } from '@nestjs/swagger';
+import { Response } from 'express';
+import { Request } from 'express';
 import { AuthService } from './auth.service';
-import { UpdateUserDto, UserResponseDto } from '../common/dto/user.dto';
 import {
   LoginDto,
   RegisterDto,
-  AuthResponseDto,
   VerifyTokenDto,
+  ClientAuthResponseDto,
 } from './dto/auth.dto';
+import { UserResponseDto, UpdateUserDto } from '../common/dto/user.dto';
 import {
   ApiSuccessResponseDto,
   ApiErrorResponseDto,
 } from '../common/dto/api-response.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+
+interface RequestWithCookies extends Request {
+  cookies: {
+    refreshToken?: string;
+  };
+}
 
 @ApiTags('Auth')
 @Controller('users')
@@ -54,6 +66,207 @@ export class AuthController {
   })
   async findAll(): Promise<UserResponseDto[]> {
     return this.authService.findAllUsers();
+  }
+
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Login',
+    description: 'Authenticate user and get access token',
+  })
+  @ApiBody({
+    type: LoginDto,
+    description: 'Login credentials',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User authenticated',
+    type: ApiSuccessResponseDto<ClientAuthResponseDto>,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid credentials',
+    type: ApiErrorResponseDto,
+  })
+  async login(
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<ClientAuthResponseDto> {
+    const result = await this.authService.login(loginDto);
+
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return {
+      accessToken: result.accessToken,
+      tokenType: result.tokenType,
+      expiresIn: result.expiresIn,
+      user: result.user,
+    };
+  }
+
+  @Post('register')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Register',
+    description: 'Create new user account',
+  })
+  @ApiBody({
+    type: RegisterDto,
+    description: 'Registration data',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'User created',
+    type: ApiSuccessResponseDto<ClientAuthResponseDto>,
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'User with this email already exists',
+    type: ApiErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid request data',
+    type: ApiErrorResponseDto,
+  })
+  async register(
+    @Body() registerDto: RegisterDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<ClientAuthResponseDto> {
+    const result = await this.authService.register(registerDto);
+
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return {
+      accessToken: result.accessToken,
+      tokenType: result.tokenType,
+      expiresIn: result.expiresIn,
+      user: result.user,
+    };
+  }
+
+  @Post('verify')
+  @ApiOperation({
+    summary: 'Token verification',
+    description: 'Check the validity of the JWT token',
+  })
+  @ApiBody({
+    type: VerifyTokenDto,
+    description: 'Data for token verification',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Token is valid',
+    type: ApiSuccessResponseDto<{ valid: boolean; payload: unknown }>,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid token',
+    type: ApiErrorResponseDto,
+  })
+  async verifyToken(
+    @Body() verifyTokenDto: VerifyTokenDto,
+  ): Promise<{ valid: boolean; payload: unknown }> {
+    return this.authService.verifyToken(verifyTokenDto);
+  }
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Refresh token',
+    description: 'Refresh access token using refresh token from cookies',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Token refreshed successfully',
+    type: ApiSuccessResponseDto<ClientAuthResponseDto>,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid refresh token',
+    type: ApiErrorResponseDto,
+  })
+  async refreshToken(
+    @Req() req: RequestWithCookies,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<ClientAuthResponseDto> {
+    const refreshToken = req.cookies?.refreshToken;
+
+    if (!refreshToken) {
+      throw new Error('Refresh token not found');
+    }
+
+    const result = await this.authService.refreshToken(refreshToken);
+
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return {
+      accessToken: result.accessToken,
+      tokenType: result.tokenType,
+      expiresIn: result.expiresIn,
+      user: result.user,
+    };
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Logout',
+    description: 'Logout user and invalidate refresh tokens',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User logged out successfully',
+    type: ApiSuccessResponseDto<{ message: string }>,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid token',
+    type: ApiErrorResponseDto,
+  })
+  async logout(
+    @Req() req: Request & { user: UserResponseDto },
+  ): Promise<{ message: string }> {
+    const token = req.headers.authorization?.replace('Bearer ', '') || '';
+    return await this.authService.logout(token);
+  }
+
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get user profile',
+    description: 'Get current user profile using JWT token',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User profile retrieved successfully',
+    type: ApiSuccessResponseDto<UserResponseDto>,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid or missing token',
+    type: ApiErrorResponseDto,
+  })
+  getProfile(@Req() req: Request & { user: UserResponseDto }): UserResponseDto {
+    console.log('API Gateway /users/profile req.user:', req.user);
+    return req.user;
   }
 
   @Get(':id')
@@ -106,9 +319,6 @@ export class AuthController {
   @ApiConflictResponse({
     description: 'User with this email already exists',
   })
-  @ApiBadRequestResponse({
-    description: 'Invalid request data',
-  })
   @ApiInternalServerErrorResponse({
     description: 'Internal server error',
   })
@@ -142,88 +352,5 @@ export class AuthController {
   })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     await this.authService.deleteUser(id);
-  }
-
-  @Post('login')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Login',
-    description: 'Login user by email and password',
-  })
-  @ApiBody({
-    type: LoginDto,
-    description: 'Login data',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Successful login',
-    type: ApiSuccessResponseDto<AuthResponseDto>,
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Invalid credentials',
-    type: ApiErrorResponseDto,
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Invalid request data',
-    type: ApiErrorResponseDto,
-  })
-  async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
-    return this.authService.login(loginDto);
-  }
-
-  @Post('register')
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({
-    summary: 'Register',
-    description: 'Create new user account',
-  })
-  @ApiBody({
-    type: RegisterDto,
-    description: 'Registration data',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'User created',
-    type: ApiSuccessResponseDto<AuthResponseDto>,
-  })
-  @ApiResponse({
-    status: 409,
-    description: 'User with this email already exists',
-    type: ApiErrorResponseDto,
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Invalid request data',
-    type: ApiErrorResponseDto,
-  })
-  async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
-    return this.authService.register(registerDto);
-  }
-
-  @Post('verify')
-  @ApiOperation({
-    summary: 'Token verification',
-    description: 'Check the validity of the JWT token',
-  })
-  @ApiBody({
-    type: VerifyTokenDto,
-    description: 'Data for token verification',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Token is valid',
-    type: ApiSuccessResponseDto<{ valid: boolean; payload: unknown }>,
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Invalid token',
-    type: ApiErrorResponseDto,
-  })
-  async verifyToken(
-    @Body() verifyTokenDto: VerifyTokenDto,
-  ): Promise<{ valid: boolean; payload: unknown }> {
-    return this.authService.verifyToken(verifyTokenDto);
   }
 }
