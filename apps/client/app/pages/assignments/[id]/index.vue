@@ -42,7 +42,8 @@
               Назад
             </UButton>
             
-            <template v-if="!isTeacher">
+            <!-- Для студентів -->
+            <template v-if="!isTeacher && authStore.isAuthenticated">
               <UButton
                 @click="navigateTo(`/assignments/${assignmentId}/submit`)"
                 variant="solid"
@@ -53,7 +54,20 @@
               </UButton>
             </template>
             
-            <template v-else>
+            <!-- Для неавторизованих користувачів -->
+            <template v-if="!authStore.isAuthenticated">
+              <UButton
+                @click="loginToSubmit"
+                variant="solid"
+                color="primary"
+              >
+                <UIcon name="i-heroicons-arrow-right-on-rectangle" class="mr-2 h-4 w-4" />
+                Увійти для подання
+              </UButton>
+            </template>
+            
+            <!-- Для викладачів -->
+            <template v-if="isTeacher">
               <UButton
                 @click="editAssignment"
                 variant="solid"
@@ -160,7 +174,7 @@
 <script setup lang="ts">
 definePageMeta({
   layout: 'default',
-  middleware: 'auth'
+  middleware: 'redirect-after-auth'
 })
 
 const route = useRoute()
@@ -246,6 +260,13 @@ const editAssignment = () => {
       navigateTo(`/assignments/${assignmentId.value}/edit`)
 }
 
+const loginToSubmit = () => {
+  // Зберігаємо поточну сторінку для редіректу після авторизації
+  if (import.meta.client) {
+    sessionStorage.setItem('redirectAfterAuth', `/assignments/${assignmentId.value}/submit`)
+  }
+  navigateTo('/login')
+}
 
 
 // Завантаження даних при монтуванні

@@ -1,4 +1,4 @@
-export default defineNuxtRouteMiddleware((to: any) => {
+export default defineNuxtRouteMiddleware(() => {
   const authStore = useAuthStore()
   
   if (authStore.isAuthenticated) {

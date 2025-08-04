@@ -141,7 +141,14 @@ const handleLogin = async () => {
   })
 
   if (result.success) {
-    await router.push('/')
+    // Перевіряємо чи є збережена сторінка для редіректу
+    const redirectPath = import.meta.client ? sessionStorage.getItem('redirectAfterAuth') : null
+    if (redirectPath) {
+      sessionStorage.removeItem('redirectAfterAuth')
+      await router.push(redirectPath)
+    } else {
+      await router.push('/')
+    }
   } else {
     errorMessage.value = result.error || 'Не вдалося ввійти'
   }

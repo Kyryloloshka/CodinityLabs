@@ -124,26 +124,118 @@
             </div>
 
             <!-- Кнопки дій -->
-            <div class="flex justify-end gap-4 mt-8 pt-6 border-t border-gray-200">
-              <UButton
-                @click="navigateTo(`/assignments/${assignmentId}`)"
-                variant="ghost"
-                color="neutral"
-              >
-                <UIcon name="i-heroicons-x-mark" class="mr-2 h-4 w-4" />
-                Скасувати
-              </UButton>
-              <UButton
-                type="submit"
-                variant="solid"
-                color="success"
-                :loading="submitting"
-              >
-                <UIcon name="i-heroicons-paper-airplane" class="mr-2 h-4 w-4" />
-                Здати рішення
-              </UButton>
+            <div class="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
+              <div class="flex gap-2">
+                <UButton
+                  @click="testCode"
+                  variant="outline"
+                  color="primary"
+                  :loading="testing"
+                  :disabled="!submissionCode.trim()"
+                >
+                  <UIcon name="i-heroicons-play" class="mr-2 h-4 w-4" />
+                  Перевірити код
+                </UButton>
+              </div>
+              
+              <div class="flex gap-2">
+                <UButton
+                  @click="navigateTo(`/assignments/${assignmentId}`)"
+                  variant="ghost"
+                  color="neutral"
+                >
+                  <UIcon name="i-heroicons-x-mark" class="mr-2 h-4 w-4" />
+                  Скасувати
+                </UButton>
+                <UButton
+                  type="submit"
+                  variant="solid"
+                  color="success"
+                  :loading="submitting"
+                  :disabled="!submissionCode.trim()"
+                >
+                  <UIcon name="i-heroicons-paper-airplane" class="mr-2 h-4 w-4" />
+                  Здати рішення
+                </UButton>
+              </div>
             </div>
           </form>
+        </div>
+
+        <!-- Результати перевірки коду -->
+        <div v-if="checkResults" class="bg-white shadow rounded-lg p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold text-gray-900">Результати перевірки</h2>
+            <div class="flex items-center gap-2">
+              <UBadge 
+                :color="checkResults.score >= 70 ? 'success' : checkResults.score >= 40 ? 'warning' : 'error'"
+                variant="solid"
+              >
+                {{ checkResults.score }} балів
+              </UBadge>
+            </div>
+          </div>
+
+          <!-- Помилки lint -->
+          <div v-if="checkResults.lint.length > 0" class="mb-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-3">Помилки коду</h3>
+            <div class="space-y-2">
+              <div
+                v-for="(error, index) in checkResults.lint"
+                :key="index"
+                class="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded-lg"
+              >
+                <UIcon 
+                  :name="error.severity === 2 ? 'i-heroicons-exclamation-triangle' : 'i-heroicons-exclamation-circle'"
+                  class="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0"
+                />
+                <div class="flex-1">
+                  <p class="text-sm font-medium text-red-800">{{ error.message }}</p>
+                  <p class="text-xs text-red-600 mt-1">
+                    Рядок {{ error.line }}, колонка {{ error.column }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Результати тестів -->
+          <div>
+            <h3 class="text-lg font-medium text-gray-900 mb-3">Результати тестів</h3>
+            <div class="space-y-3">
+              <div
+                v-for="(test, index) in checkResults.tests"
+                :key="index"
+                class="border rounded-lg p-4"
+                :class="test.passed ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'"
+              >
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="font-medium text-gray-900">{{ test.description }}</h4>
+                  <UBadge 
+                    :color="test.passed ? 'success' : 'error'"
+                    variant="solid"
+                  >
+                    {{ test.passed ? 'Пройдено' : 'Не пройдено' }}
+                  </UBadge>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Вхідні дані</label>
+                    <div class="bg-white p-2 rounded border font-mono text-xs">{{ test.input }}</div>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Очікуваний результат</label>
+                    <div class="bg-white p-2 rounded border font-mono text-xs">{{ test.expected }}</div>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Фактичний результат</label>
+                    <div class="bg-white p-2 rounded border font-mono text-xs">{{ test.actual }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -153,19 +245,21 @@
 <script setup lang="ts">
 definePageMeta({
   layout: 'default',
-  middleware: 'auth'
+  middleware: 'student-only'
 })
 
 const route = useRoute()
 const authStore = useAuthStore()
-const { getAssignment, createSubmission } = useAssignments()
+const { getAssignment, createSubmission, checkCode } = useAssignments()
 
 // Реактивні дані
 const assignment = ref<any>(null)
 const loading = ref(true)
 const error = ref('')
 const submitting = ref(false)
+const testing = ref(false)
 const submissionCode = ref('')
+const checkResults = ref<any>(null)
 
 // Отримуємо ID завдання з URL
 const assignmentId = route.params.id as string
@@ -181,6 +275,32 @@ const loadAssignment = async () => {
     console.error(err)
   } finally {
     loading.value = false
+  }
+}
+
+// Перевірка коду
+const testCode = async () => {
+  if (!submissionCode.value.trim()) return
+
+  try {
+    testing.value = true
+    error.value = ''
+    
+    const request = {
+      code: submissionCode.value,
+      testCases: assignment.value.testCases.map((testCase: any) => ({
+        input: testCase.input,
+        expected: testCase.expected,
+        description: testCase.description
+      }))
+    }
+    
+    checkResults.value = await checkCode(request)
+  } catch (err) {
+    error.value = 'Помилка перевірки коду'
+    console.error('Error testing code:', err)
+  } finally {
+    testing.value = false
   }
 }
 

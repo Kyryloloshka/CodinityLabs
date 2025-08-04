@@ -6,6 +6,7 @@
   "scripts": {
     "build": "pnpm -r build",
     "dev": "pnpm -r --parallel dev",
+    "dev:client": "pnpm --filter ./apps/client dev",
     "start": "pnpm -r --parallel start",
     "lint": "pnpm -r lint",
     "lint:fix": "pnpm -r lint:fix",

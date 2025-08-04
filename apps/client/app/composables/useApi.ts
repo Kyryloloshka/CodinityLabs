@@ -14,43 +14,96 @@ export const useApi = () => {
     return headers
   }
 
+  const handleResponse = async <T>(response: T): Promise<T> => {
+    return response
+  }
+
+  const handleError = async (error: unknown) => {
+    if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
+      if (authStore.isAuthenticated && authStore.user) {
+        const refreshed = await authStore.refreshAccessToken()
+        if (refreshed) {
+          throw new Error('RETRY_REQUEST')
+        } else {
+          authStore.logout()
+          if (import.meta.client) {
+            window.location.href = '/'
+          }
+          throw new Error('AUTH_FAILED')
+        }
+      } else {
+        throw error
+      }
+    }
+    throw error
+  }
+
+  const makeRequest = async <T>(
+    method: string,
+    endpoint: string,
+    data?: Record<string, any>
+  ): Promise<T> => {
+    try {
+      const options: any = {
+        method,
+        headers: getAuthHeaders(),
+        credentials: 'include',
+      }
+
+      if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+        options.body = data
+      }
+
+      const response = await $fetch<T>(`${config.public.apiBaseUrl}${endpoint}`, options)
+      return await handleResponse(response)
+    } catch (error: unknown) {
+      try {
+        await handleError(error)
+      } catch (handledError) {
+        if (handledError instanceof Error && handledError.message === 'RETRY_REQUEST') {
+          const options: any = {
+            method,
+            headers: getAuthHeaders(),
+            credentials: 'include',
+          }
+
+          if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+            options.body = data
+          }
+
+          return await $fetch<T>(`${config.public.apiBaseUrl}${endpoint}`, options)
+        }
+        
+        if (handledError instanceof Error && handledError.message === 'AUTH_FAILED') {
+          throw new Error('Unauthorized')
+        }
+        
+        throw handledError
+      }
+      
+      throw error
+    }
+  }
+
   return {
     async get<T>(endpoint: string): Promise<T> {
-      return await $fetch<T>(`${config.public.apiBaseUrl}${endpoint}`, {
-        method: 'GET',
-        headers: getAuthHeaders(),
-      })
+      return makeRequest<T>('GET', endpoint)
     },
     
     async post<T>(endpoint: string, data?: Record<string, any>): Promise<T> {
-      return await $fetch<T>(`${config.public.apiBaseUrl}${endpoint}`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: data,
-      })
+      return makeRequest<T>('POST', endpoint, data)
     },
     
     async put<T>(endpoint: string, data?: Record<string, any>): Promise<T> {
-      return await $fetch<T>(`${config.public.apiBaseUrl}${endpoint}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: data,
-      })
+      return makeRequest<T>('PUT', endpoint, data)
     },
     
     async patch<T>(endpoint: string, data?: Record<string, any>): Promise<T> {
-      return await $fetch<T>(`${config.public.apiBaseUrl}${endpoint}`, {
-        method: 'PATCH',
-        headers: getAuthHeaders(),
-        body: data,
-      })
+      return makeRequest<T>('PATCH', endpoint, data)
     },
     
     async delete<T>(endpoint: string): Promise<T> {
-      return await $fetch<T>(`${config.public.apiBaseUrl}${endpoint}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      })
+      return makeRequest<T>('DELETE', endpoint)
     },
   }
 } 

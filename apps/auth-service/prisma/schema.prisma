@@ -17,8 +17,20 @@ model User {
   role      UserRole
   name      String
   createdAt DateTime @default(now())
+  refreshTokens RefreshToken[]
 
   @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique // Хешований refresh token
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
 }
 
 enum UserRole {

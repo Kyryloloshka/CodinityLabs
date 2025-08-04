@@ -22,6 +22,21 @@
       </UButton>
     </div>
 
+    <!-- Інформація для неавторизованих користувачів -->
+    <div v-if="!authStore.isAuthenticated" class="mb-6">
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex">
+          <UIcon name="i-heroicons-information-circle" class="h-5 w-5 text-blue-400" />
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-blue-800">Увага!</h3>
+            <p class="mt-1 text-sm text-blue-700">
+              Для подання рішень необхідно увійти в систему.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Фільтри та пошук -->
     <div class="mb-6 flex flex-col sm:flex-row gap-4">
       <div class="flex-1">
@@ -142,7 +157,7 @@
             
             <div class="flex items-center gap-2 ml-4">
               <!-- Для студентів -->
-              <template v-if="!isTeacher">
+              <template v-if="!isTeacher && authStore.isAuthenticated">
                 <UButton
                   @click="viewAssignment(assignment)"
                   variant="ghost"
@@ -161,8 +176,28 @@
                 </UButton>
               </template>
               
+              <!-- Для неавторизованих користувачів -->
+              <template v-if="!authStore.isAuthenticated">
+                <UButton
+                  @click="viewAssignment(assignment)"
+                  variant="ghost"
+                  color="primary"
+                >
+                  <UIcon name="i-heroicons-eye" class="mr-1 h-4 w-4" />
+                  Переглянути
+                </UButton>
+                <UButton
+                  @click="loginToSubmit(assignment)"
+                  variant="solid"
+                  color="primary"
+                >
+                  <UIcon name="i-heroicons-arrow-right-on-rectangle" class="mr-1 h-4 w-4" />
+                  Увійти для подання
+                </UButton>
+              </template>
+              
               <!-- Для викладачів -->
-              <template v-else>
+              <template v-if="isTeacher">
                 <UButton
                   @click="viewAssignment(assignment)"
                   variant="ghost"
@@ -220,7 +255,7 @@
 <script setup lang="ts">
 definePageMeta({
   layout: 'default',
-  middleware: 'auth'
+  middleware: 'redirect-after-auth'
 })
 
 const authStore = useAuthStore()
@@ -277,8 +312,12 @@ const loadAssignments = async () => {
     loading.value = true
     error.value = ''
     
-    if (isTeacher.value) {
-      assignments.value = await getTeacherAssignments(authStore.user!.id)
+    if (authStore.isAuthenticated) {
+      if (isTeacher.value) {
+        assignments.value = await getTeacherAssignments(authStore.user!.id)
+      } else {
+        assignments.value = await getAssignments()
+      }
     } else {
       assignments.value = await getAssignments()
     }
@@ -328,6 +367,14 @@ const deleteAssignment = async (assignment: any) => {
 
 const submitAssignment = (assignment: any) => {
   navigateTo(`/assignments/${assignment.id}/submit`)
+}
+
+const loginToSubmit = (assignment: any) => {
+  // Зберігаємо сторінку для редіректу після авторизації
+  if (import.meta.client) {
+    sessionStorage.setItem('redirectAfterAuth', `/assignments/${assignment.id}/submit`)
+  }
+  navigateTo('/login')
 }
 
 const isAssignmentActive = (assignment: any) => {
