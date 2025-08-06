@@ -14,13 +14,10 @@ export class CodeExecutorService {
     timeout: number = 1000,
   ): Promise<TestResultDto> {
     try {
-      // Створюємо унікальний тег для контейнера
       const containerTag = `code-runner-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-      // Підготовка коду для виконання
       const processedCode = this.processCode(code, language);
 
-      // Запускаємо Docker контейнер
       const result = await this.runDockerContainer(
         containerTag,
         processedCode,

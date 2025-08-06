@@ -254,7 +254,6 @@ export class AssignmentsService {
     }
   }
 
-  // Submission methods
   async findAllSubmissions(): Promise<SubmissionDto[]> {
     try {
       const response = await firstValueFrom(
@@ -368,10 +367,8 @@ export class AssignmentsService {
     }
   }
 
-  // Checker service methods
   async checkCode(checkDto: CheckDto): Promise<CheckResultDto> {
     try {
-      // Якщо передано assignmentId, отримуємо всі тести завдання (публічні та приватні)
       if (checkDto.assignmentId) {
         const assignment = await this.findOne(checkDto.assignmentId);
         checkDto.testCases = assignment.testCases.map(
@@ -389,7 +386,6 @@ export class AssignmentsService {
         );
       }
 
-      // Перевіряємо, що є тести для перевірки
       if (!checkDto.testCases || checkDto.testCases.length === 0) {
         throw new HttpException(
           'No test cases provided',

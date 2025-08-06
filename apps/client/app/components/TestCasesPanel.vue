@@ -14,7 +14,6 @@
       </button>
     </div>
 
-    <!-- Test Case Content -->
     <div v-if="selectedTestCaseIndex >= 0 && assignment.testCases[selectedTestCaseIndex]">
       <div class="flex items-center gap-2 mb-3">
         <div v-if="assignment.testCases[selectedTestCaseIndex].description" class="text-sm text-theme-secondary">

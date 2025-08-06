@@ -1,6 +1,5 @@
 <template>
   <div class="w-full h-full bg-theme-card border-r border-theme-primary flex flex-col transition-colors duration-300">
-    <!-- File Upload Section -->
     <div class="border-b border-theme-primary p-3">
       <div class="flex items-center gap-2">
         <UButton
@@ -39,7 +38,6 @@
       </ClientOnly>
     </div>
     
-    <!-- Action Buttons -->
     <div class="border-t border-theme-primary p-3">
       <div class="flex gap-2">
         <UButton

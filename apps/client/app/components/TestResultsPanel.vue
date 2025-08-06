@@ -1,6 +1,5 @@
 <template>
   <div v-if="checkResults" class="space-y-3">
-    <!-- Score -->
     <div class="flex items-center justify-between p-2 bg-theme-secondary rounded">
       <span class="text-xs font-medium text-theme-primary">Загальний результат:</span>
       <UBadge 
@@ -13,7 +12,6 @@
       </UBadge>
     </div>
 
-    <!-- Test Statistics -->
     <div class="flex items-center justify-between p-2 bg-theme-secondary rounded">
       <span class="text-xs font-medium text-theme-primary">Статистика тестів:</span>
       <div class="flex items-center gap-2">
@@ -29,7 +27,6 @@
       </div>
     </div>
 
-    <!-- Lint Errors -->
     <div v-if="checkResults.lint.length > 0">
       <h3 class="text-xs font-semibold text-theme-primary mb-2">Помилки коду</h3>
       <div class="space-y-1 max-h-24 overflow-y-auto">
@@ -50,11 +47,9 @@
       </div>
     </div>
 
-    <!-- Test Results Tabs -->
     <div>
       <h3 class="text-xs font-semibold text-theme-primary mb-2">Результати тестів (публічні)</h3>
       
-      <!-- Test Result Tabs -->
       <div class="flex items-center gap-1 mb-3 flex-wrap">
         <button
           v-for="(test, index) in checkResults.tests"
@@ -69,7 +64,6 @@
         </button>
       </div>
 
-      <!-- Test Result Content -->
       <div v-if="selectedResultIndex >= 0 && checkResults.tests[selectedResultIndex]">
         <div 
           class="border rounded p-3"
@@ -129,6 +123,4 @@ interface Emits {
 
 const props = defineProps<Props>()
 defineEmits<Emits>()
-
-// Видаляємо старі computed властивості, оскільки тепер використовуємо testStats з API
 </script> 

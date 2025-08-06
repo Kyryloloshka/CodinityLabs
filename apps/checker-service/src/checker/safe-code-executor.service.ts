@@ -14,13 +14,10 @@ export class SafeCodeExecutorService {
     timeout: number = 1000,
   ): Promise<TestResultDto> {
     try {
-      // Підготовка коду для виконання
       const processedCode = this.processCode(code, language);
 
-      // Створюємо безпечне середовище виконання
       const sandbox = this.createSandbox();
 
-      // Виконуємо код з таймаутом
       const result = await this.executeWithTimeout(
         processedCode,
         testCase.input,

@@ -146,10 +146,8 @@ export const useAuthStore = defineStore('auth', {
         }
       } catch (error) {
         console.error('Auth initialization error:', error)
-        // При помилці очищаємо дані авторизації
         this.logout()
       } finally {
-        // Завжди позначаємо як ініціалізоване, навіть при помилці
         this.isInitialized = true
       }
     },

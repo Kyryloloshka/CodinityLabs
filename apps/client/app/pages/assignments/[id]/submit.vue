@@ -1,6 +1,5 @@
 <template>
   <div class="h-screen flex flex-col bg-theme-primary transition-colors duration-300">
-    <!-- Header -->
     <AssignmentSubmitHeader
       :assignment="assignment"
       :selected-language="selectedLanguage"
@@ -9,9 +8,7 @@
       @reset-code="resetCode"
     />
 
-    <!-- Main Content -->
     <div class="flex-1 flex overflow-hidden">
-      <!-- Left Panel - Problem Description -->
       <div 
         class="relative"
         :style="{ width: `${leftPanelWidth}px` }"
@@ -21,14 +18,12 @@
           :total-test-cases-count="totalTestCasesCount"
           :loading="loading"
         />
-        <!-- Resize handle -->
         <div
           class="absolute top-0 right-0 w-1 h-full bg-theme-secondary hover:bg-theme-primary cursor-col-resize transition-colors duration-200"
           @mousedown="startResize('left', $event)"
         ></div>
       </div>
 
-      <!-- Center Panel - Test Cases & Results -->
       <div 
         class="relative"
         :style="{ width: `${centerPanelWidth}px` }"
@@ -46,14 +41,12 @@
           @update:selected-test-case-index="selectedTestCaseIndex = $event"
           @update:selected-result-index="selectedResultIndex = $event"
         />
-        <!-- Resize handle -->
         <div
           class="absolute top-0 right-0 w-1 h-full bg-theme-secondary hover:bg-theme-primary cursor-col-resize transition-colors duration-200"
           @mousedown="startResize('center', $event)"
         ></div>
       </div>
 
-      <!-- Right Panel - Code Editor -->
       <div 
         class="relative flex-1"
         :style="{ width: `${rightPanelWidth}px` }"
@@ -88,7 +81,6 @@ const authStore = useAuthStore()
 const { getAssignment, getAssignmentForStudent, createSubmission, checkCode } = useAssignments()
 const toast = useToast()
 
-// Реактивні дані
 const assignment = ref<any>(null)
 const loading = ref(true)
 const error = ref('')
@@ -104,7 +96,6 @@ const totalTestCasesCount = ref(0)
 const isFileUploading = ref(false)
 const isProgrammaticLanguageChange = ref(false)
 
-// Resize state
 const leftPanelWidth = ref(400)
 const centerPanelWidth = ref(400)
 const rightPanelWidth = ref(400)
@@ -116,28 +107,20 @@ const startWidth = ref(0)
 const assignmentId = route.params.id as string
 
 const codeTemplates = {
-  javascript: `// Ваше рішення
-function solution(input) {
-  // Введіть вашу логіку тут
+  javascript: `function solution(input) {
   return input;
 }
 
-// Функція main для тестування
 function main(args) {
-  // Приклад використання
   const result = solution(args);
   return result;
 }`,
   
-  typescript: `// Ваше рішення
-function solution(input: string): string {
-  // Введіть вашу логіку тут
+  typescript: `function solution(input: string): string {
   return input;
 }
 
-// Функція main для тестування
 function main(args: string): string {
-  // Приклад використання
   const result: string = solution(args);
   return result;}`
 }
@@ -185,7 +168,6 @@ const loadAssignment = async () => {
   }
 }
 
-// Перевірка коду
 const testCode = async () => {
   if (!submissionCode.value.trim()) return
 
@@ -196,17 +178,15 @@ const testCode = async () => {
     const request = {
       code: submissionCode.value,
       language: selectedLanguage.value,
-      assignmentId: assignmentId // Передаємо ID завдання замість тестів
+      assignmentId: assignmentId
     }
     
     const results = await checkCode(request)
     
-    // Зберігаємо результати
     checkResults.value = results
     
-    // Автоматично переключаємося на вкладку результатів
     activeTab.value = 'results'
-    selectedResultIndex.value = 0 // Default to first result
+    selectedResultIndex.value = 0
   } catch (err: any) {
     error.value = 'Помилка перевірки коду'
     console.error('Error testing code:', err)
@@ -226,7 +206,6 @@ const submitSolution = async () => {
   try {
     submitting.value = true
     
-    // Якщо ще не тестували код, спочатку протестуємо
     if (!checkResults.value) {
       await testCode()
     }
@@ -252,7 +231,6 @@ const submitSolution = async () => {
 }
 
 watch(selectedLanguage, () => {
-  // Не скидаємо код, якщо завантажується файл або програмна зміна мови
   if (!isFileUploading.value && !isProgrammaticLanguageChange.value) {
     resetCode()
   }
@@ -262,7 +240,6 @@ onMounted(() => {
   loadAssignment()
 })
 
-// Resize functionality
 const startResize = (panel: 'left' | 'center', event: MouseEvent) => {
   isResizing.value = true
   currentResizePanel.value = panel

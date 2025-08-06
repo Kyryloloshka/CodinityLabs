@@ -1,7 +1,6 @@
 <template>
   <div class="w-full h-full bg-theme-card overflow-y-auto transition-colors duration-300">
     <div class="p-4">
-      <!-- Main Tabs -->
       <div class="flex items-center border-b border-theme-primary mb-4">
         <button
           @click="$emit('update:activeTab', 'testCases')"
@@ -26,7 +25,6 @@
         </button>
       </div>
 
-      <!-- Test Cases Tab Content -->
       <TestCasesPanel
         v-if="activeTab === 'testCases'"
         :assignment="assignment"
@@ -34,7 +32,6 @@
         @update:selected-test-case-index="$emit('update:selectedTestCaseIndex', $event)"
       />
 
-      <!-- Results Tab Content -->
       <TestResultsPanel
         v-else-if="activeTab === 'results'"
         :check-results="checkResults"
@@ -42,7 +39,6 @@
         @update:selected-result-index="$emit('update:selectedResultIndex', $event)"
       />
 
-      <!-- Empty State -->
       <div v-else-if="activeTab === 'testCases' && !assignment" class="text-center py-8">
         <UIcon name="i-heroicons-document-text" class="h-8 w-8 text-theme-muted mx-auto mb-2" />
         <p class="text-theme-secondary text-xs">Завантаження тестових випадків...</p>

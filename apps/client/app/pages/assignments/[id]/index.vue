@@ -1,6 +1,5 @@
 <template>
   <div class="">
-    <!-- Завантаження -->
     <div v-if="loading" class="flex justify-center py-12">
       <div class="text-center">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-primary mx-auto"></div>
@@ -8,7 +7,6 @@
       </div>
     </div>
 
-    <!-- Помилка -->
     <div v-else-if="error" class="bg-error border border-error rounded-lg p-4">
       <div class="flex">
         <UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-error" />
@@ -19,9 +17,7 @@
       </div>
     </div>
 
-    <!-- Контент завдання -->
     <div v-else-if="assignment" class="max-w-4xl mx-auto">
-      <!-- Заголовок -->
       <div class="mb-8">
         <div class="flex items-center justify-between">
           <div>
@@ -35,14 +31,12 @@
             </div>
           </div>
           
-          <!-- Кнопки дій -->
           <div class="flex gap-2">
             <UButton to="/assignments" variant="ghost" color="neutral" class="text-theme-primary hover:bg-theme-hover">
               <UIcon name="i-heroicons-arrow-left" class="mr-2 h-4 w-4" />
               Назад
             </UButton>
             
-            <!-- Для студентів -->
             <template v-if="!isTeacher && authStore.isAuthenticated">
               <UButton
                 @click="navigateTo(`/assignments/${assignmentId}/submit`)"
@@ -55,7 +49,6 @@
               </UButton>
             </template>
             
-            <!-- Для неавторизованих користувачів -->
             <template v-if="!authStore.isAuthenticated">
               <UButton
                 @click="loginToSubmit"
@@ -67,7 +60,6 @@
               </UButton>
             </template>
             
-            <!-- Для викладачів -->
             <template v-if="isTeacher">
               <UButton
                 @click="editAssignment"
@@ -82,7 +74,6 @@
         </div>
       </div>
 
-      <!-- Опис завдання -->
       <div class="bg-theme-card shadow rounded-lg p-6 mb-6 border border-theme-primary">
         <h2 class="text-xl font-semibold text-theme-primary mb-4">Опис завдання</h2>
         <div class="prose max-w-none">
@@ -90,7 +81,6 @@
         </div>
       </div>
 
-      <!-- Тестові випадки -->
       <div class="bg-theme-card shadow rounded-lg p-6 mb-6 border border-theme-primary">
         <h2 class="text-xl font-semibold text-theme-primary mb-4">Тестові випадки</h2>
         <div class="grid gap-4">
@@ -183,24 +173,20 @@ const authStore = useAuthStore()
 const { getAssignment, getAssignmentForStudent, getAssignmentForTeacher, getAssignmentSubmissions } = useAssignments()
 const toast = useToast()
 
-// Реактивні дані
 const assignment = ref<any>(null)
 const submissions = ref<any[]>([])
 const loading = ref(true)
 const submissionsLoading = ref(false)
 const error = ref('')
 
-// Обчислювані властивості
 const isTeacher = computed(() => authStore.user?.role === 'TEACHER')
 const assignmentId = computed(() => route.params.id as string)
 
-// Методи
 const loadAssignment = async () => {
   try {
     loading.value = true
     error.value = ''
     
-    // Використовуємо різні API залежно від ролі користувача
     if (authStore.isAuthenticated) {
       if (isTeacher.value) {
         assignment.value = await getAssignmentForTeacher(assignmentId.value)
@@ -208,21 +194,18 @@ const loadAssignment = async () => {
         assignment.value = await getAssignmentForStudent(assignmentId.value)
       }
     } else {
-      // Для неавторизованих користувачів показуємо публічні тести
       assignment.value = await getAssignmentForStudent(assignmentId.value)
     }
   } catch (err: any) {
     error.value = 'Помилка завантаження завдання'
     console.error(err)
     
-    // Перевіряємо, чи це помилка 404 (завдання не знайдено)
     if (err?.status === 404 || err?.statusCode === 404) {
       toast.add({
         title: 'Помилка',
         description: 'Таке завдання не доступне',
         color: 'error'
       })
-      // Затримка перед перенаправленням
       setTimeout(async () => {
         await navigateTo('/assignments')
       }, 2000)

@@ -31,10 +31,8 @@ export const useTheme = () => {
       
       updateTheme()
       
-      // Додатково встановлюємо атрибут на html елементі
       document.documentElement.setAttribute('data-theme', theme.value)
       
-      // Принудово оновлюємо тему ще раз для впевненості
       setTimeout(() => {
         document.documentElement.setAttribute('data-theme', theme.value)
         updateTheme()

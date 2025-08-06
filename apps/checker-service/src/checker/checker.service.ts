@@ -16,21 +16,16 @@ export class CheckerService {
   async checkCode(checkDto: CheckDto): Promise<CheckResultDto> {
     const { code, testCases, language = 'javascript' } = checkDto;
 
-    // Базова перевірка коду з урахуванням мови програмування
     const lintResults = this.runLintAnalysis(code, language);
 
-    // Виконання всіх тестів в безпечному середовищі
     const allTestResults = await this.runTestsSafely(code, testCases, language);
 
-    // Фільтруємо тільки публічні тести для відповіді
     const publicTestResults = allTestResults.filter(
       (_, index) => testCases[index]?.isPublic !== false,
     );
 
-    // Розраховуємо статистику
     const testStats = this.calculateTestStats(allTestResults, testCases);
 
-    // Розрахунок score на основі всіх тестів
     const score = this.calculateScore(lintResults, allTestResults);
 
     return {
@@ -45,7 +40,6 @@ export class CheckerService {
     const lintErrors: LintErrorDto[] = [];
 
     try {
-      // Перевірка на основі мови програмування
       switch (language) {
         case 'javascript':
         case 'typescript':
@@ -65,7 +59,6 @@ export class CheckerService {
     code: string,
     lintErrors: LintErrorDto[],
   ): void {
-    // Перевірка на наявність функції main або solution
     if (
       !code.includes('function main') &&
       !code.includes('const main') &&
@@ -83,7 +76,6 @@ export class CheckerService {
       });
     }
 
-    // Базова перевірка синтаксису
     try {
       this.validateJavaScriptSyntax(code);
     } catch (syntaxError) {
@@ -121,14 +113,13 @@ export class CheckerService {
   ): Promise<TestResultDto[]> {
     const results: TestResultDto[] = [];
 
-    // Виконуємо тести послідовно в безпечному середовищі
     for (const testCase of testCases) {
       try {
         const result = await this.safeCodeExecutorService.executeCodeSafely(
           code,
           testCase,
           language,
-          1000, // 1 секунда таймаут
+          1000,
         );
         results.push(result);
       } catch (error) {
@@ -167,7 +158,6 @@ export class CheckerService {
       (error) => error.severity === 1,
     ).length;
 
-    // Максимальний штраф 30 балів
     const lintPenalty = Math.min(30, errorCount * 3 + warningCount * 1);
     const lintScore = Math.max(0, 30 - lintPenalty);
 

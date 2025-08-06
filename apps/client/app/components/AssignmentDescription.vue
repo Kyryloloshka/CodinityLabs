@@ -11,7 +11,6 @@
     
     <div v-else-if="assignment" class="p-4">
       <div class="space-y-4">
-        <!-- Problem Info -->
         <div>
           <div class="flex items-center gap-2 mb-2">
             <div class="text-xs text-theme-primary bg-theme-secondary rounded-full px-2 py-1">

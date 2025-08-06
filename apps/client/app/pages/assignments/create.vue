@@ -1,6 +1,5 @@
 <template>
   <div class="">
-    <!-- Помилка -->
     <div v-if="error" class="bg-error border border-error rounded-lg p-4 mb-6">
       <div class="flex">
         <UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-error" />
@@ -11,9 +10,7 @@
       </div>
     </div>
 
-    <!-- Контент -->
     <div class="max-w-4xl mx-auto">
-      <!-- Заголовок -->
       <div class="mb-8">
         <div class="flex items-center justify-between">
           <div>
@@ -34,7 +31,6 @@
         </div>
       </div>
 
-      <!-- Форма завдання -->
       <div class="bg-theme-card shadow rounded-lg p-6 border border-theme-primary">
         <form @submit.prevent="saveAssignment">
           <div class="space-y-6">
@@ -177,7 +173,6 @@
             </div>
           </div>
 
-          <!-- Кнопки дій -->
           <div class="flex justify-end gap-4 mt-8 pt-6 border-t border-theme-primary">
             <UButton
               @click="navigateTo('/assignments')"
@@ -214,12 +209,10 @@ const route = useRoute()
 const authStore = useAuthStore()
 const { createAssignment, updateAssignment, getAssignment } = useAssignments()
 
-// Реактивні дані
 const saving = ref(false)
 const editingAssignment = ref<any>(null)
 const error = ref('')
 
-// Форма завдання
 const form = ref({
   title: '',
   description: '',
@@ -228,11 +221,9 @@ const form = ref({
   testCases: [] as { input: string; expected: string; description: string; isPublic: boolean }[]
 })
 
-// Перевіряємо, чи це редагування існуючого завдання
 const assignmentId = route.params.id as string
 const isEditing = computed(() => !!assignmentId && assignmentId !== 'create')
 
-// Завантаження даних для редагування
 const loadAssignment = async () => {
   if (!isEditing.value) return
   
@@ -252,12 +243,10 @@ const loadAssignment = async () => {
     }
   } catch (error) {
     console.error('Error loading assignment:', error)
-    // Перенаправляємо на сторінку завдань, якщо завдання не знайдено
     await router.push('/assignments')
   }
 }
 
-// Методи
 const addTestCase = () => {
   form.value.testCases.push({
     input: '',

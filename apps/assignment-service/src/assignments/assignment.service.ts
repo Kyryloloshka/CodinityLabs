@@ -15,7 +15,6 @@ export class AssignmentService {
   async create(createAssignmentDto: CreateAssignmentDto) {
     const { testCases, ...assignmentData } = createAssignmentDto;
 
-    // Валідація: мінімум 3 публічних тести
     const publicTests = testCases.filter(tc => tc.isPublic);
     if (publicTests.length < 3) {
       throw new Error('Потрібно мінімум 3 публічних тести для завдання');
@@ -47,7 +46,6 @@ export class AssignmentService {
     } = paginationDto || {};
     const skip = (page - 1) * limit;
 
-    // Build where clause for filtering
     const where: any = {};
 
     if (search) {
