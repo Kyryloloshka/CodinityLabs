@@ -8,7 +8,7 @@ export class CheckerController {
   constructor(private readonly checkerService: CheckerService) {}
 
   @Post()
-  checkCode(@Body() checkDto: CheckDto): Promise<CheckResultDto> {
+  async checkCode(@Body() checkDto: CheckDto): Promise<CheckResultDto> {
     return this.checkerService.checkCode(checkDto);
   }
 }

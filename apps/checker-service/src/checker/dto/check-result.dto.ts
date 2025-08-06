@@ -12,6 +12,7 @@ export class TestResultDto {
   expected: string;
   description: string;
   input: string;
+  timeout?: boolean; // Додаємо поле для відстеження таймауту
 }
 
 export class CheckResultDto {

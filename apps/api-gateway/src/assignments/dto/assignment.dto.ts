@@ -7,6 +7,7 @@ import {
   ValidateNested,
   Min,
   Max,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -34,6 +35,12 @@ export class TestCaseDto {
     example: 'Факторіал числа 5',
   })
   description: string;
+
+  @ApiProperty({
+    description: 'Чи тест видимий студентам',
+    example: true,
+  })
+  isPublic: boolean;
 
   @ApiProperty({
     description: 'ID завдання',
@@ -141,6 +148,14 @@ export class CreateTestCaseDto {
   })
   @IsString()
   description: string;
+
+  @ApiProperty({
+    description: 'Чи тест видимий студентам',
+    example: true,
+    default: true,
+  })
+  @IsBoolean()
+  isPublic: boolean = true;
 }
 
 export class CreateAssignmentDto {

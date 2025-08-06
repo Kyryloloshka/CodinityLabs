@@ -1,0 +1,519 @@
+/* Nuxt UI Component Overrides for Custom Theme */
+
+/* Global Nuxt UI overrides */
+:root {
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  --color-primary-950: #172554;
+}
+
+/* Button overrides */
+.u-button {
+  transition: all 0.2s ease-in-out;
+}
+
+.u-button--variant-solid {
+  background-color: var(--accent-primary) !important;
+  border-color: var(--accent-primary) !important;
+  color: var(--text-inverse) !important;
+}
+
+.u-button--variant-solid:hover {
+  background-color: var(--accent-secondary) !important;
+  border-color: var(--accent-secondary) !important;
+}
+
+.u-button--variant-ghost {
+  background-color: transparent !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+.u-button--variant-ghost:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+.u-button--variant-outline {
+  background-color: transparent !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+.u-button--variant-outline:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+/* Input overrides */
+.u-input {
+  background-color: var(--bg-input) !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-primary) !important;
+  transition: all 0.2s ease-in-out;
+}
+
+.u-input:focus {
+  border-color: var(--border-focus) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+.u-input::placeholder {
+  color: var(--text-muted) !important;
+}
+
+.u-input--error {
+  border-color: var(--accent-error) !important;
+}
+
+.u-input--error:focus {
+  border-color: var(--accent-error) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
+/* Textarea overrides */
+.u-textarea {
+  background-color: var(--bg-input) !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-primary) !important;
+  transition: all 0.2s ease-in-out;
+}
+
+.u-textarea:focus {
+  border-color: var(--border-focus) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+.u-textarea::placeholder {
+  color: var(--text-muted) !important;
+}
+
+.u-textarea--error {
+  border-color: var(--accent-error) !important;
+}
+
+.u-textarea--error:focus {
+  border-color: var(--accent-error) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
+/* Card overrides */
+.u-card {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+.u-card--variant-ghost {
+  background-color: transparent !important;
+  border-color: transparent !important;
+}
+
+.u-card--variant-outline {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-primary) !important;
+}
+
+/* Form group overrides */
+.u-form-group__label {
+  color: var(--text-primary) !important;
+}
+
+.u-form-group__description {
+  color: var(--text-secondary) !important;
+}
+
+.u-form-group__error {
+  color: var(--accent-error) !important;
+}
+
+/* Badge overrides */
+.u-badge {
+  transition: all 0.2s ease-in-out;
+}
+
+.u-badge--variant-solid {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+.u-badge--variant-soft {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+}
+
+.u-badge--variant-outline {
+  background-color: transparent !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+.u-badge--color-primary {
+  background-color: var(--accent-primary) !important;
+  color: var(--text-inverse) !important;
+}
+
+.u-badge--color-success {
+  background-color: var(--accent-success) !important;
+  color: var(--text-inverse) !important;
+}
+
+.u-badge--color-warning {
+  background-color: var(--accent-warning) !important;
+  color: var(--text-inverse) !important;
+}
+
+.u-badge--color-error {
+  background-color: var(--accent-error) !important;
+  color: var(--text-inverse) !important;
+}
+
+/* Dropdown overrides */
+.u-dropdown {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-primary) !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.u-dropdown__item {
+  color: var(--text-primary) !important;
+}
+
+.u-dropdown__item:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+.u-dropdown__item--active {
+  background-color: var(--accent-primary) !important;
+  color: var(--text-inverse) !important;
+}
+
+/* Modal overrides */
+.u-modal {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-primary) !important;
+}
+
+.u-modal__overlay {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+.u-modal__header {
+  border-color: var(--border-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+.u-modal__body {
+  color: var(--text-primary) !important;
+}
+
+.u-modal__footer {
+  border-color: var(--border-primary) !important;
+}
+
+/* Alert overrides */
+.u-alert {
+  border-color: var(--border-primary) !important;
+}
+
+.u-alert--variant-soft {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+.u-alert--variant-outline {
+  background-color: transparent !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+.u-alert--color-primary {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+  color: var(--accent-primary) !important;
+  border-color: var(--accent-primary) !important;
+}
+
+.u-alert--color-success {
+  background-color: rgba(34, 197, 94, 0.1) !important;
+  color: var(--accent-success) !important;
+  border-color: var(--accent-success) !important;
+}
+
+.u-alert--color-warning {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+  color: var(--accent-warning) !important;
+  border-color: var(--accent-warning) !important;
+}
+
+.u-alert--color-error {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  color: var(--accent-error) !important;
+  border-color: var(--accent-error) !important;
+}
+
+/* Progress overrides */
+.u-progress {
+  background-color: var(--bg-tertiary) !important;
+}
+
+.u-progress__bar {
+  background-color: var(--accent-primary) !important;
+}
+
+/* Avatar overrides */
+.u-avatar {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-primary) !important;
+}
+
+/* Tooltip overrides */
+.u-tooltip {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-primary) !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+/* Popover overrides */
+.u-popover {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-primary) !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.u-popover__arrow {
+  border-color: var(--border-primary) !important;
+}
+
+/* Accordion overrides */
+.u-accordion__item {
+  border-color: var(--border-primary) !important;
+}
+
+.u-accordion__trigger {
+  color: var(--text-primary) !important;
+}
+
+.u-accordion__trigger:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+.u-accordion__content {
+  color: var(--text-secondary) !important;
+}
+
+/* Tabs overrides */
+.u-tabs__list {
+  border-color: var(--border-primary) !important;
+}
+
+.u-tabs__trigger {
+  color: var(--text-secondary) !important;
+}
+
+.u-tabs__trigger:hover {
+  color: var(--text-primary) !important;
+  background-color: var(--bg-hover) !important;
+}
+
+.u-tabs__trigger--active {
+  color: var(--accent-primary) !important;
+  border-color: var(--accent-primary) !important;
+}
+
+.u-tabs__content {
+  color: var(--text-primary) !important;
+}
+
+/* Table overrides */
+.u-table {
+  border-color: var(--border-primary) !important;
+}
+
+.u-table__header {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+.u-table__row {
+  border-color: var(--border-primary) !important;
+}
+
+.u-table__row:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+.u-table__cell {
+  color: var(--text-primary) !important;
+}
+
+/* Pagination overrides */
+.u-pagination {
+  color: var(--text-primary) !important;
+}
+
+.u-pagination__item {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+.u-pagination__item:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+.u-pagination__item--active {
+  background-color: var(--accent-primary) !important;
+  color: var(--text-inverse) !important;
+  border-color: var(--accent-primary) !important;
+}
+
+/* Checkbox overrides */
+.u-checkbox {
+  border-color: var(--border-primary) !important;
+  background-color: var(--bg-input) !important;
+}
+
+.u-checkbox--checked {
+  background-color: var(--accent-primary) !important;
+  border-color: var(--accent-primary) !important;
+}
+
+/* Radio overrides */
+.u-radio {
+  border-color: var(--border-primary) !important;
+  background-color: var(--bg-input) !important;
+}
+
+.u-radio--checked {
+  border-color: var(--accent-primary) !important;
+}
+
+.u-radio__indicator {
+  background-color: var(--accent-primary) !important;
+}
+
+/* Select overrides */
+.u-select {
+  background-color: var(--bg-input) !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+.u-select__option {
+  color: var(--text-primary) !important;
+}
+
+.u-select__option:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+.u-select__option--selected {
+  background-color: var(--accent-primary) !important;
+  color: var(--text-inverse) !important;
+}
+
+/* Switch overrides */
+.u-switch {
+  background-color: var(--bg-tertiary) !important;
+}
+
+.u-switch--checked {
+  background-color: var(--accent-primary) !important;
+}
+
+.u-switch__thumb {
+  background-color: var(--bg-input) !important;
+}
+
+/* Dark mode specific overrides */
+[data-theme="dark"] .u-button--variant-ghost:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+[data-theme="dark"] .u-input {
+  background-color: var(--bg-input) !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .u-textarea {
+  background-color: var(--bg-input) !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .u-card {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-primary) !important;
+}
+
+[data-theme="dark"] .u-dropdown {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-primary) !important;
+}
+
+[data-theme="dark"] .u-modal {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-primary) !important;
+}
+
+[data-theme="dark"] .u-tooltip {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .u-popover {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-primary) !important;
+}
+
+/* Light mode specific overrides */
+[data-theme="light"] .u-button--variant-ghost:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+[data-theme="light"] .u-input {
+  background-color: var(--bg-input) !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="light"] .u-textarea {
+  background-color: var(--bg-input) !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="light"] .u-card {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-primary) !important;
+}
+
+[data-theme="light"] .u-dropdown {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-primary) !important;
+}
+
+[data-theme="light"] .u-modal {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-primary) !important;
+}
+
+[data-theme="light"] .u-tooltip {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="light"] .u-popover {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-primary) !important;
+} 

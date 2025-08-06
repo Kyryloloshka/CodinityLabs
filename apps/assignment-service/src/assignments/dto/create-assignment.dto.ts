@@ -6,6 +6,7 @@ import {
   ValidateNested,
   Min,
   Max,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -18,6 +19,9 @@ export class CreateTestCaseDto {
 
   @IsString()
   description: string;
+
+  @IsBoolean()
+  isPublic: boolean = true; // За замовчуванням тест публічний
 }
 
 export class CreateAssignmentDto {

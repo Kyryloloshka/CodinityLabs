@@ -16,6 +16,21 @@ interface ApiResponse<T> {
   message?: string;
 }
 
+interface PaginatedApiResponse<T> {
+  data: {
+    data: T[];
+    meta: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  };
+  message?: string;
+}
+
 interface ErrorResponse {
   message?: string;
 }
@@ -47,11 +62,24 @@ export class AssignmentsService {
     return url;
   }
 
-  async findAll(): Promise<AssignmentDto[]> {
+  async findAll(
+    page?: number,
+    limit?: number,
+    search?: string,
+    difficulty?: number,
+    status?: string,
+  ): Promise<PaginatedApiResponse<AssignmentDto>['data']> {
     try {
+      const params = new URLSearchParams();
+      if (page) params.append('page', page.toString());
+      if (limit) params.append('limit', limit.toString());
+      if (search) params.append('search', search);
+      if (difficulty) params.append('difficulty', difficulty.toString());
+      if (status) params.append('status', status);
+
       const response = await firstValueFrom(
-        this.httpService.get<ApiResponse<AssignmentDto[]>>(
-          `${this.assignmentServiceUrl}/assignments`,
+        this.httpService.get<PaginatedApiResponse<AssignmentDto>>(
+          `${this.assignmentServiceUrl}/assignments?${params.toString()}`,
         ),
       );
       return response.data.data;
@@ -63,11 +91,25 @@ export class AssignmentsService {
     }
   }
 
-  async findByTeacher(teacherId: string): Promise<AssignmentDto[]> {
+  async findByTeacher(
+    teacherId: string,
+    page?: number,
+    limit?: number,
+    search?: string,
+    difficulty?: number,
+    status?: string,
+  ): Promise<PaginatedApiResponse<AssignmentDto>['data']> {
     try {
+      const params = new URLSearchParams();
+      if (page) params.append('page', page.toString());
+      if (limit) params.append('limit', limit.toString());
+      if (search) params.append('search', search);
+      if (difficulty) params.append('difficulty', difficulty.toString());
+      if (status) params.append('status', status);
+
       const response = await firstValueFrom(
-        this.httpService.get<ApiResponse<AssignmentDto[]>>(
-          `${this.assignmentServiceUrl}/assignments/teacher/${teacherId}`,
+        this.httpService.get<PaginatedApiResponse<AssignmentDto>>(
+          `${this.assignmentServiceUrl}/assignments/teacher/${teacherId}?${params.toString()}`,
         ),
       );
       return response.data.data;
@@ -93,6 +135,44 @@ export class AssignmentsService {
       }
       throw new HttpException(
         'Failed to fetch assignment',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async findOneForStudent(id: string): Promise<AssignmentDto> {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<ApiResponse<AssignmentDto>>(
+          `${this.assignmentServiceUrl}/assignments/${id}/student`,
+        ),
+      );
+      return response.data.data;
+    } catch (error: unknown) {
+      if (isAxiosError(error) && error.response?.status === 404) {
+        throw new HttpException('Assignment not found', HttpStatus.NOT_FOUND);
+      }
+      throw new HttpException(
+        'Failed to fetch assignment for student',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async findOneForTeacher(id: string): Promise<AssignmentDto> {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<ApiResponse<AssignmentDto>>(
+          `${this.assignmentServiceUrl}/assignments/${id}/teacher`,
+        ),
+      );
+      return response.data.data;
+    } catch (error: unknown) {
+      if (isAxiosError(error) && error.response?.status === 404) {
+        throw new HttpException('Assignment not found', HttpStatus.NOT_FOUND);
+      }
+      throw new HttpException(
+        'Failed to fetch assignment for teacher',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -291,6 +371,30 @@ export class AssignmentsService {
   // Checker service methods
   async checkCode(checkDto: CheckDto): Promise<CheckResultDto> {
     try {
+      // Якщо передано assignmentId, отримуємо всі тести завдання
+      if (checkDto.assignmentId) {
+        const assignment = await this.findOne(checkDto.assignmentId);
+        checkDto.testCases = assignment.testCases.map(
+          (testCase: {
+            input: string;
+            expected: string;
+            description: string;
+          }) => ({
+            input: testCase.input,
+            expected: testCase.expected,
+            description: testCase.description,
+          }),
+        );
+      }
+
+      // Перевіряємо, що є тести для перевірки
+      if (!checkDto.testCases || checkDto.testCases.length === 0) {
+        throw new HttpException(
+          'No test cases provided',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
       const response = await firstValueFrom(
         this.httpService.post<CheckResultDto>(
           `${this.checkerServiceUrl}/check`,

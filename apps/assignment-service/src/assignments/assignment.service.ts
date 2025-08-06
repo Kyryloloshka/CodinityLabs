@@ -3,6 +3,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateAssignmentDto } from './dto/create-assignment.dto';
 import { UpdateAssignmentDto } from './dto/update-assignment.dto';
 import { AssignmentNotFoundException } from '../common/exceptions/custom.exceptions';
+import {
+  PaginationDto,
+  PaginatedResponseDto,
+} from '../common/dto/pagination.dto';
 
 @Injectable()
 export class AssignmentService {
@@ -10,6 +14,12 @@ export class AssignmentService {
 
   async create(createAssignmentDto: CreateAssignmentDto) {
     const { testCases, ...assignmentData } = createAssignmentDto;
+
+    // Валідація: мінімум 3 публічних тести
+    const publicTests = testCases.filter(tc => tc.isPublic);
+    if (publicTests.length < 3) {
+      throw new Error('Потрібно мінімум 3 публічних тести для завдання');
+    }
 
     return this.prisma.assignment.create({
       data: {
@@ -25,31 +35,145 @@ export class AssignmentService {
     });
   }
 
-  async findAll() {
-    return this.prisma.assignment.findMany({
-      include: {
-        testCases: true,
-        _count: {
-          select: {
-            submissions: true,
+  async findAll(
+    paginationDto?: PaginationDto,
+  ): Promise<PaginatedResponseDto<any>> {
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      difficulty,
+      status,
+    } = paginationDto || {};
+    const skip = (page - 1) * limit;
+
+    // Build where clause for filtering
+    const where: any = {};
+
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    if (difficulty) {
+      where.difficulty = difficulty;
+    }
+
+    if (status) {
+      const now = new Date();
+      if (status === 'active') {
+        where.deadline = { gt: now };
+      } else if (status === 'completed') {
+        where.deadline = { lte: now };
+      }
+    }
+
+    const [assignments, total] = await Promise.all([
+      this.prisma.assignment.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          testCases: true,
+          _count: {
+            select: {
+              submissions: true,
+            },
           },
         },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      this.prisma.assignment.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: assignments,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
       },
-    });
+    };
   }
 
-  async findByTeacher(teacherId: string) {
-    return this.prisma.assignment.findMany({
-      where: { teacherId },
-      include: {
-        testCases: true,
-        _count: {
-          select: {
-            submissions: true,
+  async findByTeacher(
+    teacherId: string,
+    paginationDto?: PaginationDto,
+  ): Promise<PaginatedResponseDto<any>> {
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      difficulty,
+      status,
+    } = paginationDto || {};
+    const skip = (page - 1) * limit;
+
+    // Build where clause for filtering
+    const where: any = { teacherId };
+
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    if (difficulty) {
+      where.difficulty = difficulty;
+    }
+
+    if (status) {
+      const now = new Date();
+      if (status === 'active') {
+        where.deadline = { gt: now };
+      } else if (status === 'completed') {
+        where.deadline = { lte: now };
+      }
+    }
+
+    const [assignments, total] = await Promise.all([
+      this.prisma.assignment.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          testCases: true,
+          _count: {
+            select: {
+              submissions: true,
+            },
           },
         },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      this.prisma.assignment.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: assignments,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
       },
-    });
+    };
   }
 
   async findOne(id: string) {
@@ -72,10 +196,60 @@ export class AssignmentService {
     return assignment;
   }
 
+  async findOneForStudent(id: string) {
+    const assignment = await this.prisma.assignment.findUnique({
+      where: { id },
+      include: {
+        testCases: {
+          where: { isPublic: true }, // Показуємо тільки публічні тести студентам
+        },
+        _count: {
+          select: {
+            submissions: true,
+          },
+        },
+      },
+    });
+
+    if (!assignment) {
+      throw new AssignmentNotFoundException(id);
+    }
+
+    return assignment;
+  }
+
+  async findOneForTeacher(id: string) {
+    const assignment = await this.prisma.assignment.findUnique({
+      where: { id },
+      include: {
+        testCases: true, // Показуємо всі тести викладачу
+        _count: {
+          select: {
+            submissions: true,
+          },
+        },
+      },
+    });
+
+    if (!assignment) {
+      throw new AssignmentNotFoundException(id);
+    }
+
+    return assignment;
+  }
+
   async update(id: string, updateAssignmentDto: UpdateAssignmentDto) {
     await this.findOne(id);
 
     const { testCases, ...assignmentData } = updateAssignmentDto;
+
+    // Валідація: мінімум 3 публічних тести (якщо оновлюються тести)
+    if (testCases) {
+      const publicTests = testCases.filter(tc => tc.isPublic);
+      if (publicTests.length < 3) {
+        throw new Error('Потрібно мінімум 3 публічних тести для завдання');
+      }
+    }
 
     return this.prisma.assignment.update({
       where: { id },

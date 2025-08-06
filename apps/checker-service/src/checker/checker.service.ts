@@ -5,19 +5,22 @@ import {
   LintErrorDto,
   TestResultDto,
 } from './dto/check-result.dto';
+import { SafeCodeExecutorService } from './safe-code-executor.service';
 
 @Injectable()
 export class CheckerService {
-  constructor() {}
+  constructor(
+    private readonly safeCodeExecutorService: SafeCodeExecutorService,
+  ) {}
 
-  checkCode(checkDto: CheckDto): CheckResultDto {
-    const { code, testCases } = checkDto;
+  async checkCode(checkDto: CheckDto): Promise<CheckResultDto> {
+    const { code, testCases, language = 'javascript' } = checkDto;
 
-    // Базова перевірка коду
-    const lintResults = this.runLintAnalysis(code);
+    // Базова перевірка коду з урахуванням мови програмування
+    const lintResults = this.runLintAnalysis(code, language);
 
-    // Виконання тестів
-    const testResults = this.runTests(code, testCases);
+    // Виконання тестів в безпечному середовищі
+    const testResults = await this.runTestsSafely(code, testCases, language);
 
     // Розрахунок score
     const score = this.calculateScore(lintResults, testResults);
@@ -29,37 +32,18 @@ export class CheckerService {
     };
   }
 
-  private runLintAnalysis(code: string): LintErrorDto[] {
+  private runLintAnalysis(code: string, language: string): LintErrorDto[] {
     const lintErrors: LintErrorDto[] = [];
 
     try {
-      // Базова перевірка на наявність функції main
-      if (
-        !code.includes('function main') &&
-        !code.includes('const main') &&
-        !code.includes('let main')
-      ) {
-        lintErrors.push({
-          ruleId: 'missing-main-function',
-          severity: 2,
-          message: 'Function main is required',
-          line: 1,
-          column: 1,
-        });
-      }
-
-      // Перевірка на базові синтаксичні помилки
-      try {
-        // Використовуємо безпечніший спосіб перевірки синтаксису
-        this.validateSyntax(code);
-      } catch (syntaxError) {
-        lintErrors.push({
-          ruleId: 'syntax-error',
-          severity: 2,
-          message: `Syntax error: ${(syntaxError as Error).message}`,
-          line: 1,
-          column: 1,
-        });
+      // Перевірка на основі мови програмування
+      switch (language) {
+        case 'javascript':
+        case 'typescript':
+          this.checkJavaScriptSyntax(code, lintErrors);
+          break;
+        default:
+          this.checkJavaScriptSyntax(code, lintErrors);
       }
     } catch (error) {
       console.error('Lint analysis error:', error);
@@ -68,8 +52,43 @@ export class CheckerService {
     return lintErrors;
   }
 
-  private validateSyntax(code: string): void {
-    // Базова перевірка синтаксису без використання eval
+  private checkJavaScriptSyntax(
+    code: string,
+    lintErrors: LintErrorDto[],
+  ): void {
+    // Перевірка на наявність функції main або solution
+    if (
+      !code.includes('function main') &&
+      !code.includes('const main') &&
+      !code.includes('let main') &&
+      !code.includes('function solution') &&
+      !code.includes('const solution') &&
+      !code.includes('let solution')
+    ) {
+      lintErrors.push({
+        ruleId: 'missing-main-function',
+        severity: 2,
+        message: 'Function main or solution is required',
+        line: 1,
+        column: 1,
+      });
+    }
+
+    // Базова перевірка синтаксису
+    try {
+      this.validateJavaScriptSyntax(code);
+    } catch (syntaxError) {
+      lintErrors.push({
+        ruleId: 'syntax-error',
+        severity: 2,
+        message: `Syntax error: ${(syntaxError as Error).message}`,
+        line: 1,
+        column: 1,
+      });
+    }
+  }
+
+  private validateJavaScriptSyntax(code: string): void {
     const basicChecks = [
       { pattern: /function\s+\w+\s*\(/, name: 'function declaration' },
       { pattern: /const\s+\w+\s*=/, name: 'const declaration' },
@@ -77,7 +96,6 @@ export class CheckerService {
       { pattern: /var\s+\w+\s*=/, name: 'var declaration' },
     ];
 
-    // Перевіряємо базові конструкції
     const hasValidConstructs = basicChecks.some((check) =>
       check.pattern.test(code),
     );
@@ -87,12 +105,22 @@ export class CheckerService {
     }
   }
 
-  private runTests(code: string, testCases: TestCaseDto[]): TestResultDto[] {
+  private async runTestsSafely(
+    code: string,
+    testCases: TestCaseDto[],
+    language: string,
+  ): Promise<TestResultDto[]> {
     const results: TestResultDto[] = [];
 
+    // Виконуємо тести послідовно в безпечному середовищі
     for (const testCase of testCases) {
       try {
-        const result = this.runSingleTest(code, testCase);
+        const result = await this.safeCodeExecutorService.executeCodeSafely(
+          code,
+          testCase,
+          language,
+          1000, // 1 секунда таймаут
+        );
         results.push(result);
       } catch (error) {
         console.error('Test execution error:', error);
@@ -104,66 +132,12 @@ export class CheckerService {
           expected: testCase.expected,
           description: testCase.description,
           input: testCase.input,
+          timeout: false,
         });
       }
     }
 
     return results;
-  }
-
-  private runSingleTest(code: string, testCase: TestCaseDto): TestResultDto {
-    try {
-      // Створюємо безпечну функцію для виконання коду
-      const safeCode = this.createSafeExecutionCode(code, testCase.input);
-      const actual = this.executeCodeSafely(safeCode);
-      const actualString = String(actual);
-      const passed = actualString === testCase.expected;
-
-      return {
-        passed,
-        actual: actualString,
-        expected: testCase.expected,
-        description: testCase.description,
-        input: testCase.input,
-      };
-    } catch (error) {
-      return {
-        passed: false,
-        actual:
-          'Error: ' + (error instanceof Error ? error.message : String(error)),
-        expected: testCase.expected,
-        description: testCase.description,
-        input: testCase.input,
-      };
-    }
-  }
-
-  private createSafeExecutionCode(code: string, input: unknown): string {
-    return `
-      ${code}
-      
-      // Перевіряємо, чи існує функція main
-      if (typeof main !== 'function') {
-        throw new Error('Function main is not defined');
-      }
-      
-      // Виконуємо функцію з вхідними даними
-      return main(${JSON.stringify(input)});
-    `;
-  }
-
-  private executeCodeSafely(code: string): unknown {
-    // В реальному проекті тут можна використовувати більш безпечні альтернативи
-    // наприклад, використання VM модуля Node.js або інших sandbox рішень
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-implied-eval
-      const executeCode = new Function(code) as () => unknown;
-      return executeCode();
-    } catch (error) {
-      throw new Error(
-        `Code execution failed: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
   }
 
   private calculateScore(
@@ -174,11 +148,9 @@ export class CheckerService {
       return 0;
     }
 
-    // Базовий score на основі пройдених тестів (70% від загального score)
     const passedTests = testResults.filter((test) => test.passed).length;
     const testScore = (passedTests / testResults.length) * 70;
 
-    // Штраф за помилки коду (30% від загального score)
     const errorCount = lintErrors.filter(
       (error) => error.severity === 2,
     ).length;

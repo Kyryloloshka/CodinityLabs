@@ -1,43 +1,47 @@
 <template>
-  <header class="bg-white shadow">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center py-6">
+  <header class="bg-theme-card shadow-md border-b border-theme-primary transition-colors duration-300">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-1">
         <div class="flex items-center">
-          <UIcon name="i-heroicons-academic-cap" class="h-8 w-8 text-indigo-600" />
-          <h1 class="ml-3 text-2xl font-bold text-gray-900">
+          <UIcon name="i-heroicons-academic-cap" class="h-6 w-6 text-accent-primary" />
+          <h1 class="ml-2 text-lg font-bold text-theme-primary">
             Система управління завданнями
           </h1>
         </div>
         
-        <div v-if="authStore.isAuthenticated" class="flex items-center space-x-4">
-          <div class="text-sm text-gray-700">
-            <span class="font-medium">{{ authStore.user?.name }}</span>
-            <span class="mx-2">•</span>
-            <span class="text-gray-500">{{ getRoleLabel(authStore.user?.role) }}</span>
+        <div v-if="authStore.isAuthenticated" class="flex items-center space-x-3">
+          <ThemeSwitcher />
+          <div class="text-xs text-theme-secondary">
+            <span class="font-medium text-theme-primary">{{ authStore.user?.name }}</span>
+            <span class="mx-1">•</span>
+            <span class="text-theme-muted">{{ getRoleLabel(authStore.user?.role) }}</span>
           </div>
           <UButton
             variant="ghost"
+            size="sm"
             :loading="isLoggingOut"
             @click="handleLogout"
+            class="text-theme-primary cursor-pointer hover:bg-theme-hover"
           >
-            <UIcon name="i-heroicons-arrow-right-on-rectangle" class="mr-2 h-4 w-4" />
+            <UIcon name="i-heroicons-arrow-right-on-rectangle" class="mr-1 h-3 w-3" />
             Вийти
           </UButton>
         </div>
-        <div v-else class="flex items-center space-x-4">
+        <div v-else class="flex items-center space-x-2">
+          <ThemeSwitcher />
           <UButton
             to="/login"
             variant="ghost"
-            color="primary"
             size="sm"
+            class="text-theme-primary cursor-pointer"
           >
             Увійти
           </UButton>
           <UButton
             to="/register"
-            variant="solid"
-            color="primary"
+            variant="ghost"
             size="sm"
+            class="text-theme-primary cursor-pointer"
           >
             Реєстрація
           </UButton>

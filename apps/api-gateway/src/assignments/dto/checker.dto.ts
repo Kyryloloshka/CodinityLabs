@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsArray, ValidateNested } from 'class-validator';
+import { IsString, IsNotEmpty, IsArray, ValidateNested, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class TestCaseDto {
@@ -38,13 +38,33 @@ export class CheckDto {
   code: string;
 
   @ApiProperty({
-    description: 'Тестові випадки',
+    description: 'Мова програмування',
+    example: 'javascript',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  language?: string;
+
+  @ApiProperty({
+    description: 'ID завдання для автоматичного отримання тестів',
+    example: 'a82940b0-cff0-42df-b4c4-0ff66a2a30fc',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  assignmentId?: string;
+
+  @ApiProperty({
+    description: 'Тестові випадки (використовуються якщо assignmentId не передано)',
     type: [TestCaseDto],
+    required: false,
   })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => TestCaseDto)
-  testCases: TestCaseDto[];
+  @IsOptional()
+  testCases?: TestCaseDto[];
 }
 
 export class LintErrorDto {
