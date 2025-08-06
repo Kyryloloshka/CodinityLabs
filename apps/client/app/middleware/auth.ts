@@ -3,6 +3,8 @@ export default defineNuxtRouteMiddleware(() => {
   
   // Чекаємо поки додаток ініціалізується
   if (!authStore.isInitialized) {
+    // Повертаємо undefined, щоб middleware не блокував навігацію
+    // Layout покаже завантажувальний екран
     return
   }
   

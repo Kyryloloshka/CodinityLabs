@@ -130,21 +130,26 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async initializeAuth() {
-      if (import.meta.client) {
-        const userStr = localStorage.getItem('user')
+      try {
+        if (import.meta.client) {
+          const userStr = localStorage.getItem('user')
 
-        if (userStr) {
-          this.user = JSON.parse(userStr)
-          this.isAuthenticated = true
-          
-          const refreshed = await this.refreshAccessToken()
-          if (!refreshed) {
-            this.logout()
+          if (userStr) {
+            this.user = JSON.parse(userStr)
+            this.isAuthenticated = true
+            
+            const refreshed = await this.refreshAccessToken()
+            if (!refreshed) {
+              this.logout()
+            }
           }
         }
-        
-        this.isInitialized = true
-      } else {
+      } catch (error) {
+        console.error('Auth initialization error:', error)
+        // При помилці очищаємо дані авторизації
+        this.logout()
+      } finally {
+        // Завжди позначаємо як ініціалізоване, навіть при помилці
         this.isInitialized = true
       }
     },

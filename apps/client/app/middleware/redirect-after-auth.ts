@@ -1,6 +1,13 @@
 export default defineNuxtRouteMiddleware((to: any) => {
   const authStore = useAuthStore()
 
+  // Чекаємо поки додаток ініціалізується
+  if (!authStore.isInitialized) {
+    // Повертаємо undefined, щоб middleware не блокував навігацію
+    // Layout покаже завантажувальний екран
+    return
+  }
+
   const publicPages = ['/login', '/register', '/', '/assignments']
 
   const isAssignmentView = /^\/assignments\/[^/]+$/.test(to.path) && !to.path.includes('/edit') && !to.path.includes('/submit')
