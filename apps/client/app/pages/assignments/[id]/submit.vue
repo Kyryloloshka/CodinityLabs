@@ -17,6 +17,7 @@
       >
         <AssignmentDescription
           :assignment="assignment"
+          :total-test-cases-count="totalTestCasesCount"
           :loading="loading"
         />
         <!-- Resize handle -->
@@ -94,6 +95,7 @@ const selectedLanguage = ref('javascript')
 const selectedTestCaseIndex = ref(0)
 const selectedResultIndex = ref(0)
 const activeTab = ref('testCases')
+const totalTestCasesCount = ref(0)
 
 // Resize state
 const leftPanelWidth = ref(400)
@@ -142,8 +144,14 @@ const loadAssignment = async () => {
   try {
     loading.value = true
     error.value = ''
-    // Використовуємо API для студентів, який показує тільки публічні тести
     assignment.value = await getAssignmentForStudent(assignmentId)
+    try {
+      const fullAssignment = await getAssignment(assignmentId)
+      totalTestCasesCount.value = fullAssignment.testCases.length
+    } catch (err) {
+      totalTestCasesCount.value = assignment.value.testCases.length
+    }
+    
     resetCode()
   } catch (err: any) {
     error.value = 'Помилка завантаження завдання'

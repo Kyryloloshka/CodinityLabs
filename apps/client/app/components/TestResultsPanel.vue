@@ -109,8 +109,7 @@
 interface Props {
   checkResults?: any
   selectedResultIndex: number
-  totalTests?: number
-  fullTestResults?: any // Повні результати для статистики
+  fullTestResults?: any
 }
 
 interface Emits {
@@ -120,18 +119,6 @@ interface Emits {
 const props = defineProps<Props>()
 defineEmits<Emits>()
 
-// Обчислювані властивості для статистики
-const passedTests = computed(() => {
-  if (!props.checkResults?.tests) return 0
-  return props.checkResults.tests.filter((test: any) => test.passed).length
-})
-
-const failedTests = computed(() => {
-  if (!props.checkResults?.tests) return 0
-  return props.checkResults.tests.filter((test: any) => !test.passed).length
-})
-
-// Статистика по всіх тестах (включаючи приховані)
 const fullPassedTests = computed(() => {
   if (!props.fullTestResults?.tests) return 0
   return props.fullTestResults.tests.filter((test: any) => test.passed).length
@@ -140,10 +127,5 @@ const fullPassedTests = computed(() => {
 const fullFailedTests = computed(() => {
   if (!props.fullTestResults?.tests) return 0
   return props.fullTestResults.tests.filter((test: any) => !test.passed).length
-})
-
-const fullTotalTests = computed(() => {
-  if (!props.fullTestResults?.tests) return 0
-  return props.fullTestResults.tests.length
 })
 </script> 

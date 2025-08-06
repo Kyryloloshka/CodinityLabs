@@ -17,7 +17,7 @@
             <div class="text-xs text-theme-primary bg-theme-secondary rounded-full px-2 py-1">
               {{ assignment.difficulty }}/10
             </div>
-            <span class="text-xs text-theme-secondary">{{ assignment.testCases.length }} тестів</span>
+            <span class="text-xs text-theme-secondary">{{ totalTestCasesCount || assignment.testCases.length }} тестів</span>
           </div>
           <p class="text-sm text-theme-primary leading-relaxed">{{ assignment.description }}</p>
         </div>
@@ -30,11 +30,9 @@
 interface Props {
   assignment?: any
   loading: boolean
+  totalTestCasesCount?: number
 }
 
 defineProps<Props>()
 
-const getDifficultyColor = (difficulty: number) => {
-  return 'secondary'
-}
 </script> 

@@ -39,7 +39,6 @@
         v-else-if="activeTab === 'results'"
         :check-results="checkResults"
         :selected-result-index="selectedResultIndex"
-        :total-tests="totalTests"
         :full-test-results="fullTestResults"
         @update:selected-result-index="$emit('update:selectedResultIndex', $event)"
       />
@@ -65,7 +64,6 @@ interface Props {
   activeTab: string
   selectedTestCaseIndex: number
   selectedResultIndex: number
-  totalTests?: number
   fullTestResults?: any
 }
 
