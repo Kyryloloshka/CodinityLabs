@@ -44,6 +44,7 @@ interface Props {
 
 interface Emits {
   (e: 'update:selectedLanguage', value: string): void
+  (e: 'manualLanguageChange'): void
   (e: 'resetCode'): void
 }
 
@@ -53,5 +54,6 @@ const emit = defineEmits<Emits>()
 const handleLanguageChange = (event: Event) => {
   const target = event.target as HTMLSelectElement
   emit('update:selectedLanguage', target.value)
+  emit('manualLanguageChange')
 }
 </script> 

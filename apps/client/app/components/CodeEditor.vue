@@ -167,10 +167,26 @@ const setValue = (value: string) => {
   }
 }
 
+// Встановлення мови та значення одночасно
+const setLanguageAndValue = (language: string, value: string) => {
+  if (editor && monacoInstance) {
+    try {
+      const model = editor.getModel()
+      if (model) {
+        monacoInstance.editor.setModelLanguage(model, language)
+        editor.setValue(value)
+      }
+    } catch (error) {
+      console.error('Error updating language and value:', error)
+    }
+  }
+}
+
 // Експорт методів
 defineExpose({
   getValue,
-  setValue
+  setValue,
+  setLanguageAndValue
 })
 
 // Життєвий цикл

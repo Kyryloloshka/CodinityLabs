@@ -5,6 +5,7 @@
       :assignment="assignment"
       :selected-language="selectedLanguage"
       @update:selected-language="selectedLanguage = $event"
+      @manual-language-change="() => { console.log('Manual language change'); isFileUploading = false }"
       @reset-code="resetCode"
     />
 
@@ -62,6 +63,10 @@
           :testing="testing"
           :submitting="submitting"
           @update:submission-code="submissionCode = $event"
+          @update:language="selectedLanguage = $event"
+                @file-upload-start="() => { isFileUploading = true }"
+      @file-upload-end="() => { isFileUploading = false }"
+      @programmatic-language-change="(newLanguage) => { isProgrammaticLanguageChange = true; selectedLanguage = newLanguage; nextTick(() => { isProgrammaticLanguageChange = false }) }"
           @test-code="testCode"
           @submit-solution="submitSolution"
         />
@@ -96,6 +101,8 @@ const selectedTestCaseIndex = ref(0)
 const selectedResultIndex = ref(0)
 const activeTab = ref('testCases')
 const totalTestCasesCount = ref(0)
+const isFileUploading = ref(false)
+const isProgrammaticLanguageChange = ref(false)
 
 // Resize state
 const leftPanelWidth = ref(400)
@@ -261,7 +268,10 @@ const submitSolution = async () => {
 }
 
 watch(selectedLanguage, () => {
-  resetCode()
+  // Не скидаємо код, якщо завантажується файл або програмна зміна мови
+  if (!isFileUploading.value && !isProgrammaticLanguageChange.value) {
+    resetCode()
+  }
 })
 
 onMounted(() => {
