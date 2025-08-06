@@ -140,6 +140,44 @@ export class AssignmentsService {
     }
   }
 
+  async findOneForStudent(id: string): Promise<AssignmentDto> {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<ApiResponse<AssignmentDto>>(
+          `${this.assignmentServiceUrl}/assignments/${id}/student`,
+        ),
+      );
+      return response.data.data;
+    } catch (error: unknown) {
+      if (isAxiosError(error) && error.response?.status === 404) {
+        throw new HttpException('Assignment not found', HttpStatus.NOT_FOUND);
+      }
+      throw new HttpException(
+        'Failed to fetch assignment for student',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async findOneForTeacher(id: string): Promise<AssignmentDto> {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<ApiResponse<AssignmentDto>>(
+          `${this.assignmentServiceUrl}/assignments/${id}/teacher`,
+        ),
+      );
+      return response.data.data;
+    } catch (error: unknown) {
+      if (isAxiosError(error) && error.response?.status === 404) {
+        throw new HttpException('Assignment not found', HttpStatus.NOT_FOUND);
+      }
+      throw new HttpException(
+        'Failed to fetch assignment for teacher',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   async create(
     createAssignmentDto: CreateAssignmentDto,
   ): Promise<AssignmentDto> {
@@ -333,6 +371,30 @@ export class AssignmentsService {
   // Checker service methods
   async checkCode(checkDto: CheckDto): Promise<CheckResultDto> {
     try {
+      // Якщо передано assignmentId, отримуємо всі тести завдання
+      if (checkDto.assignmentId) {
+        const assignment = await this.findOne(checkDto.assignmentId);
+        checkDto.testCases = assignment.testCases.map(
+          (testCase: {
+            input: string;
+            expected: string;
+            description: string;
+          }) => ({
+            input: testCase.input,
+            expected: testCase.expected,
+            description: testCase.description,
+          }),
+        );
+      }
+
+      // Перевіряємо, що є тести для перевірки
+      if (!checkDto.testCases || checkDto.testCases.length === 0) {
+        throw new HttpException(
+          'No test cases provided',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
       const response = await firstValueFrom(
         this.httpService.post<CheckResultDto>(
           `${this.checkerServiceUrl}/check`,

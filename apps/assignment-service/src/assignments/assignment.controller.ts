@@ -60,6 +60,24 @@ export class AssignmentController {
     );
   }
 
+  @Get(':id/student')
+  async findOneForStudent(@Param('id') id: string) {
+    const assignment = await this.assignmentService.findOneForStudent(id);
+    return ApiResponseDto.success(
+      assignment,
+      'Assignment retrieved successfully for student',
+    );
+  }
+
+  @Get(':id/teacher')
+  async findOneForTeacher(@Param('id') id: string) {
+    const assignment = await this.assignmentService.findOneForTeacher(id);
+    return ApiResponseDto.success(
+      assignment,
+      'Assignment retrieved successfully for teacher',
+    );
+  }
+
   @Patch(':id')
   async update(
     @Param('id') id: string,

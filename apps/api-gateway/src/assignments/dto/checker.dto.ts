@@ -47,13 +47,24 @@ export class CheckDto {
   language?: string;
 
   @ApiProperty({
-    description: 'Тестові випадки',
+    description: 'ID завдання для автоматичного отримання тестів',
+    example: 'a82940b0-cff0-42df-b4c4-0ff66a2a30fc',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  assignmentId?: string;
+
+  @ApiProperty({
+    description: 'Тестові випадки (використовуються якщо assignmentId не передано)',
     type: [TestCaseDto],
+    required: false,
   })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => TestCaseDto)
-  testCases: TestCaseDto[];
+  @IsOptional()
+  testCases?: TestCaseDto[];
 }
 
 export class LintErrorDto {

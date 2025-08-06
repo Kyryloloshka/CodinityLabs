@@ -37,6 +37,8 @@
           :active-tab="activeTab"
           :selected-test-case-index="selectedTestCaseIndex"
           :selected-result-index="selectedResultIndex"
+          :total-tests="assignment?.testCases?.length || 0"
+          :full-test-results="fullTestResults"
           @update:active-tab="activeTab = $event"
           @update:selected-test-case-index="selectedTestCaseIndex = $event"
           @update:selected-result-index="selectedResultIndex = $event"
@@ -76,7 +78,7 @@ definePageMeta({
 
 const route = useRoute()
 const authStore = useAuthStore()
-const { getAssignment, createSubmission, checkCode } = useAssignments()
+const { getAssignment, getAssignmentForStudent, createSubmission, checkCode } = useAssignments()
 const toast = useToast()
 
 // Реактивні дані
@@ -87,6 +89,7 @@ const submitting = ref(false)
 const testing = ref(false)
 const submissionCode = ref('')
 const checkResults = ref<any>(null)
+const fullTestResults = ref<any>(null) // Зберігаємо повні результати для статистики
 const selectedLanguage = ref('javascript')
 const selectedTestCaseIndex = ref(0)
 const selectedResultIndex = ref(0)
@@ -127,8 +130,7 @@ function solution(input: string): string {
 function main(args: string): string {
   // Приклад використання
   const result: string = solution(args);
-  return result;
-}`
+  return result;}`
 }
 
 const resetCode = () => {
@@ -140,7 +142,8 @@ const loadAssignment = async () => {
   try {
     loading.value = true
     error.value = ''
-    assignment.value = await getAssignment(assignmentId)
+    // Використовуємо API для студентів, який показує тільки публічні тести
+    assignment.value = await getAssignmentForStudent(assignmentId)
     resetCode()
   } catch (err: any) {
     error.value = 'Помилка завантаження завдання'
@@ -178,14 +181,30 @@ const testCode = async () => {
     const request = {
       code: submissionCode.value,
       language: selectedLanguage.value,
-      testCases: assignment.value.testCases.map((testCase: any) => ({
-        input: testCase.input,
-        expected: testCase.expected,
-        description: testCase.description
-      }))
+      assignmentId: assignmentId // Передаємо ID завдання замість тестів
     }
     
-    checkResults.value = await checkCode(request)
+    const fullResults = await checkCode(request)
+    
+    // Зберігаємо повні результати для статистики
+    fullTestResults.value = fullResults
+    
+    // Фільтруємо результати тільки видимими тестами для відображення
+    const visibleTestCases = assignment.value.testCases
+    const visibleTestResults = fullResults.tests.filter((result: any) => {
+      return visibleTestCases.some((visibleTest: any) => 
+        visibleTest.input === result.input && 
+        visibleTest.expected === result.expected &&
+        visibleTest.description === result.description
+      )
+    })
+    
+    // Оновлюємо результати тільки видимими тестами для відображення
+    checkResults.value = {
+      ...fullResults,
+      tests: visibleTestResults
+    }
+    
     // Автоматично переключаємося на вкладку результатів
     activeTab.value = 'results'
     selectedResultIndex.value = 0 // Default to first result
@@ -207,6 +226,11 @@ const submitSolution = async () => {
 
   try {
     submitting.value = true
+    
+    // Якщо ще не тестували код, спочатку протестуємо
+    if (!fullTestResults.value) {
+      await testCode()
+    }
     
     await createSubmission({
       userId: authStore.user!.id,

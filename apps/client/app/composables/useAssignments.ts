@@ -3,6 +3,7 @@ interface TestCase {
   input: string
   expected: string
   description: string
+  isPublic: boolean
   assignmentId: string
   createdAt: string
   updatedAt: string
@@ -45,6 +46,7 @@ interface CreateAssignment {
     input: string
     expected: string
     description: string
+    isPublic: boolean
   }[]
 }
 
@@ -58,6 +60,7 @@ interface UpdateAssignment {
     input: string
     expected: string
     description: string
+    isPublic: boolean
   }[]
 }
 
@@ -86,7 +89,8 @@ interface CreateSubmission {
 interface CheckCodeRequest {
   code: string
   language?: string
-  testCases: {
+  assignmentId?: string
+  testCases?: {
     input: string
     expected: string
     description: string
@@ -116,59 +120,51 @@ interface CheckCodeResponse {
 }
 
 export const useAssignments = () => {
-  const { get, post, patch, delete: del } = useApi()
+  const config = useRuntimeConfig()
+  const api = useApi()
 
-  // Отримання всіх завдань (для студентів) з пагінацією
   const getAssignments = async (page?: number, limit?: number, search?: string, difficulty?: number, status?: string): Promise<PaginatedResponse<Assignment>> => {
-    try {
-      const params = new URLSearchParams()
-      if (page) params.append('page', page.toString())
-      if (limit) params.append('limit', limit.toString())
-      if (search) params.append('search', search)
-      if (difficulty) params.append('difficulty', difficulty.toString())
-      if (status) params.append('status', status)
+    const params = new URLSearchParams()
+    if (page) params.append('page', page.toString())
+    if (limit) params.append('limit', limit.toString())
+    if (search) params.append('search', search)
+    if (difficulty) params.append('difficulty', difficulty.toString())
+    if (status) params.append('status', status)
 
-      const response = await get<PaginatedResponse<Assignment>>(`/assignments?${params.toString()}`)
-      return response
-    } catch (error) {
-      console.error('Error fetching assignments:', error)
-      throw error
-    }
+    const response = await api.get<PaginatedResponse<Assignment>>(`/assignments?${params.toString()}`)
+    return response
   }
 
-  // Отримання завдань викладача (для викладачів) з пагінацією
   const getTeacherAssignments = async (teacherId: string, page?: number, limit?: number, search?: string, difficulty?: number, status?: string): Promise<PaginatedResponse<Assignment>> => {
-    try {
-      const params = new URLSearchParams()
-      if (page) params.append('page', page.toString())
-      if (limit) params.append('limit', limit.toString())
-      if (search) params.append('search', search)
-      if (difficulty) params.append('difficulty', difficulty.toString())
-      if (status) params.append('status', status)
+    const params = new URLSearchParams()
+    if (page) params.append('page', page.toString())
+    if (limit) params.append('limit', limit.toString())
+    if (search) params.append('search', search)
+    if (difficulty) params.append('difficulty', difficulty.toString())
+    if (status) params.append('status', status)
 
-      const response = await get<PaginatedResponse<Assignment>>(`/assignments/teacher/${teacherId}?${params.toString()}`)
-      return response
-    } catch (error) {
-      console.error('Error fetching teacher assignments:', error)
-      throw error
-    }
+    const response = await api.get<PaginatedResponse<Assignment>>(`/assignments/teacher/${teacherId}?${params.toString()}`)
+    return response
   }
 
-  // Отримання завдання за ID
   const getAssignment = async (id: string): Promise<Assignment> => {
-    try {
-      const response = await get<Assignment>(`/assignments/${id}`)
-      return response
-    } catch (error) {
-      console.error('Error fetching assignment:', error)
-      throw error
-    }
+    const response = await api.get<Assignment>(`/assignments/${id}`)
+    return response
   }
 
-  // Створення завдання
+  const getAssignmentForStudent = async (id: string): Promise<Assignment> => {
+    const response = await api.get<Assignment>(`/assignments/${id}/student`)
+    return response
+  }
+
+  const getAssignmentForTeacher = async (id: string): Promise<Assignment> => {
+    const response = await api.get<Assignment>(`/assignments/${id}/teacher`)
+    return response
+  }
+
   const createAssignment = async (assignment: CreateAssignment): Promise<Assignment> => {
     try {
-      const response = await post<Assignment>('/assignments', assignment)
+      const response = await api.post<Assignment>('/assignments', assignment)
       return response
     } catch (error) {
       console.error('Error creating assignment:', error)
@@ -176,10 +172,9 @@ export const useAssignments = () => {
     }
   }
 
-  // Оновлення завдання
   const updateAssignment = async (id: string, assignment: UpdateAssignment): Promise<Assignment> => {
     try {
-      const response = await patch<Assignment>(`/assignments/${id}`, assignment)
+      const response = await api.patch<Assignment>(`/assignments/${id}`, assignment)
       return response
     } catch (error) {
       console.error('Error updating assignment:', error)
@@ -187,20 +182,18 @@ export const useAssignments = () => {
     }
   }
 
-  // Видалення завдання
   const deleteAssignment = async (id: string): Promise<void> => {
     try {
-      await del(`/assignments/${id}`)
+      await api.delete(`/assignments/${id}`)
     } catch (error) {
       console.error('Error deleting assignment:', error)
       throw error
     }
   }
 
-  // Отримання всіх подань
   const getSubmissions = async (): Promise<Submission[]> => {
     try {
-      const response = await get<Submission[]>('/submissions')
+      const response = await api.get<Submission[]>('/submissions')
       return response
     } catch (error) {
       console.error('Error fetching submissions:', error)
@@ -208,10 +201,9 @@ export const useAssignments = () => {
     }
   }
 
-  // Отримання подань користувача
   const getUserSubmissions = async (userId: string): Promise<Submission[]> => {
     try {
-      const response = await get<Submission[]>(`/submissions/user/${userId}`)
+      const response = await api.get<Submission[]>(`/submissions/user/${userId}`)
       return response
     } catch (error) {
       console.error('Error fetching user submissions:', error)
@@ -219,10 +211,9 @@ export const useAssignments = () => {
     }
   }
 
-  // Отримання подань для завдання
   const getAssignmentSubmissions = async (assignmentId: string): Promise<Submission[]> => {
     try {
-      const response = await get<Submission[]>(`/submissions/assignment/${assignmentId}`)
+      const response = await api.get<Submission[]>(`/submissions/assignment/${assignmentId}`)
       return response
     } catch (error) {
       console.error('Error fetching assignment submissions:', error)
@@ -230,10 +221,9 @@ export const useAssignments = () => {
     }
   }
 
-  // Створення подання
   const createSubmission = async (submission: CreateSubmission): Promise<Submission> => {
     try {
-      const response = await post<Submission>('/submissions', submission)
+      const response = await api.post<Submission>('/submissions', submission)
       return response
     } catch (error) {
       console.error('Error creating submission:', error)
@@ -241,20 +231,18 @@ export const useAssignments = () => {
     }
   }
 
-  // Видалення подання
   const deleteSubmission = async (id: string): Promise<void> => {
     try {
-      await del(`/submissions/${id}`)
+      await api.delete(`/submissions/${id}`)
     } catch (error) {
       console.error('Error deleting submission:', error)
       throw error
     }
   }
 
-  // Перевірка коду
   const checkCode = async (request: CheckCodeRequest): Promise<CheckCodeResponse> => {
     try {
-      const response = await post<CheckCodeResponse>('/assignments/check', request)
+      const response = await api.post<CheckCodeResponse>('/assignments/check', request)
       return response
     } catch (error) {
       console.error('Error checking code:', error)
@@ -266,6 +254,8 @@ export const useAssignments = () => {
     getAssignments,
     getTeacherAssignments,
     getAssignment,
+    getAssignmentForStudent,
+    getAssignmentForTeacher,
     createAssignment,
     updateAssignment,
     deleteAssignment,
@@ -274,6 +264,6 @@ export const useAssignments = () => {
     getAssignmentSubmissions,
     createSubmission,
     deleteSubmission,
-    checkCode
+    checkCode,
   }
 } 

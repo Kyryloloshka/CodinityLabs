@@ -15,6 +15,12 @@ export class AssignmentService {
   async create(createAssignmentDto: CreateAssignmentDto) {
     const { testCases, ...assignmentData } = createAssignmentDto;
 
+    // Валідація: мінімум 3 публічних тести
+    const publicTests = testCases.filter(tc => tc.isPublic);
+    if (publicTests.length < 3) {
+      throw new Error('Потрібно мінімум 3 публічних тести для завдання');
+    }
+
     return this.prisma.assignment.create({
       data: {
         ...assignmentData,
@@ -190,10 +196,60 @@ export class AssignmentService {
     return assignment;
   }
 
+  async findOneForStudent(id: string) {
+    const assignment = await this.prisma.assignment.findUnique({
+      where: { id },
+      include: {
+        testCases: {
+          where: { isPublic: true }, // Показуємо тільки публічні тести студентам
+        },
+        _count: {
+          select: {
+            submissions: true,
+          },
+        },
+      },
+    });
+
+    if (!assignment) {
+      throw new AssignmentNotFoundException(id);
+    }
+
+    return assignment;
+  }
+
+  async findOneForTeacher(id: string) {
+    const assignment = await this.prisma.assignment.findUnique({
+      where: { id },
+      include: {
+        testCases: true, // Показуємо всі тести викладачу
+        _count: {
+          select: {
+            submissions: true,
+          },
+        },
+      },
+    });
+
+    if (!assignment) {
+      throw new AssignmentNotFoundException(id);
+    }
+
+    return assignment;
+  }
+
   async update(id: string, updateAssignmentDto: UpdateAssignmentDto) {
     await this.findOne(id);
 
     const { testCases, ...assignmentData } = updateAssignmentDto;
+
+    // Валідація: мінімум 3 публічних тести (якщо оновлюються тести)
+    if (testCases) {
+      const publicTests = testCases.filter(tc => tc.isPublic);
+      if (publicTests.length < 3) {
+        throw new Error('Потрібно мінімум 3 публічних тести для завдання');
+      }
+    }
 
     return this.prisma.assignment.update({
       where: { id },

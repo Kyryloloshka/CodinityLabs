@@ -30,6 +30,7 @@ model TestCase {
   input        String
   expected     String
   description  String
+  isPublic     Boolean  @default(true) // Чи тест видимий студентам
   assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   assignmentId String
   createdAt    DateTime @default(now())

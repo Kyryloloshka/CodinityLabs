@@ -205,16 +205,15 @@ export class AssignmentsController {
   @Get(':id')
   @ApiOperation({
     summary: 'Get assignment by ID',
-    description:
-      'Get assignment by unique identifier from Assignment Service (public access)',
+    description: 'Get assignment by ID from Assignment Service (shows all test cases)',
   })
   @ApiParam({
     name: 'id',
-    description: 'Унікальний ідентифікатор завдання',
+    description: 'Unique assignment identifier',
     example: 'a82940b0-cff0-42df-b4c4-0ff66a2a30fc',
   })
   @ApiOkResponse({
-    description: 'Assignment successfully found',
+    description: 'Assignment successfully retrieved',
     type: AssignmentDto,
   })
   @ApiNotFoundResponse({
@@ -227,6 +226,60 @@ export class AssignmentsController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<AssignmentDto> {
     return this.assignmentsService.findOne(id);
+  }
+
+  @Get(':id/student')
+  @ApiOperation({
+    summary: 'Get assignment for student',
+    description: 'Get assignment by ID with only public test cases visible to students',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Unique assignment identifier',
+    example: 'a82940b0-cff0-42df-b4c4-0ff66a2a30fc',
+  })
+  @ApiOkResponse({
+    description: 'Assignment successfully retrieved for student',
+    type: AssignmentDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Assignment not found',
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error',
+  })
+  async findOneForStudent(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<AssignmentDto> {
+    return this.assignmentsService.findOneForStudent(id);
+  }
+
+  @Get(':id/teacher')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get assignment for teacher',
+    description: 'Get assignment by ID with all test cases visible to teachers',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Unique assignment identifier',
+    example: 'a82940b0-cff0-42df-b4c4-0ff66a2a30fc',
+  })
+  @ApiOkResponse({
+    description: 'Assignment successfully retrieved for teacher',
+    type: AssignmentDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Assignment not found',
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error',
+  })
+  async findOneForTeacher(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<AssignmentDto> {
+    return this.assignmentsService.findOneForTeacher(id);
   }
 
   @Post()

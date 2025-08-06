@@ -106,16 +106,16 @@
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div>
+                <label class="block text-sm font-medium text-theme-secondary mb-1">Опис</label>
+                <div class="bg-theme-input p-2 rounded border border-theme-primary text-theme-primary">{{ testCase.description }}</div>
+              </div>
+              <div>
                 <label class="block text-sm font-medium text-theme-secondary mb-1">Вхідні дані</label>
                 <div class="bg-theme-input p-2 rounded border border-theme-primary font-mono text-theme-primary">{{ testCase.input }}</div>
               </div>
               <div>
                 <label class="block text-sm font-medium text-theme-secondary mb-1">Очікуваний результат</label>
                 <div class="bg-theme-input p-2 rounded border border-theme-primary font-mono text-theme-primary">{{ testCase.expected }}</div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-theme-secondary mb-1">Опис</label>
-                <div class="bg-theme-input p-2 rounded border border-theme-primary text-theme-primary">{{ testCase.description }}</div>
               </div>
             </div>
           </div>
@@ -180,7 +180,7 @@ definePageMeta({
 
 const route = useRoute()
 const authStore = useAuthStore()
-const { getAssignment, getAssignmentSubmissions } = useAssignments()
+const { getAssignment, getAssignmentForStudent, getAssignmentForTeacher, getAssignmentSubmissions } = useAssignments()
 const toast = useToast()
 
 // Реактивні дані
@@ -199,7 +199,18 @@ const loadAssignment = async () => {
   try {
     loading.value = true
     error.value = ''
-    assignment.value = await getAssignment(assignmentId.value)
+    
+    // Використовуємо різні API залежно від ролі користувача
+    if (authStore.isAuthenticated) {
+      if (isTeacher.value) {
+        assignment.value = await getAssignmentForTeacher(assignmentId.value)
+      } else {
+        assignment.value = await getAssignmentForStudent(assignmentId.value)
+      }
+    } else {
+      // Для неавторизованих користувачів показуємо публічні тести
+      assignment.value = await getAssignmentForStudent(assignmentId.value)
+    }
   } catch (err: any) {
     error.value = 'Помилка завантаження завдання'
     console.error(err)

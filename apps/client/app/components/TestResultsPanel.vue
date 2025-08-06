@@ -13,6 +13,19 @@
       </UBadge>
     </div>
 
+    <!-- Test Statistics -->
+    <div class="flex items-center justify-between p-2 bg-theme-secondary rounded">
+      <span class="text-xs font-medium text-theme-primary">Статистика тестів:</span>
+      <div class="flex items-center gap-2">
+        <UBadge v-if="fullPassedTests > 0" color="success" variant="subtle" size="xs">
+          {{ fullPassedTests }} пройдено
+        </UBadge>
+        <UBadge v-if="fullFailedTests > 0" color="error" variant="subtle" size="xs">
+          {{ fullFailedTests }} не пройдено
+        </UBadge>
+      </div>
+    </div>
+
     <!-- Lint Errors -->
     <div v-if="checkResults.lint.length > 0">
       <h3 class="text-xs font-semibold text-theme-primary mb-2">Помилки коду</h3>
@@ -39,7 +52,7 @@
       <h3 class="text-xs font-semibold text-theme-primary mb-2">Результати тестів</h3>
       
       <!-- Test Result Tabs -->
-      <div class="flex items-center gap-1 mb-3">
+      <div class="flex items-center gap-1 mb-3 flex-wrap">
         <button
           v-for="(test, index) in checkResults.tests"
           :key="index"
@@ -96,12 +109,41 @@
 interface Props {
   checkResults?: any
   selectedResultIndex: number
+  totalTests?: number
+  fullTestResults?: any // Повні результати для статистики
 }
 
 interface Emits {
   (e: 'update:selectedResultIndex', value: number): void
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 defineEmits<Emits>()
+
+// Обчислювані властивості для статистики
+const passedTests = computed(() => {
+  if (!props.checkResults?.tests) return 0
+  return props.checkResults.tests.filter((test: any) => test.passed).length
+})
+
+const failedTests = computed(() => {
+  if (!props.checkResults?.tests) return 0
+  return props.checkResults.tests.filter((test: any) => !test.passed).length
+})
+
+// Статистика по всіх тестах (включаючи приховані)
+const fullPassedTests = computed(() => {
+  if (!props.fullTestResults?.tests) return 0
+  return props.fullTestResults.tests.filter((test: any) => test.passed).length
+})
+
+const fullFailedTests = computed(() => {
+  if (!props.fullTestResults?.tests) return 0
+  return props.fullTestResults.tests.filter((test: any) => !test.passed).length
+})
+
+const fullTotalTests = computed(() => {
+  if (!props.fullTestResults?.tests) return 0
+  return props.fullTestResults.tests.length
+})
 </script> 

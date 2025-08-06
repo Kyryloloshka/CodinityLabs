@@ -161,6 +161,17 @@
                       />
                     </div>
                   </div>
+                  
+                  <div class="mt-4">
+                    <label class="flex items-center">
+                      <input
+                        v-model="testCase.isPublic"
+                        type="checkbox"
+                        class="mr-2 rounded border-theme-secondary text-primary focus:ring-primary"
+                      />
+                      <span class="text-sm text-theme-secondary">Публічний тест (видимий студентам)</span>
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
@@ -214,7 +225,7 @@ const form = ref({
   description: '',
   difficulty: 1,
   deadline: '',
-  testCases: [] as { input: string; expected: string; description: string }[]
+  testCases: [] as { input: string; expected: string; description: string; isPublic: boolean }[]
 })
 
 // Перевіряємо, чи це редагування існуючого завдання
@@ -235,7 +246,8 @@ const loadAssignment = async () => {
       testCases: editingAssignment.value.testCases.map((tc: any) => ({
         input: tc.input,
         expected: tc.expected,
-        description: tc.description
+        description: tc.description,
+        isPublic: tc.isPublic
       }))
     }
   } catch (error) {
@@ -250,7 +262,8 @@ const addTestCase = () => {
   form.value.testCases.push({
     input: '',
     expected: '',
-    description: ''
+    description: '',
+    isPublic: true // За замовчуванням тест публічний
   })
 }
 
@@ -286,6 +299,13 @@ const saveAssignment = async () => {
         error.value = `Тестовий випадок ${i + 1} має неповні дані`
         return
       }
+    }
+    
+    // Перевіряємо мінімум 3 публічних тести
+    const publicTests = form.value.testCases.filter(tc => tc.isPublic)
+    if (publicTests.length < 3) {
+      error.value = 'Потрібно мінімум 3 публічних тести для завдання'
+      return
     }
     
     const assignmentData = {

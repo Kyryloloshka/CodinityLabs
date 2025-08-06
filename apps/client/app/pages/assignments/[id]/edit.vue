@@ -163,6 +163,17 @@
                         />
                       </div>
                     </div>
+                    
+                    <div class="mt-4">
+                      <label class="flex items-center">
+                        <input
+                          v-model="testCase.isPublic"
+                          type="checkbox"
+                          class="mr-2 rounded border-theme-secondary text-primary focus:ring-primary"
+                        />
+                        <span class="text-sm text-theme-secondary">Публічний тест (видимий студентам)</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -218,7 +229,7 @@ const form = ref({
   description: '',
   difficulty: 1,
   deadline: '',
-  testCases: [] as { input: string; expected: string; description: string }[]
+  testCases: [] as { input: string; expected: string; description: string; isPublic: boolean }[]
 })
 
 // Отримуємо ID завдання з URL
@@ -240,7 +251,8 @@ const loadAssignment = async () => {
       testCases: assignment.value.testCases.map((tc: any) => ({
         input: tc.input,
         expected: tc.expected,
-        description: tc.description
+        description: tc.description,
+        isPublic: tc.isPublic
       }))
     }
   } catch (err: any) {
@@ -280,7 +292,8 @@ const addTestCase = () => {
   form.value.testCases.push({
     input: '',
     expected: '',
-    description: ''
+    description: '',
+    isPublic: false
   })
 }
 
