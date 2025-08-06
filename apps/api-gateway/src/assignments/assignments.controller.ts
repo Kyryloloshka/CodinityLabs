@@ -205,7 +205,8 @@ export class AssignmentsController {
   @Get(':id')
   @ApiOperation({
     summary: 'Get assignment by ID',
-    description: 'Get assignment by ID from Assignment Service (shows all test cases)',
+    description:
+      'Get assignment by ID from Assignment Service (shows all test cases)',
   })
   @ApiParam({
     name: 'id',
@@ -231,7 +232,8 @@ export class AssignmentsController {
   @Get(':id/student')
   @ApiOperation({
     summary: 'Get assignment for student',
-    description: 'Get assignment by ID with only public test cases visible to students',
+    description:
+      'Get assignment by ID with only public test cases visible to students',
   })
   @ApiParam({
     name: 'id',

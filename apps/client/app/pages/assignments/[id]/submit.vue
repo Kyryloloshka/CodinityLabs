@@ -40,7 +40,7 @@
           :selected-test-case-index="selectedTestCaseIndex"
           :selected-result-index="selectedResultIndex"
           :total-tests="assignment?.testCases?.length || 0"
-          :full-test-results="fullTestResults"
+
           :testing="testing"
           @update:active-tab="activeTab = $event"
           @update:selected-test-case-index="selectedTestCaseIndex = $event"
@@ -65,9 +65,9 @@
           :submitting="submitting"
           @update:submission-code="submissionCode = $event"
           @update:language="selectedLanguage = $event"
-                @file-upload-start="() => { isFileUploading = true }"
-      @file-upload-end="() => { isFileUploading = false }"
-      @programmatic-language-change="(newLanguage) => { isProgrammaticLanguageChange = true; selectedLanguage = newLanguage; nextTick(() => { isProgrammaticLanguageChange = false }) }"
+          @file-upload-start="() => { isFileUploading = true }"
+          @file-upload-end="() => { isFileUploading = false }"
+          @programmatic-language-change="(newLanguage) => { isProgrammaticLanguageChange = true; selectedLanguage = newLanguage; nextTick(() => { isProgrammaticLanguageChange = false }) }"
           @test-code="testCode"
           @submit-solution="submitSolution"
         />
@@ -96,7 +96,6 @@ const submitting = ref(false)
 const testing = ref(false)
 const submissionCode = ref('')
 const checkResults = ref<any>(null)
-const fullTestResults = ref<any>(null) // Зберігаємо повні результати для статистики
 const selectedLanguage = ref('javascript')
 const selectedTestCaseIndex = ref(0)
 const selectedResultIndex = ref(0)
@@ -200,26 +199,10 @@ const testCode = async () => {
       assignmentId: assignmentId // Передаємо ID завдання замість тестів
     }
     
-    const fullResults = await checkCode(request)
+    const results = await checkCode(request)
     
-    // Зберігаємо повні результати для статистики
-    fullTestResults.value = fullResults
-    
-    // Фільтруємо результати тільки видимими тестами для відображення
-    const visibleTestCases = assignment.value.testCases
-    const visibleTestResults = fullResults.tests.filter((result: any) => {
-      return visibleTestCases.some((visibleTest: any) => 
-        visibleTest.input === result.input && 
-        visibleTest.expected === result.expected &&
-        visibleTest.description === result.description
-      )
-    })
-    
-    // Оновлюємо результати тільки видимими тестами для відображення
-    checkResults.value = {
-      ...fullResults,
-      tests: visibleTestResults
-    }
+    // Зберігаємо результати
+    checkResults.value = results
     
     // Автоматично переключаємося на вкладку результатів
     activeTab.value = 'results'
@@ -244,7 +227,7 @@ const submitSolution = async () => {
     submitting.value = true
     
     // Якщо ще не тестували код, спочатку протестуємо
-    if (!fullTestResults.value) {
+    if (!checkResults.value) {
       await testCode()
     }
     

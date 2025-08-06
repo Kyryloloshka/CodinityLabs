@@ -19,4 +19,11 @@ export class CheckResultDto {
   lint: LintErrorDto[];
   tests: TestResultDto[];
   score: number;
+  testStats: {
+    total: number;
+    passed: number;
+    failed: number;
+    timeout: number;
+    public: number;
+  };
 }

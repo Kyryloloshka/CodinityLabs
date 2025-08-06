@@ -33,10 +33,7 @@ export class AssignmentController {
   @Get()
   async findAll(@Query() paginationDto: PaginationDto) {
     const result = await this.assignmentService.findAll(paginationDto);
-    return ApiResponseDto.success(
-      result,
-      'Assignments retrieved successfully',
-    );
+    return ApiResponseDto.success(result, 'Assignments retrieved successfully');
   }
 
   @Get('teacher/:teacherId')
@@ -44,7 +41,10 @@ export class AssignmentController {
     @Param('teacherId') teacherId: string,
     @Query() paginationDto: PaginationDto,
   ) {
-    const result = await this.assignmentService.findByTeacher(teacherId, paginationDto);
+    const result = await this.assignmentService.findByTeacher(
+      teacherId,
+      paginationDto,
+    );
     return ApiResponseDto.success(
       result,
       'Teacher assignments retrieved successfully',

@@ -17,14 +17,14 @@
     <div class="flex items-center justify-between p-2 bg-theme-secondary rounded">
       <span class="text-xs font-medium text-theme-primary">Статистика тестів:</span>
       <div class="flex items-center gap-2">
-        <UBadge v-if="fullPassedTests > 0" color="success" variant="subtle" size="xs">
-          {{ fullPassedTests }} пройдено
+        <UBadge v-if="checkResults.testStats?.passed > 0" color="success" variant="subtle" size="sm">
+          {{ checkResults.testStats.passed }} пройдено
         </UBadge>
-        <UBadge v-if="fullFailedTests > 0" color="error" variant="subtle" size="xs">
-          {{ fullFailedTests }} не пройдено
+        <UBadge v-if="checkResults.testStats?.failed > 0" color="error" variant="subtle" size="sm">
+          {{ checkResults.testStats.failed }} не пройдено
         </UBadge>
-        <UBadge v-if="fullTimeoutTests > 0" color="warning" variant="subtle" size="xs">
-          {{ fullTimeoutTests }} таймаут
+        <UBadge v-if="checkResults.testStats?.timeout > 0" color="warning" variant="subtle" size="sm">
+          {{ checkResults.testStats.timeout }} таймаут
         </UBadge>
       </div>
     </div>
@@ -52,7 +52,7 @@
 
     <!-- Test Results Tabs -->
     <div>
-      <h3 class="text-xs font-semibold text-theme-primary mb-2">Результати тестів</h3>
+      <h3 class="text-xs font-semibold text-theme-primary mb-2">Результати тестів (публічні)</h3>
       
       <!-- Test Result Tabs -->
       <div class="flex items-center gap-1 mb-3 flex-wrap">
@@ -121,7 +121,6 @@
 interface Props {
   checkResults?: any
   selectedResultIndex: number
-  fullTestResults?: any
 }
 
 interface Emits {
@@ -131,18 +130,5 @@ interface Emits {
 const props = defineProps<Props>()
 defineEmits<Emits>()
 
-const fullPassedTests = computed(() => {
-  if (!props.fullTestResults?.tests) return 0
-  return props.fullTestResults.tests.filter((test: any) => test.passed).length
-})
-
-const fullFailedTests = computed(() => {
-  if (!props.fullTestResults?.tests) return 0
-  return props.fullTestResults.tests.filter((test: any) => !test.passed && !test.timeout).length
-})
-
-const fullTimeoutTests = computed(() => {
-  if (!props.fullTestResults?.tests) return 0
-  return props.fullTestResults.tests.filter((test: any) => test.timeout).length
-})
+// Видаляємо старі computed властивості, оскільки тепер використовуємо testStats з API
 </script> 

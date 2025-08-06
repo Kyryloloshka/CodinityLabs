@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsArray, ValidateNested, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsArray,
+  ValidateNested,
+  IsOptional,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class TestCaseDto {
@@ -56,7 +62,8 @@ export class CheckDto {
   assignmentId?: string;
 
   @ApiProperty({
-    description: 'Тестові випадки (використовуються якщо assignmentId не передано)',
+    description:
+      'Тестові випадки (використовуються якщо assignmentId не передано)',
     type: [TestCaseDto],
     required: false,
   })
@@ -139,7 +146,7 @@ export class CheckResultDto {
   lint: LintErrorDto[];
 
   @ApiProperty({
-    description: 'Результати тестів',
+    description: 'Результати тестів (тільки публічні)',
     type: [TestResultDto],
   })
   tests: TestResultDto[];
@@ -149,4 +156,22 @@ export class CheckResultDto {
     example: 100,
   })
   score: number;
+
+  @ApiProperty({
+    description: 'Статистика тестів',
+    example: {
+      total: 10,
+      passed: 7,
+      failed: 2,
+      timeout: 1,
+      public: 5,
+    },
+  })
+  testStats: {
+    total: number;
+    passed: number;
+    failed: number;
+    timeout: number;
+    public: number;
+  };
 }

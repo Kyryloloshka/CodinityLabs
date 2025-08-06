@@ -371,7 +371,7 @@ export class AssignmentsService {
   // Checker service methods
   async checkCode(checkDto: CheckDto): Promise<CheckResultDto> {
     try {
-      // Якщо передано assignmentId, отримуємо всі тести завдання
+      // Якщо передано assignmentId, отримуємо всі тести завдання (публічні та приватні)
       if (checkDto.assignmentId) {
         const assignment = await this.findOne(checkDto.assignmentId);
         checkDto.testCases = assignment.testCases.map(
@@ -379,10 +379,12 @@ export class AssignmentsService {
             input: string;
             expected: string;
             description: string;
+            isPublic: boolean;
           }) => ({
             input: testCase.input,
             expected: testCase.expected,
             description: testCase.description,
+            isPublic: testCase.isPublic,
           }),
         );
       }

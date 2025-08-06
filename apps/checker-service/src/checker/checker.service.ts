@@ -19,16 +19,25 @@ export class CheckerService {
     // Базова перевірка коду з урахуванням мови програмування
     const lintResults = this.runLintAnalysis(code, language);
 
-    // Виконання тестів в безпечному середовищі
-    const testResults = await this.runTestsSafely(code, testCases, language);
+    // Виконання всіх тестів в безпечному середовищі
+    const allTestResults = await this.runTestsSafely(code, testCases, language);
 
-    // Розрахунок score
-    const score = this.calculateScore(lintResults, testResults);
+    // Фільтруємо тільки публічні тести для відповіді
+    const publicTestResults = allTestResults.filter(
+      (_, index) => testCases[index]?.isPublic !== false,
+    );
+
+    // Розраховуємо статистику
+    const testStats = this.calculateTestStats(allTestResults, testCases);
+
+    // Розрахунок score на основі всіх тестів
+    const score = this.calculateScore(lintResults, allTestResults);
 
     return {
       lint: lintResults,
-      tests: testResults,
+      tests: publicTestResults,
       score,
+      testStats,
     };
   }
 
@@ -163,5 +172,48 @@ export class CheckerService {
     const lintScore = Math.max(0, 30 - lintPenalty);
 
     return Math.round(testScore + lintScore);
+  }
+
+  private calculateTestStats(
+    allTestResults: TestResultDto[],
+    testCases: TestCaseDto[],
+  ): {
+    total: number;
+    passed: number;
+    failed: number;
+    timeout: number;
+    public: number;
+  } {
+    let total = 0;
+    let passed = 0;
+    let failed = 0;
+    let timeout = 0;
+    let publicCount = 0;
+
+    for (let i = 0; i < allTestResults.length; i++) {
+      const testResult = allTestResults[i];
+      const testCase = testCases[i];
+
+      total++;
+      if (testResult.passed) {
+        passed++;
+      } else {
+        failed++;
+      }
+      if (testResult.timeout) {
+        timeout++;
+      }
+      if (testCase?.isPublic !== false) {
+        publicCount++;
+      }
+    }
+
+    return {
+      total,
+      passed,
+      failed,
+      timeout,
+      public: publicCount,
+    };
   }
 }
