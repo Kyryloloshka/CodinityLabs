@@ -23,6 +23,18 @@ interface Assignment {
   }
 }
 
+interface PaginatedResponse<T> {
+  data: T[]
+  meta: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+    hasNext: boolean
+    hasPrev: boolean
+  }
+}
+
 interface CreateAssignment {
   title: string
   description: string
@@ -54,6 +66,7 @@ interface Submission {
   userId: string
   assignmentId: string
   code: string
+  language?: string
   eslintReport: any
   testResults: any
   score: number
@@ -67,10 +80,12 @@ interface CreateSubmission {
   userId: string
   assignmentId: string
   code: string
+  language?: string
 }
 
 interface CheckCodeRequest {
   code: string
+  language?: string
   testCases: {
     input: string
     expected: string
@@ -103,10 +118,17 @@ interface CheckCodeResponse {
 export const useAssignments = () => {
   const { get, post, patch, delete: del } = useApi()
 
-  // Отримання всіх завдань (для студентів)
-  const getAssignments = async (): Promise<Assignment[]> => {
+  // Отримання всіх завдань (для студентів) з пагінацією
+  const getAssignments = async (page?: number, limit?: number, search?: string, difficulty?: number, status?: string): Promise<PaginatedResponse<Assignment>> => {
     try {
-      const response = await get<Assignment[]>('/assignments')
+      const params = new URLSearchParams()
+      if (page) params.append('page', page.toString())
+      if (limit) params.append('limit', limit.toString())
+      if (search) params.append('search', search)
+      if (difficulty) params.append('difficulty', difficulty.toString())
+      if (status) params.append('status', status)
+
+      const response = await get<PaginatedResponse<Assignment>>(`/assignments?${params.toString()}`)
       return response
     } catch (error) {
       console.error('Error fetching assignments:', error)
@@ -114,10 +136,17 @@ export const useAssignments = () => {
     }
   }
 
-  // Отримання завдань викладача (для викладачів)
-  const getTeacherAssignments = async (teacherId: string): Promise<Assignment[]> => {
+  // Отримання завдань викладача (для викладачів) з пагінацією
+  const getTeacherAssignments = async (teacherId: string, page?: number, limit?: number, search?: string, difficulty?: number, status?: string): Promise<PaginatedResponse<Assignment>> => {
     try {
-      const response = await get<Assignment[]>(`/assignments/teacher/${teacherId}`)
+      const params = new URLSearchParams()
+      if (page) params.append('page', page.toString())
+      if (limit) params.append('limit', limit.toString())
+      if (search) params.append('search', search)
+      if (difficulty) params.append('difficulty', difficulty.toString())
+      if (status) params.append('status', status)
+
+      const response = await get<PaginatedResponse<Assignment>>(`/assignments/teacher/${teacherId}?${params.toString()}`)
       return response
     } catch (error) {
       console.error('Error fetching teacher assignments:', error)

@@ -1,242 +1,67 @@
 <template>
-  <div class="px-4 py-6 sm:px-0">
-    <div class="max-w-4xl mx-auto">
-      <div class="mb-8">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-3xl font-bold text-gray-900">Здати рішення</h1>
-            <div class="flex items-center gap-4 mt-2 text-sm text-gray-600">
-              здайте ваше рішення для завдання "{{ assignment?.title }}"
-            </div>
-          </div>
-          
-          <div class="flex gap-2">
-            <UButton to="/assignments" variant="ghost" color="neutral">
-              <UIcon name="i-heroicons-arrow-left" class="mr-2 h-4 w-4" />
-              Назад
-            </UButton>
-          </div>
-        </div>
+  <div class="h-screen flex flex-col bg-theme-primary transition-colors duration-300">
+    <!-- Header -->
+    <AssignmentSubmitHeader
+      :assignment="assignment"
+      :selected-language="selectedLanguage"
+      @update:selected-language="selectedLanguage = $event"
+      @reset-code="resetCode"
+    />
+
+    <!-- Main Content -->
+    <div class="flex-1 flex overflow-hidden">
+      <!-- Left Panel - Problem Description -->
+      <div 
+        class="relative"
+        :style="{ width: `${leftPanelWidth}px` }"
+      >
+        <AssignmentDescription
+          :assignment="assignment"
+          :loading="loading"
+        />
+        <!-- Resize handle -->
+        <div
+          class="absolute top-0 right-0 w-1 h-full bg-theme-secondary hover:bg-theme-primary cursor-col-resize transition-colors duration-200"
+          @mousedown="startResize('left', $event)"
+        ></div>
       </div>
 
-      <div v-if="loading" class="flex justify-center py-12">
-        <div class="text-center">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p class="mt-4 text-sm text-gray-600">Завантаження завдання...</p>
-        </div>
+      <!-- Center Panel - Test Cases & Results -->
+      <div 
+        class="relative"
+        :style="{ width: `${centerPanelWidth}px` }"
+      >
+        <ResultsPanel
+          :assignment="assignment"
+          :check-results="checkResults"
+          :active-tab="activeTab"
+          :selected-test-case-index="selectedTestCaseIndex"
+          :selected-result-index="selectedResultIndex"
+          @update:active-tab="activeTab = $event"
+          @update:selected-test-case-index="selectedTestCaseIndex = $event"
+          @update:selected-result-index="selectedResultIndex = $event"
+        />
+        <!-- Resize handle -->
+        <div
+          class="absolute top-0 right-0 w-1 h-full bg-theme-secondary hover:bg-theme-primary cursor-col-resize transition-colors duration-200"
+          @mousedown="startResize('center', $event)"
+        ></div>
       </div>
 
-      <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-        <div class="flex">
-          <UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-red-400" />
-          <div class="ml-3">
-            <h3 class="text-sm font-medium text-red-800">Помилка завантаження</h3>
-            <p class="mt-1 text-sm text-red-700">{{ error }}</p>
-          </div>
-        </div>
-      </div>
-
-      <div v-else-if="assignment" class="max-w-4xl mx-auto space-y-6">
-        <div class="bg-white shadow rounded-lg p-6">
-          <div class="space-y-4">
-            <div>
-              <h4 class="text-xl font-semibold text-gray-900">{{ assignment.title }}</h4>
-              <p class="text-gray-600 mt-2">{{ assignment.description }}</p>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div class="flex items-center gap-2">
-                <UIcon name="i-heroicons-cube" class="h-5 w-5 text-gray-400" />
-                <span class="text-sm text-gray-600">
-                  Складність: {{ assignment.difficulty }}/10
-                </span>
-              </div>
-              <div class="flex items-center gap-2">
-                <UIcon name="i-heroicons-calendar" class="h-5 w-5 text-gray-400" />
-                <span class="text-sm text-gray-600">
-                  Дедлайн: {{ formatDate(assignment.deadline) }}
-                </span>
-              </div>
-              <div class="flex items-center gap-2">
-                <UIcon name="i-heroicons-document-text" class="h-5 w-5 text-gray-400" />
-                <span class="text-sm text-gray-600">
-                  {{ assignment.testCases.length }} тестових випадків
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Тестові випадки -->
-        <div class="bg-white shadow rounded-lg p-6">
-          <h2 class="text-xl font-semibold text-gray-900 mb-4">Тестові випадки</h2>
-          
-          <div class="grid gap-4">
-            <div
-              v-for="(testCase, index) in assignment.testCases"
-              :key="testCase.id"
-              class="border border-gray-200 rounded-lg p-4"
-            >
-              <div class="flex items-center justify-between mb-2">
-                <h3 class="font-medium text-gray-900">Тест {{ index + 1 }}</h3>
-                <UBadge color="primary" variant="subtle">Тестовий випадок</UBadge>
-              </div>
-              
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div>
-                  <label class="block text-sm font-medium text-gray-500 mb-1">Вхідні дані</label>
-                  <div class="bg-gray-50 p-2 rounded border font-mono">{{ testCase.input }}</div>
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-500 mb-1">Очікуваний результат</label>
-                  <div class="bg-gray-50 p-2 rounded border font-mono">{{ testCase.expected }}</div>
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-500 mb-1">Опис</label>
-                  <div class="bg-gray-50 p-2 rounded border">{{ testCase.description }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Форма здавання рішення -->
-        <div class="bg-white shadow rounded-lg p-6">
-          <h2 class="text-xl font-semibold text-gray-900 mb-4">Ваше рішення</h2>
-          
-          <form @submit.prevent="submitSolution">
-            <div class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                  Код рішення
-                </label>
-                <UTextarea
-                  v-model="submissionCode"
-                  placeholder="Напишіть ваш код тут..."
-                  :rows="15"
-                  class="font-mono w-full"
-                  required
-                />
-                <p class="mt-2 text-sm text-gray-500">
-                  Введіть ваш код, який буде протестований на наданих тестових випадках.
-                </p>
-              </div>
-            </div>
-
-            <!-- Кнопки дій -->
-            <div class="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
-              <div class="flex gap-2">
-                <UButton
-                  @click="testCode"
-                  variant="outline"
-                  color="primary"
-                  :loading="testing"
-                  :disabled="!submissionCode.trim()"
-                >
-                  <UIcon name="i-heroicons-play" class="mr-2 h-4 w-4" />
-                  Перевірити код
-                </UButton>
-              </div>
-              
-              <div class="flex gap-2">
-                <UButton
-                  @click="navigateTo(`/assignments/${assignmentId}`)"
-                  variant="ghost"
-                  color="neutral"
-                >
-                  <UIcon name="i-heroicons-x-mark" class="mr-2 h-4 w-4" />
-                  Скасувати
-                </UButton>
-                <UButton
-                  type="submit"
-                  variant="solid"
-                  color="success"
-                  :loading="submitting"
-                  :disabled="!submissionCode.trim()"
-                >
-                  <UIcon name="i-heroicons-paper-airplane" class="mr-2 h-4 w-4" />
-                  Здати рішення
-                </UButton>
-              </div>
-            </div>
-          </form>
-        </div>
-
-        <!-- Результати перевірки коду -->
-        <div v-if="checkResults" class="bg-white shadow rounded-lg p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-semibold text-gray-900">Результати перевірки</h2>
-            <div class="flex items-center gap-2">
-              <UBadge 
-                :color="checkResults.score >= 70 ? 'success' : checkResults.score >= 40 ? 'warning' : 'error'"
-                variant="solid"
-              >
-                {{ checkResults.score }} балів
-              </UBadge>
-            </div>
-          </div>
-
-          <!-- Помилки lint -->
-          <div v-if="checkResults.lint.length > 0" class="mb-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-3">Помилки коду</h3>
-            <div class="space-y-2">
-              <div
-                v-for="(error, index) in checkResults.lint"
-                :key="index"
-                class="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded-lg"
-              >
-                <UIcon 
-                  :name="error.severity === 2 ? 'i-heroicons-exclamation-triangle' : 'i-heroicons-exclamation-circle'"
-                  class="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0"
-                />
-                <div class="flex-1">
-                  <p class="text-sm font-medium text-red-800">{{ error.message }}</p>
-                  <p class="text-xs text-red-600 mt-1">
-                    Рядок {{ error.line }}, колонка {{ error.column }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Результати тестів -->
-          <div>
-            <h3 class="text-lg font-medium text-gray-900 mb-3">Результати тестів</h3>
-            <div class="space-y-3">
-              <div
-                v-for="(test, index) in checkResults.tests"
-                :key="index"
-                class="border rounded-lg p-4"
-                :class="test.passed ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'"
-              >
-                <div class="flex items-center justify-between mb-2">
-                  <h4 class="font-medium text-gray-900">{{ test.description }}</h4>
-                  <UBadge 
-                    :color="test.passed ? 'success' : 'error'"
-                    variant="solid"
-                  >
-                    {{ test.passed ? 'Пройдено' : 'Не пройдено' }}
-                  </UBadge>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <label class="block text-xs font-medium text-gray-500 mb-1">Вхідні дані</label>
-                    <div class="bg-white p-2 rounded border font-mono text-xs">{{ test.input }}</div>
-                  </div>
-                  <div>
-                    <label class="block text-xs font-medium text-gray-500 mb-1">Очікуваний результат</label>
-                    <div class="bg-white p-2 rounded border font-mono text-xs">{{ test.expected }}</div>
-                  </div>
-                  <div>
-                    <label class="block text-xs font-medium text-gray-500 mb-1">Фактичний результат</label>
-                    <div class="bg-white p-2 rounded border font-mono text-xs">{{ test.actual }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <!-- Right Panel - Code Editor -->
+      <div 
+        class="relative flex-1"
+        :style="{ width: `${rightPanelWidth}px` }"
+      >
+        <CodeEditorPanel
+          :submission-code="submissionCode"
+          :selected-language="selectedLanguage"
+          :testing="testing"
+          :submitting="submitting"
+          @update:submission-code="submissionCode = $event"
+          @test-code="testCode"
+          @submit-solution="submitSolution"
+        />
       </div>
     </div>
   </div>
@@ -244,13 +69,15 @@
 
 <script setup lang="ts">
 definePageMeta({
-  layout: 'default',
-  middleware: 'student-only'
+  layout: 'no-container',
+  middleware: 'student-only',
+  ssr: false
 })
 
 const route = useRoute()
 const authStore = useAuthStore()
 const { getAssignment, createSubmission, checkCode } = useAssignments()
+const toast = useToast()
 
 // Реактивні дані
 const assignment = ref<any>(null)
@@ -260,19 +87,81 @@ const submitting = ref(false)
 const testing = ref(false)
 const submissionCode = ref('')
 const checkResults = ref<any>(null)
+const selectedLanguage = ref('javascript')
+const selectedTestCaseIndex = ref(0)
+const selectedResultIndex = ref(0)
+const activeTab = ref('testCases')
 
-// Отримуємо ID завдання з URL
+// Resize state
+const leftPanelWidth = ref(400)
+const centerPanelWidth = ref(400)
+const rightPanelWidth = ref(400)
+const isResizing = ref(false)
+const currentResizePanel = ref<'left' | 'center' | null>(null)
+const startX = ref(0)
+const startWidth = ref(0)
+
 const assignmentId = route.params.id as string
 
-// Завантаження завдання
+const codeTemplates = {
+  javascript: `// Ваше рішення
+function solution(input) {
+  // Введіть вашу логіку тут
+  return input;
+}
+
+// Функція main для тестування
+function main(args) {
+  // Приклад використання
+  const result = solution(args);
+  return result;
+}`,
+  
+  typescript: `// Ваше рішення
+function solution(input: string): string {
+  // Введіть вашу логіку тут
+  return input;
+}
+
+// Функція main для тестування
+function main(args: string): string {
+  // Приклад використання
+  const result: string = solution(args);
+  return result;
+}`
+}
+
+const resetCode = () => {
+  const template = codeTemplates[selectedLanguage.value as keyof typeof codeTemplates] || codeTemplates.javascript
+  submissionCode.value = template
+}
+
 const loadAssignment = async () => {
   try {
     loading.value = true
     error.value = ''
     assignment.value = await getAssignment(assignmentId)
-  } catch (err) {
+    resetCode()
+  } catch (err: any) {
     error.value = 'Помилка завантаження завдання'
     console.error(err)
+    
+    if (err?.status === 404 || err?.statusCode === 404) {
+      toast.add({
+        title: 'Помилка',
+        description: 'Таке завдання не доступне',
+        color: 'error'
+      })
+      await navigateTo('/assignments')
+      return
+    }
+    
+    toast.add({
+      title: 'Помилка',
+      description: 'Помилка завантаження завдання',
+      color: 'error'
+    })
+    await navigateTo('/assignments')
   } finally {
     loading.value = false
   }
@@ -288,6 +177,7 @@ const testCode = async () => {
     
     const request = {
       code: submissionCode.value,
+      language: selectedLanguage.value,
       testCases: assignment.value.testCases.map((testCase: any) => ({
         input: testCase.input,
         expected: testCase.expected,
@@ -296,15 +186,22 @@ const testCode = async () => {
     }
     
     checkResults.value = await checkCode(request)
-  } catch (err) {
+    // Автоматично переключаємося на вкладку результатів
+    activeTab.value = 'results'
+    selectedResultIndex.value = 0 // Default to first result
+  } catch (err: any) {
     error.value = 'Помилка перевірки коду'
     console.error('Error testing code:', err)
+    toast.add({
+      title: 'Помилка',
+      description: 'Помилка перевірки коду',
+      color: 'error'
+    })
   } finally {
     testing.value = false
   }
 }
 
-// Здавання рішення
 const submitSolution = async () => {
   if (!submissionCode.value.trim()) return
 
@@ -314,31 +211,71 @@ const submitSolution = async () => {
     await createSubmission({
       userId: authStore.user!.id,
       assignmentId: assignmentId,
-      code: submissionCode.value
+      code: submissionCode.value,
+      language: selectedLanguage.value
     })
 
-    // Перенаправляємо на сторінку завдання
     await navigateTo(`/assignments/${assignmentId}`)
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error submitting solution:', err)
+    toast.add({
+      title: 'Помилка',
+      description: 'Помилка відправки рішення',
+      color: 'error'
+    })
   } finally {
     submitting.value = false
   }
 }
 
-// Форматування дати
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('uk-UA', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
+watch(selectedLanguage, () => {
+  resetCode()
+})
 
-// Завантаження даних при монтуванні
 onMounted(() => {
   loadAssignment()
 })
-</script> 
+
+// Resize functionality
+const startResize = (panel: 'left' | 'center', event: MouseEvent) => {
+  isResizing.value = true
+  currentResizePanel.value = panel
+  startX.value = event.clientX
+  
+  if (panel === 'left') {
+    startWidth.value = leftPanelWidth.value
+  } else if (panel === 'center') {
+    startWidth.value = centerPanelWidth.value
+  }
+  
+  document.addEventListener('mousemove', handleResize)
+  document.addEventListener('mouseup', stopResize)
+}
+
+const handleResize = (event: MouseEvent) => {
+  if (!isResizing.value || !currentResizePanel.value) return
+  
+  const deltaX = event.clientX - startX.value
+  
+  if (currentResizePanel.value === 'left') {
+    const newWidth = Math.max(200, Math.min(800, startWidth.value + deltaX))
+    leftPanelWidth.value = newWidth
+  } else if (currentResizePanel.value === 'center') {
+    const newWidth = Math.max(200, Math.min(800, startWidth.value + deltaX))
+    centerPanelWidth.value = newWidth
+  }
+}
+
+const stopResize = () => {
+  isResizing.value = false
+  currentResizePanel.value = null
+  document.removeEventListener('mousemove', handleResize)
+  document.removeEventListener('mouseup', stopResize)
+}
+</script>
+
+<style scoped>
+.cursor-col-resize {
+  cursor: col-resize;
+}
+</style> 

@@ -8,11 +8,13 @@ import {
   Delete,
   UsePipes,
   ValidationPipe,
+  Query,
 } from '@nestjs/common';
 import { AssignmentService } from './assignment.service';
 import { CreateAssignmentDto } from './dto/create-assignment.dto';
 import { UpdateAssignmentDto } from './dto/update-assignment.dto';
 import { ApiResponseDto } from '../common/dto/api-response.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Controller('assignments')
 @UsePipes(new ValidationPipe({ transform: true }))
@@ -29,19 +31,22 @@ export class AssignmentController {
   }
 
   @Get()
-  async findAll() {
-    const assignments = await this.assignmentService.findAll();
+  async findAll(@Query() paginationDto: PaginationDto) {
+    const result = await this.assignmentService.findAll(paginationDto);
     return ApiResponseDto.success(
-      assignments,
+      result,
       'Assignments retrieved successfully',
     );
   }
 
   @Get('teacher/:teacherId')
-  async findByTeacher(@Param('teacherId') teacherId: string) {
-    const assignments = await this.assignmentService.findByTeacher(teacherId);
+  async findByTeacher(
+    @Param('teacherId') teacherId: string,
+    @Query() paginationDto: PaginationDto,
+  ) {
+    const result = await this.assignmentService.findByTeacher(teacherId, paginationDto);
     return ApiResponseDto.success(
-      assignments,
+      result,
       'Teacher assignments retrieved successfully',
     );
   }

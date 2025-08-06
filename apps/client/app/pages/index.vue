@@ -1,71 +1,74 @@
 <template>
-  <div class="px-4 py-6 sm:px-0">
+  <div class="">
     <!-- Заголовок -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900">
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold text-theme-primary">
         {{ authStore.isAuthenticated ? 'Вітаємо!' : 'Ласкаво просимо до системи завдань' }}
       </h1>
-      <p class="mt-2 text-gray-600">
+      <p class="mt-1 text-sm text-theme-secondary">
         {{ authStore.isAuthenticated 
           ? `Ви увійшли як ${getRoleLabel(authStore.user?.role)}` 
           : 'Переглядайте доступні завдання та увійдіть для подання рішень' 
         }}
       </p>
+      
+     
     </div>
-
+   
     <!-- Публічні завдання -->
-    <div class="mb-8">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-bold text-gray-900">
-          {{ authStore.isAuthenticated ? 'Ваші завдання' : 'Публічні завдання' }}
+    <div class="mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-theme-primary">
+          Публічні завдання
         </h2>
-        <div v-if="!authStore.isAuthenticated" class="flex space-x-3">
+        <div v-if="!authStore.isAuthenticated" class="flex space-x-2">
           <UButton
             to="/login"
             variant="solid"
             color="primary"
+            size="sm"
           >
-            <UIcon name="i-heroicons-arrow-right-on-rectangle" class="mr-2 h-4 w-4" />
+            <UIcon name="i-heroicons-arrow-right-on-rectangle" class="mr-1 h-3 w-3" />
             Увійти для подання
           </UButton>
         </div>
       </div>
 
       <!-- Завантаження -->
-      <div v-if="loading" class="flex justify-center py-12">
+      <div v-if="loading" class="flex justify-center py-8">
         <div class="text-center">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p class="mt-4 text-sm text-gray-600">Завантаження завдань...</p>
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-primary mx-auto"></div>
+          <p class="mt-2 text-xs text-theme-secondary">Завантаження завдань...</p>
         </div>
       </div>
 
       <!-- Помилка -->
-      <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-lg p-4">
+      <div v-else-if="error" class="bg-error border border-error rounded p-3">
         <div class="flex">
-          <UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-red-400" />
-          <div class="ml-3">
-            <h3 class="text-sm font-medium text-red-800">Помилка завантаження</h3>
-            <p class="mt-1 text-sm text-red-700">{{ error }}</p>
+          <UIcon name="i-heroicons-exclamation-triangle" class="h-4 w-4 text-error" />
+          <div class="ml-2">
+            <h3 class="text-xs font-medium text-error">Помилка завантаження</h3>
+            <p class="mt-1 text-xs text-error-light">{{ error }}</p>
           </div>
         </div>
       </div>
 
       <!-- Список завдань -->
-      <div v-else-if="assignments.length > 0" class="grid gap-6">
+      <div v-else-if="assignments.length > 0" class="grid gap-4">
         <div
           v-for="assignment in assignments"
           :key="assignment.id"
-          class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow"
+          class="bg-theme-card overflow-hidden shadow rounded hover:shadow-md transition-shadow border border-theme-primary"
         >
-          <div class="px-6 py-4">
+          <div class="px-4 py-3">
             <div class="flex items-start justify-between">
               <div class="flex-1">
-                <div class="flex items-center gap-3 mb-2">
-                  <h3 class="text-lg font-semibold text-gray-900">
+                <div class="flex items-center gap-2 mb-2">
+                  <h3 class="text-base font-semibold text-theme-primary">
                     {{ assignment.title }}
                   </h3>
                   <UBadge
-                    :color="getDifficultyColor(assignment.difficulty)"
+                    color="secondary"
                     variant="subtle"
                   >
                     Складність: {{ assignment.difficulty }}/10
@@ -78,43 +81,45 @@
                   </UBadge>
                 </div>
                 
-                <p class="text-gray-600 mb-4 line-clamp-2">
+                <p class="text-sm text-theme-secondary mb-3 line-clamp-2">
                   {{ assignment.description }}
                 </p>
                 
-                <div class="flex items-center gap-6 text-sm text-gray-500">
+                <div class="flex items-center gap-4 text-xs text-theme-muted">
                   <div class="flex items-center">
-                    <UIcon name="i-heroicons-calendar" class="mr-1 h-4 w-4" />
-                    Дедлайн: {{ formatDate(assignment.deadline) }}
+                    <UIcon name="i-heroicons-calendar" class="mr-1 h-3 w-3" />
+                    {{ formatDate(assignment.deadline) }}
                   </div>
                   <div class="flex items-center">
-                    <UIcon name="i-heroicons-document-text" class="mr-1 h-4 w-4" />
+                    <UIcon name="i-heroicons-document-text" class="mr-1 h-3 w-3" />
                     {{ assignment._count.submissions }} подань
                   </div>
                   <div class="flex items-center">
-                    <UIcon name="i-heroicons-cube" class="mr-1 h-4 w-4" />
+                    <UIcon name="i-heroicons-cube" class="mr-1 h-3 w-3" />
                     {{ assignment.testCases.length }} тестів
                   </div>
                 </div>
               </div>
               
-              <div class="flex items-center gap-2 ml-4">
+              <div class="flex items-center gap-1 ml-3">
                 <UButton
                   @click="viewAssignment(assignment)"
                   variant="ghost"
-                  color="primary"
+                  size="sm"
+                  class="text-theme-primary hover:bg-theme-hover"
                 >
-                  <UIcon name="i-heroicons-eye" class="mr-1 h-4 w-4" />
+                  <UIcon name="i-heroicons-eye" class="mr-1 h-3 w-3" />
                   Переглянути
                 </UButton>
                 
                 <UButton
                   v-if="authStore.isAuthenticated"
                   @click="submitAssignment(assignment)"
-                  variant="solid"
-                  color="success"
+                  variant="ghost"
+                  size="sm"
+                  class="text-theme-primary hover:bg-theme-hover"
                 >
-                  <UIcon name="i-heroicons-paper-airplane" class="mr-1 h-4 w-4" />
+                  <UIcon name="i-heroicons-paper-airplane" class="mr-1 h-3 w-3" />
                   Здати
                 </UButton>
                 
@@ -123,9 +128,10 @@
                   @click="loginToSubmit(assignment)"
                   variant="solid"
                   color="primary"
+                  size="sm"
                 >
-                  <UIcon name="i-heroicons-arrow-right-on-rectangle" class="mr-1 h-4 w-4" />
-                  Увійти для подання
+                  <UIcon name="i-heroicons-arrow-right-on-rectangle" class="mr-1 h-3 w-3" />
+                  Увійти
                 </UButton>
               </div>
             </div>
@@ -134,12 +140,12 @@
       </div>
 
       <!-- Порожній стан -->
-      <div v-else class="text-center py-12">
-        <UIcon name="i-heroicons-document-text" class="mx-auto h-12 w-12 text-gray-400" />
-        <h3 class="mt-2 text-sm font-medium text-gray-900">
+      <div v-else class="text-center py-8">
+        <UIcon name="i-heroicons-document-text" class="mx-auto h-8 w-8 text-theme-muted" />
+        <h3 class="mt-2 text-sm font-medium text-theme-primary">
           {{ authStore.isAuthenticated ? 'У вас немає доступних завдань' : 'Немає публічних завдань' }}
         </h3>
-        <p class="mt-1 text-sm text-gray-500">
+        <p class="mt-1 text-xs text-theme-secondary">
           {{ authStore.isAuthenticated ? 'Зачекайте поки викладачі створять завдання' : 'Зачекайте поки викладачі створять публічні завдання' }}
         </p>
       </div>
@@ -154,10 +160,25 @@ definePageMeta({
 })
 
 const authStore = useAuthStore()
-const { getAssignments, getTeacherAssignments } = useAssignments()
+const { getAssignments } = useAssignments()
+
+interface Assignment {
+  id: string
+  title: string
+  description: string
+  difficulty: number
+  deadline: string
+  teacherId: string
+  createdAt: string
+  updatedAt: string
+  testCases: any[]
+  _count: {
+    submissions: number
+  }
+}
 
 // Реактивні дані
-const assignments = ref<any[]>([])
+const assignments = ref<Assignment[]>([])
 const loading = ref(true)
 const error = ref('')
 
@@ -172,13 +193,6 @@ const getRoleLabel = (role: string | undefined) => {
   }
 }
 
-const getDifficultyColor = (difficulty: number) => {
-  if (difficulty <= 3) return 'success'
-  if (difficulty <= 6) return 'warning'
-  if (difficulty <= 8) return 'warning'
-  return 'error'
-}
-
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString('uk-UA', {
     year: 'numeric',
@@ -189,22 +203,21 @@ const formatDate = (dateString: string) => {
   })
 }
 
-const isAssignmentActive = (assignment: any) => {
+const isAssignmentActive = (assignment: Assignment) => {
   const now = new Date()
   const deadline = new Date(assignment.deadline)
   return deadline > now
 }
 
-const viewAssignment = (assignment: any) => {
+const viewAssignment = (assignment: Assignment) => {
   navigateTo(`/assignments/${assignment.id}`)
 }
 
-const submitAssignment = (assignment: any) => {
+const submitAssignment = (assignment: Assignment) => {
   navigateTo(`/assignments/${assignment.id}/submit`)
 }
 
-const loginToSubmit = (assignment: any) => {
-  // Зберігаємо сторінку для редіректу після авторизації
+const loginToSubmit = (assignment: Assignment) => {
   if (import.meta.client) {
     sessionStorage.setItem('redirectAfterAuth', `/assignments/${assignment.id}/submit`)
   }
@@ -216,16 +229,8 @@ const loadAssignments = async () => {
     loading.value = true
     error.value = ''
     
-    if (authStore.isAuthenticated) {
-      if (authStore.user?.role === 'TEACHER') {
-        assignments.value = await getTeacherAssignments(authStore.user.id)
-      } else {
-        assignments.value = await getAssignments()
-      }
-    } else {
-      // Для неавторизованих користувачів показуємо публічні завдання
-      assignments.value = await getAssignments()
-    }
+    const response = await getAssignments(1, 10)
+    assignments.value = response.data
   } catch (err) {
     error.value = 'Помилка завантаження завдань'
     console.error('Error in loadAssignments:', err)

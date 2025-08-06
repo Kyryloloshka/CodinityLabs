@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class SubmissionDto {
   @ApiProperty({
@@ -26,6 +26,13 @@ export class SubmissionDto {
       'function factorial(n) {\n  if (n === 0 || n === 1) return 1;\n  return n * factorial(n - 1);\n}',
   })
   code: string;
+
+  @ApiProperty({
+    description: 'Мова програмування',
+    example: 'javascript',
+    required: false,
+  })
+  language?: string;
 
   @ApiProperty({
     description: 'Звіт ESLint',
@@ -100,4 +107,13 @@ export class CreateSubmissionDto {
   @IsString()
   @IsNotEmpty()
   code: string;
+
+  @ApiProperty({
+    description: 'Мова програмування',
+    example: 'javascript',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  language?: string;
 }

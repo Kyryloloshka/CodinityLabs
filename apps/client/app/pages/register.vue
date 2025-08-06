@@ -1,16 +1,16 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
+  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-theme-secondary to-theme-tertiary py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-[300px] w-full space-y-8">
       <div>
-        <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-emerald-100">
-          <UIcon name="i-heroicons-user-plus" class="h-8 w-8 text-emerald-600" />
+        <div class="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-theme-tertiary">
+          <UIcon name="i-heroicons-user-plus" class="h-8 w-8 text-accent-success" />
         </div>
-        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        <h2 class="mt-6 text-center text-3xl font-extrabold text-theme-primary">
           Створити обліковий запис
         </h2>
-        <p class="mt-2 text-center text-sm text-gray-600">
+        <p class="mt-2 text-center text-sm text-theme-secondary">
           Або
-          <NuxtLink to="/login" class="font-medium text-emerald-600 hover:text-emerald-500">
+          <NuxtLink to="/login" class="font-medium text-primary hover:text-theme-secondary">
             увійдіть в існуючий акаунт
           </NuxtLink>
         </p>
@@ -19,11 +19,11 @@
       <form class="mt-8 space-y-6" @submit.prevent="handleRegister">
         <div class="space-y-4">
           <div>
-            <label for="name" class="block text-sm font-medium text-gray-700">
+            <label for="name" class="block text-sm font-medium text-theme-primary">
               Ім'я
             </label>
             <div class="mt-1">
-              <UInput
+              <input
                 id="name"
                 v-model="form.name"
                 type="text"
@@ -31,16 +31,17 @@
                 :error="errors.name"
                 required
                 autocomplete="name"
+                class="min-w-full px-2 text-sm py-1 h-8 border border-theme-secondary rounded-md shadow-sm bg-theme-input text-theme-primary focus:outline-none focus:ring-0"
               />
             </div>
           </div>
 
           <div>
-            <label for="email" class="block text-sm font-medium text-gray-700">
+            <label for="email" class="block text-sm font-medium text-theme-primary">
               Email
             </label>
             <div class="mt-1">
-              <UInput
+              <input
                 id="email"
                 v-model="form.email"
                 type="email"
@@ -48,16 +49,17 @@
                 :error="errors.email"
                 required
                 autocomplete="email"
+                class="min-w-full px-2 text-sm py-1 h-8 border border-theme-secondary rounded-md shadow-sm bg-theme-input text-theme-primary focus:outline-none focus:ring-0"
               />
             </div>
           </div>
           
           <div>
-            <label for="password" class="block text-sm font-medium text-gray-700">
+            <label for="password" class="block text-sm font-medium text-theme-primary">
               Пароль
             </label>
             <div class="mt-1">
-              <UInput
+              <input
                 id="password"
                 v-model="form.password"
                 type="password"
@@ -65,16 +67,17 @@
                 :error="errors.password"
                 required
                 autocomplete="new-password"
+                class="min-w-full px-2 text-sm py-1 h-8 border border-theme-secondary rounded-md shadow-sm bg-theme-input text-theme-primary focus:outline-none focus:ring-0"
               />
             </div>
           </div>
 
           <div>
-            <label for="confirmPassword" class="block text-sm font-medium text-gray-700">
+            <label for="confirmPassword" class="block text-sm font-medium text-theme-primary">
               Підтвердження пароля
             </label>
             <div class="mt-1">
-              <UInput
+              <input
                 id="confirmPassword"
                 v-model="form.confirmPassword"
                 type="password"
@@ -82,19 +85,20 @@
                 :error="errors.confirmPassword"
                 required
                 autocomplete="new-password"
+                class="min-w-full px-2 text-sm py-1 h-8 border border-theme-secondary rounded-md shadow-sm bg-theme-input text-theme-primary focus:outline-none focus:ring-0"
               />
             </div>
           </div>
 
           <div>
-            <label for="role" class="block text-sm font-medium text-gray-700">
+            <label for="role" class="block text-sm font-medium text-theme-primary">
               Роль
             </label>
             <div class="mt-1">
               <select
                 id="role"
                 v-model="form.role"
-                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-white"
+                class="min-w-full px-2 text-sm py-1 h-8 border border-theme-secondary rounded-md shadow-sm bg-theme-input text-theme-primary focus:outline-none focus:ring-0"
                 :class="{ 'border-red-300': errors.role }"
                 required
               >
@@ -109,14 +113,14 @@
           </div>
         </div>
 
-        <div v-if="errorMessage" class="rounded-md bg-red-50 p-4">
+        <div v-if="errorMessage" class="rounded-md bg-error p-4">
           <div class="flex">
-            <UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-red-400" />
+            <UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-error" />
             <div class="ml-3">
-              <h3 class="text-sm font-medium text-red-800">
+              <h3 class="text-sm font-medium text-error">
                 Помилка реєстрації
               </h3>
-              <div class="mt-2 text-sm text-red-700">
+              <div class="mt-2 text-sm text-error-light">
                 {{ errorMessage }}
               </div>
             </div>
@@ -128,7 +132,7 @@
             type="submit"
             :loading="authStore.isLoading"
             :disabled="authStore.isLoading"
-            class="w-full"
+            class="w-full text-center flex items-center justify-center"
             size="lg"
           >
             <UIcon name="i-heroicons-user-plus" class="mr-2 h-5 w-5" />
@@ -142,7 +146,7 @@
 
 <script setup lang="ts">
 definePageMeta({
-  layout: 'auth',
+  layout: 'no-container',
   middleware: 'guest'
 })
 

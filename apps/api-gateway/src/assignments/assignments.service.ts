@@ -16,6 +16,21 @@ interface ApiResponse<T> {
   message?: string;
 }
 
+interface PaginatedApiResponse<T> {
+  data: {
+    data: T[];
+    meta: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  };
+  message?: string;
+}
+
 interface ErrorResponse {
   message?: string;
 }
@@ -47,11 +62,24 @@ export class AssignmentsService {
     return url;
   }
 
-  async findAll(): Promise<AssignmentDto[]> {
+  async findAll(
+    page?: number,
+    limit?: number,
+    search?: string,
+    difficulty?: number,
+    status?: string,
+  ): Promise<PaginatedApiResponse<AssignmentDto>['data']> {
     try {
+      const params = new URLSearchParams();
+      if (page) params.append('page', page.toString());
+      if (limit) params.append('limit', limit.toString());
+      if (search) params.append('search', search);
+      if (difficulty) params.append('difficulty', difficulty.toString());
+      if (status) params.append('status', status);
+
       const response = await firstValueFrom(
-        this.httpService.get<ApiResponse<AssignmentDto[]>>(
-          `${this.assignmentServiceUrl}/assignments`,
+        this.httpService.get<PaginatedApiResponse<AssignmentDto>>(
+          `${this.assignmentServiceUrl}/assignments?${params.toString()}`,
         ),
       );
       return response.data.data;
@@ -63,11 +91,25 @@ export class AssignmentsService {
     }
   }
 
-  async findByTeacher(teacherId: string): Promise<AssignmentDto[]> {
+  async findByTeacher(
+    teacherId: string,
+    page?: number,
+    limit?: number,
+    search?: string,
+    difficulty?: number,
+    status?: string,
+  ): Promise<PaginatedApiResponse<AssignmentDto>['data']> {
     try {
+      const params = new URLSearchParams();
+      if (page) params.append('page', page.toString());
+      if (limit) params.append('limit', limit.toString());
+      if (search) params.append('search', search);
+      if (difficulty) params.append('difficulty', difficulty.toString());
+      if (status) params.append('status', status);
+
       const response = await firstValueFrom(
-        this.httpService.get<ApiResponse<AssignmentDto[]>>(
-          `${this.assignmentServiceUrl}/assignments/teacher/${teacherId}`,
+        this.httpService.get<PaginatedApiResponse<AssignmentDto>>(
+          `${this.assignmentServiceUrl}/assignments/teacher/${teacherId}?${params.toString()}`,
         ),
       );
       return response.data.data;

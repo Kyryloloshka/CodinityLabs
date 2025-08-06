@@ -43,6 +43,7 @@ model Submission {
   userId       String
   assignmentId String
   code         String
+  language     String?  // Мова програмування
   eslintReport Json?
   testResults  Json?
   score        Float?

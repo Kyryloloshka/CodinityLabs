@@ -11,13 +11,13 @@ export class CheckerService {
   constructor() {}
 
   checkCode(checkDto: CheckDto): CheckResultDto {
-    const { code, testCases } = checkDto;
+    const { code, testCases, language = 'javascript' } = checkDto;
 
-    // Базова перевірка коду
-    const lintResults = this.runLintAnalysis(code);
+    // Базова перевірка коду з урахуванням мови програмування
+    const lintResults = this.runLintAnalysis(code, language);
 
     // Виконання тестів
-    const testResults = this.runTests(code, testCases);
+    const testResults = this.runTests(code, testCases, language);
 
     // Розрахунок score
     const score = this.calculateScore(lintResults, testResults);
@@ -29,37 +29,18 @@ export class CheckerService {
     };
   }
 
-  private runLintAnalysis(code: string): LintErrorDto[] {
+  private runLintAnalysis(code: string, language: string): LintErrorDto[] {
     const lintErrors: LintErrorDto[] = [];
 
     try {
-      // Базова перевірка на наявність функції main
-      if (
-        !code.includes('function main') &&
-        !code.includes('const main') &&
-        !code.includes('let main')
-      ) {
-        lintErrors.push({
-          ruleId: 'missing-main-function',
-          severity: 2,
-          message: 'Function main is required',
-          line: 1,
-          column: 1,
-        });
-      }
-
-      // Перевірка на базові синтаксичні помилки
-      try {
-        // Використовуємо безпечніший спосіб перевірки синтаксису
-        this.validateSyntax(code);
-      } catch (syntaxError) {
-        lintErrors.push({
-          ruleId: 'syntax-error',
-          severity: 2,
-          message: `Syntax error: ${(syntaxError as Error).message}`,
-          line: 1,
-          column: 1,
-        });
+      // Перевірка на основі мови програмування
+      switch (language) {
+        case 'javascript':
+        case 'typescript':
+          this.checkJavaScriptSyntax(code, lintErrors);
+          break;
+        default:
+          this.checkJavaScriptSyntax(code, lintErrors);
       }
     } catch (error) {
       console.error('Lint analysis error:', error);
@@ -68,8 +49,43 @@ export class CheckerService {
     return lintErrors;
   }
 
-  private validateSyntax(code: string): void {
-    // Базова перевірка синтаксису без використання eval
+  private checkJavaScriptSyntax(
+    code: string,
+    lintErrors: LintErrorDto[],
+  ): void {
+    // Перевірка на наявність функції main або solution
+    if (
+      !code.includes('function main') &&
+      !code.includes('const main') &&
+      !code.includes('let main') &&
+      !code.includes('function solution') &&
+      !code.includes('const solution') &&
+      !code.includes('let solution')
+    ) {
+      lintErrors.push({
+        ruleId: 'missing-main-function',
+        severity: 2,
+        message: 'Function main or solution is required',
+        line: 1,
+        column: 1,
+      });
+    }
+
+    // Базова перевірка синтаксису
+    try {
+      this.validateJavaScriptSyntax(code);
+    } catch (syntaxError) {
+      lintErrors.push({
+        ruleId: 'syntax-error',
+        severity: 2,
+        message: `Syntax error: ${(syntaxError as Error).message}`,
+        line: 1,
+        column: 1,
+      });
+    }
+  }
+
+  private validateJavaScriptSyntax(code: string): void {
     const basicChecks = [
       { pattern: /function\s+\w+\s*\(/, name: 'function declaration' },
       { pattern: /const\s+\w+\s*=/, name: 'const declaration' },
@@ -77,7 +93,6 @@ export class CheckerService {
       { pattern: /var\s+\w+\s*=/, name: 'var declaration' },
     ];
 
-    // Перевіряємо базові конструкції
     const hasValidConstructs = basicChecks.some((check) =>
       check.pattern.test(code),
     );
@@ -87,12 +102,16 @@ export class CheckerService {
     }
   }
 
-  private runTests(code: string, testCases: TestCaseDto[]): TestResultDto[] {
+  private runTests(
+    code: string,
+    testCases: TestCaseDto[],
+    language: string,
+  ): TestResultDto[] {
     const results: TestResultDto[] = [];
 
     for (const testCase of testCases) {
       try {
-        const result = this.runSingleTest(code, testCase);
+        const result = this.runSingleTest(code, testCase, language);
         results.push(result);
       } catch (error) {
         console.error('Test execution error:', error);
@@ -111,10 +130,17 @@ export class CheckerService {
     return results;
   }
 
-  private runSingleTest(code: string, testCase: TestCaseDto): TestResultDto {
+  private runSingleTest(
+    code: string,
+    testCase: TestCaseDto,
+    language: string,
+  ): TestResultDto {
     try {
-      // Створюємо безпечну функцію для виконання коду
-      const safeCode = this.createSafeExecutionCode(code, testCase.input);
+      const safeCode = this.createSafeExecutionCode(
+        code,
+        testCase.input,
+        language,
+      );
       const actual = this.executeCodeSafely(safeCode);
       const actualString = String(actual);
       const passed = actualString === testCase.expected;
@@ -138,23 +164,67 @@ export class CheckerService {
     }
   }
 
-  private createSafeExecutionCode(code: string, input: unknown): string {
+  private createSafeExecutionCode(
+    code: string,
+    input: unknown,
+    language: string,
+  ): string {
+    let processedCode = code;
+    if (language === 'typescript') {
+      processedCode = this.removeTypeScriptTypes(code);
+    }
+
     return `
-      ${code}
+      ${processedCode}
       
-      // Перевіряємо, чи існує функція main
-      if (typeof main !== 'function') {
-        throw new Error('Function main is not defined');
+      if (typeof main !== 'function' && typeof solution !== 'function') {
+        throw new Error('Function main or solution is not defined');
       }
       
-      // Виконуємо функцію з вхідними даними
-      return main(${JSON.stringify(input)});
+      const func = typeof main === 'function' ? main : solution;
+      return func(${JSON.stringify(input)});
     `;
   }
 
+  private removeTypeScriptTypes(code: string): string {
+    let result = code;
+
+    // Видаляємо типи параметрів функцій
+    result = result.replace(/:\s*[a-zA-Z<>[\]()|&, \s]+(?=\s*[,)])/g, '');
+
+    // Видаляємо типи змінних
+    result = result.replace(
+      /const\s+(\w+):\s*[a-zA-Z<>[\]()|&, \s]+/g,
+      'const $1',
+    );
+    result = result.replace(/let\s+(\w+):\s*[a-zA-Z<>[\]()|&, \s]+/g, 'let $1');
+    result = result.replace(/var\s+(\w+):\s*[a-zA-Z<>[\]()|&, \s]+/g, 'var $1');
+
+    // Видаляємо return типи функцій
+    result = result.replace(
+      /function\s+(\w+)\s*\([^)]*\)\s*:\s*[a-zA-Z<>[\]()|&, \s]+/g,
+      (match) => {
+        return match.replace(/:\s*[a-zA-Z<>[\]()|&, \s]+$/, '');
+      },
+    );
+
+    // Видаляємо interface та type declarations
+    result = result.replace(/interface\s+\w+\s*\{[^}]*\}/g, '');
+    result = result.replace(/type\s+\w+\s*=\s*[^;]+;/g, '');
+
+    // Видаляємо import statements
+    result = result.replace(/import\s+.*?from\s+['"][^'"]+['"];?\n?/g, '');
+
+    // Видаляємо export statements
+    result = result.replace(/export\s+/g, '');
+
+    // Видаляємо залишкові типи
+    result = result.replace(/:\s*[a-zA-Z<>[\]()|&, \s]+/g, '');
+
+    return result;
+  }
+
   private executeCodeSafely(code: string): unknown {
-    // В реальному проекті тут можна використовувати більш безпечні альтернативи
-    // наприклад, використання VM модуля Node.js або інших sandbox рішень
     try {
       // eslint-disable-next-line @typescript-eslint/no-implied-eval
       const executeCode = new Function(code) as () => unknown;
@@ -174,11 +244,9 @@ export class CheckerService {
       return 0;
     }
 
-    // Базовий score на основі пройдених тестів (70% від загального score)
     const passedTests = testResults.filter((test) => test.passed).length;
     const testScore = (passedTests / testResults.length) * 70;
 
-    // Штраф за помилки коду (30% від загального score)
     const errorCount = lintErrors.filter(
       (error) => error.severity === 2,
     ).length;

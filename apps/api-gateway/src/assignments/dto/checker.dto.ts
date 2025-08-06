@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsArray, ValidateNested } from 'class-validator';
+import { IsString, IsNotEmpty, IsArray, ValidateNested, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class TestCaseDto {
@@ -36,6 +36,15 @@ export class CheckDto {
   @IsString()
   @IsNotEmpty()
   code: string;
+
+  @ApiProperty({
+    description: 'Мова програмування',
+    example: 'javascript',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  language?: string;
 
   @ApiProperty({
     description: 'Тестові випадки',

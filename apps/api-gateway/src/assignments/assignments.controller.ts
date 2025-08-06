@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   UseGuards,
   Request,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -20,6 +21,7 @@ import {
   ApiBadRequestResponse,
   ApiInternalServerErrorResponse,
   ApiBearerAuth,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { AssignmentsService } from './assignments.service';
 import {
@@ -38,17 +40,79 @@ export class AssignmentsController {
   @Get()
   @ApiOperation({
     summary: 'Get all assignments',
-    description: 'Get all assignments from Assignment Service (public access)',
+    description:
+      'Get all assignments from Assignment Service with pagination (public access)',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number (default: 1)',
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Number of items per page (default: 10)',
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    description: 'Search term for title or description',
+    type: String,
+  })
+  @ApiQuery({
+    name: 'difficulty',
+    required: false,
+    description: 'Filter by difficulty level',
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    description: 'Filter by status (active/completed)',
+    type: String,
   })
   @ApiOkResponse({
     description: 'All assignments successfully retrieved',
-    type: [AssignmentDto],
+    schema: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/AssignmentDto' },
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            page: { type: 'number' },
+            limit: { type: 'number' },
+            total: { type: 'number' },
+            totalPages: { type: 'number' },
+            hasNext: { type: 'boolean' },
+            hasPrev: { type: 'boolean' },
+          },
+        },
+      },
+    },
   })
   @ApiInternalServerErrorResponse({
     description: 'Internal server error',
   })
-  async findAll(): Promise<AssignmentDto[]> {
-    return this.assignmentsService.findAll();
+  async findAll(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+    @Query('difficulty') difficulty?: number,
+    @Query('status') status?: string,
+  ) {
+    return this.assignmentsService.findAll(
+      page,
+      limit,
+      search,
+      difficulty,
+      status,
+    );
   }
 
   @Get('teacher/:teacherId')
@@ -56,24 +120,86 @@ export class AssignmentsController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get assignments by teacher',
-    description: 'Get all assignments created by a specific teacher',
+    description:
+      'Get all assignments created by a specific teacher with pagination',
   })
   @ApiParam({
     name: 'teacherId',
     description: 'Teacher identifier',
     example: 'teacher123',
   })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number (default: 1)',
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Number of items per page (default: 10)',
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    description: 'Search term for title or description',
+    type: String,
+  })
+  @ApiQuery({
+    name: 'difficulty',
+    required: false,
+    description: 'Filter by difficulty level',
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    description: 'Filter by status (active/completed)',
+    type: String,
+  })
   @ApiOkResponse({
     description: 'Teacher assignments successfully retrieved',
-    type: [AssignmentDto],
+    schema: {
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/AssignmentDto' },
+        },
+        meta: {
+          type: 'object',
+          properties: {
+            page: { type: 'number' },
+            limit: { type: 'number' },
+            total: { type: 'number' },
+            totalPages: { type: 'number' },
+            hasNext: { type: 'boolean' },
+            hasPrev: { type: 'boolean' },
+          },
+        },
+      },
+    },
   })
   @ApiInternalServerErrorResponse({
     description: 'Internal server error',
   })
   async findByTeacher(
     @Param('teacherId') teacherId: string,
-  ): Promise<AssignmentDto[]> {
-    return this.assignmentsService.findByTeacher(teacherId);
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+    @Query('difficulty') difficulty?: number,
+    @Query('status') status?: string,
+  ) {
+    return this.assignmentsService.findByTeacher(
+      teacherId,
+      page,
+      limit,
+      search,
+      difficulty,
+      status,
+    );
   }
 
   @Get(':id')

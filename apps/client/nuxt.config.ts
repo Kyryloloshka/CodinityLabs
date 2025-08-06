@@ -4,7 +4,11 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@nuxt/ui', '@pinia/nuxt'],
-  css: ['~/assets/css/app.css'],
+  imports: {
+    dirs: ['composables/**']
+  },
+
+  css: ['~/assets/css/app.css', '~/assets/css/nuxt-ui-overrides.css'],
   pages: true,
   router: {
     options: {
@@ -15,6 +19,12 @@ export default defineNuxtConfig({
     plugins: [
       tailwindcss(),
     ],
+    optimizeDeps: {
+      include: ['monaco-editor']
+    },
+    define: {
+      global: 'globalThis'
+    }
   },
   runtimeConfig: {
     public: {
@@ -25,8 +35,8 @@ export default defineNuxtConfig({
     host: '0.0.0.0',
     port: 3000
   },
-  ui: {
-    global: true,
-    icons: ['heroicons']
+
+  build: {
+    transpile: ['monaco-editor']
   }
 })

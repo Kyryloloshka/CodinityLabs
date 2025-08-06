@@ -6,5 +6,6 @@ export class TestCaseDto {
 
 export class CheckDto {
   code: string;
+  language?: string;
   testCases: TestCaseDto[];
 }

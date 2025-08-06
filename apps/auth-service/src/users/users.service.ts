@@ -27,7 +27,6 @@ export class UsersService {
 
   async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
     try {
-      // Перевіряємо чи користувач вже існує
       const existingUser = await this.userRepository.findByEmail(
         createUserDto.email,
       );
@@ -35,7 +34,6 @@ export class UsersService {
         throw new UserAlreadyExistsException(createUserDto.email);
       }
 
-      // Хешуємо пароль
       const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
       const createUserData: CreateUserData = {
@@ -102,13 +100,11 @@ export class UsersService {
     updateUserDto: UpdateUserDto,
   ): Promise<UserResponseDto> {
     try {
-      // Перевіряємо чи користувач існує
       const existingUser = await this.userRepository.findById(id);
       if (!existingUser) {
         throw new UserNotFoundException(id);
       }
 
-      // Якщо оновлюється email, перевіряємо чи він не зайнятий
       if (updateUserDto.email && updateUserDto.email !== existingUser.email) {
         const userWithEmail = await this.userRepository.findByEmail(
           updateUserDto.email,
@@ -140,7 +136,6 @@ export class UsersService {
 
   async remove(id: string): Promise<UserResponseDto> {
     try {
-      // Перевіряємо чи користувач існує
       const existingUser = await this.userRepository.findById(id);
       if (!existingUser) {
         throw new UserNotFoundException(id);

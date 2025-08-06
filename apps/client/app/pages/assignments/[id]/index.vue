@@ -1,20 +1,20 @@
 <template>
-  <div class="px-4 py-6 sm:px-0">
+  <div class="">
     <!-- Завантаження -->
     <div v-if="loading" class="flex justify-center py-12">
       <div class="text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-        <p class="mt-4 text-sm text-gray-600">Завантаження завдання...</p>
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-primary mx-auto"></div>
+        <p class="mt-4 text-sm text-theme-secondary">Завантаження завдання...</p>
       </div>
     </div>
 
     <!-- Помилка -->
-    <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-lg p-4">
+    <div v-else-if="error" class="bg-error border border-error rounded-lg p-4">
       <div class="flex">
-        <UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-red-400" />
+        <UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-error" />
         <div class="ml-3">
-          <h3 class="text-sm font-medium text-red-800">Помилка завантаження</h3>
-          <p class="mt-1 text-sm text-red-700">{{ error }}</p>
+          <h3 class="text-sm font-medium text-error">Помилка завантаження</h3>
+          <p class="mt-1 text-sm text-error-light">{{ error }}</p>
         </div>
       </div>
     </div>
@@ -25,9 +25,9 @@
       <div class="mb-8">
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="text-3xl font-bold text-gray-900">{{ assignment.title }}</h1>
-            <div class="flex items-center gap-4 mt-2 text-sm text-gray-600">
-              <UBadge :color="getDifficultyColor(assignment.difficulty)" variant="subtle">
+            <h1 class="text-3xl font-bold text-theme-primary">{{ assignment.title }}</h1>
+            <div class="flex items-center gap-4 mt-2 text-sm text-theme-secondary">
+              <UBadge color="secondary" variant="subtle">
                 Складність: {{ assignment.difficulty }}/10
               </UBadge>
               <span>Дедлайн: {{ formatDate(assignment.deadline) }}</span>
@@ -37,7 +37,7 @@
           
           <!-- Кнопки дій -->
           <div class="flex gap-2">
-            <UButton to="/assignments" variant="ghost" color="neutral">
+            <UButton to="/assignments" variant="ghost" color="neutral" class="text-theme-primary hover:bg-theme-hover">
               <UIcon name="i-heroicons-arrow-left" class="mr-2 h-4 w-4" />
               Назад
             </UButton>
@@ -48,6 +48,7 @@
                 @click="navigateTo(`/assignments/${assignmentId}/submit`)"
                 variant="solid"
                 color="success"
+                class="text-theme-primary cursor-pointer"
               >
                 <UIcon name="i-heroicons-paper-airplane" class="mr-2 h-4 w-4" />
                 Здати рішення
@@ -82,39 +83,39 @@
       </div>
 
       <!-- Опис завдання -->
-      <div class="bg-white shadow rounded-lg p-6 mb-6">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Опис завдання</h2>
+      <div class="bg-theme-card shadow rounded-lg p-6 mb-6 border border-theme-primary">
+        <h2 class="text-xl font-semibold text-theme-primary mb-4">Опис завдання</h2>
         <div class="prose max-w-none">
-          <p class="text-gray-700 whitespace-pre-wrap">{{ assignment.description }}</p>
+          <p class="text-theme-primary whitespace-pre-wrap">{{ assignment.description }}</p>
         </div>
       </div>
 
       <!-- Тестові випадки -->
-      <div class="bg-white shadow rounded-lg p-6 mb-6">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Тестові випадки</h2>
+      <div class="bg-theme-card shadow rounded-lg p-6 mb-6 border border-theme-primary">
+        <h2 class="text-xl font-semibold text-theme-primary mb-4">Тестові випадки</h2>
         <div class="grid gap-4">
           <div
             v-for="(testCase, index) in assignment.testCases"
             :key="testCase.id"
-            class="border border-gray-200 rounded-lg p-4"
+            class="border border-theme-primary rounded-lg p-4 bg-theme-secondary"
           >
             <div class="flex items-center justify-between mb-2">
-              <h3 class="font-medium text-gray-900">Тест {{ index + 1 }}</h3>
+              <h3 class="font-medium text-theme-primary">Тест {{ index + 1 }}</h3>
               <UBadge color="primary" variant="subtle">Тестовий випадок</UBadge>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
               <div>
-                <label class="block text-sm font-medium text-gray-500 mb-1">Вхідні дані</label>
-                <div class="bg-gray-50 p-2 rounded border font-mono">{{ testCase.input }}</div>
+                <label class="block text-sm font-medium text-theme-secondary mb-1">Вхідні дані</label>
+                <div class="bg-theme-input p-2 rounded border border-theme-primary font-mono text-theme-primary">{{ testCase.input }}</div>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-500 mb-1">Очікуваний результат</label>
-                <div class="bg-gray-50 p-2 rounded border font-mono">{{ testCase.expected }}</div>
+                <label class="block text-sm font-medium text-theme-secondary mb-1">Очікуваний результат</label>
+                <div class="bg-theme-input p-2 rounded border border-theme-primary font-mono text-theme-primary">{{ testCase.expected }}</div>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-500 mb-1">Опис</label>
-                <div class="bg-gray-50 p-2 rounded border">{{ testCase.description }}</div>
+                <label class="block text-sm font-medium text-theme-secondary mb-1">Опис</label>
+                <div class="bg-theme-input p-2 rounded border border-theme-primary text-theme-primary">{{ testCase.description }}</div>
               </div>
             </div>
           </div>
@@ -122,47 +123,47 @@
       </div>
 
       <!-- Подання студентів (тільки для викладачів) -->
-      <div v-if="isTeacher" class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Подання студентів</h2>
+      <div v-if="isTeacher" class="bg-theme-card shadow rounded-lg p-6 border border-theme-primary">
+        <h2 class="text-xl font-semibold text-theme-primary mb-4">Подання студентів</h2>
         
         <div v-if="submissionsLoading" class="text-center py-4">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-          <p class="mt-2 text-sm text-gray-600">Завантаження подань...</p>
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-primary mx-auto"></div>
+          <p class="mt-2 text-sm text-theme-secondary">Завантаження подань...</p>
         </div>
         
         <div v-else-if="submissions.length > 0" class="space-y-4">
           <div
             v-for="submission in submissions"
             :key="submission.id"
-            class="border border-gray-200 rounded-lg p-4"
+            class="border border-theme-primary rounded-lg p-4 bg-theme-secondary"
           >
             <div class="flex items-center justify-between mb-2">
               <div class="flex items-center gap-2">
-                <UIcon name="i-heroicons-user" class="h-4 w-4 text-gray-400" />
-                <span class="font-medium">Студент ID: {{ submission.userId }}</span>
+                <UIcon name="i-heroicons-user" class="h-4 w-4 text-theme-muted" />
+                <span class="font-medium text-theme-primary">Студент ID: {{ submission.userId }}</span>
               </div>
               <div class="flex items-center gap-2">
                 <UBadge :color="getStatusColor(submission.status)" variant="subtle">
                   {{ getStatusLabel(submission.status) }}
                 </UBadge>
-                <span class="text-sm text-gray-500">{{ formatDate(submission.createdAt) }}</span>
+                <span class="text-sm text-theme-secondary">{{ formatDate(submission.createdAt) }}</span>
               </div>
             </div>
             
-            <div class="bg-gray-50 p-3 rounded border font-mono text-sm overflow-x-auto">
+            <div class="bg-theme-input p-3 rounded border border-theme-primary font-mono text-sm overflow-x-auto text-theme-primary">
               <pre>{{ submission.code }}</pre>
             </div>
             
             <div v-if="submission.score !== null" class="mt-2">
-              <span class="text-sm font-medium">Оцінка: {{ submission.score }}</span>
+              <span class="text-sm font-medium text-theme-primary">Оцінка: {{ submission.score }}</span>
             </div>
           </div>
         </div>
         
         <div v-else class="text-center py-8">
-          <UIcon name="i-heroicons-document-text" class="mx-auto h-12 w-12 text-gray-400" />
-          <h3 class="mt-2 text-sm font-medium text-gray-900">Немає подань</h3>
-          <p class="mt-1 text-sm text-gray-500">Студенти ще не здавали рішення для цього завдання</p>
+          <UIcon name="i-heroicons-document-text" class="mx-auto h-12 w-12 text-theme-muted" />
+          <h3 class="mt-2 text-sm font-medium text-theme-primary">Немає подань</h3>
+          <p class="mt-1 text-sm text-theme-secondary">Студенти ще не здавали рішення для цього завдання</p>
         </div>
       </div>
     </div>
@@ -180,6 +181,7 @@ definePageMeta({
 const route = useRoute()
 const authStore = useAuthStore()
 const { getAssignment, getAssignmentSubmissions } = useAssignments()
+const toast = useToast()
 
 // Реактивні дані
 const assignment = ref<any>(null)
@@ -198,9 +200,33 @@ const loadAssignment = async () => {
     loading.value = true
     error.value = ''
     assignment.value = await getAssignment(assignmentId.value)
-  } catch (err) {
+  } catch (err: any) {
     error.value = 'Помилка завантаження завдання'
     console.error(err)
+    
+    // Перевіряємо, чи це помилка 404 (завдання не знайдено)
+    if (err?.status === 404 || err?.statusCode === 404) {
+      toast.add({
+        title: 'Помилка',
+        description: 'Таке завдання не доступне',
+        color: 'error'
+      })
+      // Затримка перед перенаправленням
+      setTimeout(async () => {
+        await navigateTo('/assignments')
+      }, 2000)
+      return
+    }
+    
+    // Для інших помилок також показуємо повідомлення
+    toast.add({
+      title: 'Помилка',
+      description: 'Помилка завантаження завдання',
+      color: 'error'
+    })
+    setTimeout(async () => {
+      await navigateTo('/assignments')
+    }, 2000)
   } finally {
     loading.value = false
   }
@@ -219,12 +245,6 @@ const loadSubmissions = async () => {
   }
 }
 
-const getDifficultyColor = (difficulty: number) => {
-  if (difficulty <= 3) return 'success'
-  if (difficulty <= 6) return 'warning'
-  if (difficulty <= 8) return 'warning'
-  return 'error'
-}
 
 const getStatusColor = (status: string) => {
   switch (status) {
