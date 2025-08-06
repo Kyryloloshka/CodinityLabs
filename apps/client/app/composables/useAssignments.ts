@@ -111,6 +111,7 @@ interface TestResult {
   expected: string
   description: string
   input: string
+  timeout?: boolean
 }
 
 interface CheckCodeResponse {

@@ -65,6 +65,8 @@ interface Props {
   selectedTestCaseIndex: number
   selectedResultIndex: number
   fullTestResults?: any
+  testing?: boolean
+  totalTests?: number
 }
 
 interface Emits {

@@ -5,19 +5,22 @@ import {
   LintErrorDto,
   TestResultDto,
 } from './dto/check-result.dto';
+import { SafeCodeExecutorService } from './safe-code-executor.service';
 
 @Injectable()
 export class CheckerService {
-  constructor() {}
+  constructor(
+    private readonly safeCodeExecutorService: SafeCodeExecutorService,
+  ) {}
 
-  checkCode(checkDto: CheckDto): CheckResultDto {
+  async checkCode(checkDto: CheckDto): Promise<CheckResultDto> {
     const { code, testCases, language = 'javascript' } = checkDto;
 
     // Базова перевірка коду з урахуванням мови програмування
     const lintResults = this.runLintAnalysis(code, language);
 
-    // Виконання тестів
-    const testResults = this.runTests(code, testCases, language);
+    // Виконання тестів в безпечному середовищі
+    const testResults = await this.runTestsSafely(code, testCases, language);
 
     // Розрахунок score
     const score = this.calculateScore(lintResults, testResults);
@@ -102,16 +105,22 @@ export class CheckerService {
     }
   }
 
-  private runTests(
+  private async runTestsSafely(
     code: string,
     testCases: TestCaseDto[],
     language: string,
-  ): TestResultDto[] {
+  ): Promise<TestResultDto[]> {
     const results: TestResultDto[] = [];
 
+    // Виконуємо тести послідовно в безпечному середовищі
     for (const testCase of testCases) {
       try {
-        const result = this.runSingleTest(code, testCase, language);
+        const result = await this.safeCodeExecutorService.executeCodeSafely(
+          code,
+          testCase,
+          language,
+          1000, // 1 секунда таймаут
+        );
         results.push(result);
       } catch (error) {
         console.error('Test execution error:', error);
@@ -123,117 +132,12 @@ export class CheckerService {
           expected: testCase.expected,
           description: testCase.description,
           input: testCase.input,
+          timeout: false,
         });
       }
     }
 
     return results;
-  }
-
-  private runSingleTest(
-    code: string,
-    testCase: TestCaseDto,
-    language: string,
-  ): TestResultDto {
-    try {
-      const safeCode = this.createSafeExecutionCode(
-        code,
-        testCase.input,
-        language,
-      );
-      const actual = this.executeCodeSafely(safeCode);
-      const actualString = String(actual);
-      const passed = actualString === testCase.expected;
-
-      return {
-        passed,
-        actual: actualString,
-        expected: testCase.expected,
-        description: testCase.description,
-        input: testCase.input,
-      };
-    } catch (error) {
-      return {
-        passed: false,
-        actual:
-          'Error: ' + (error instanceof Error ? error.message : String(error)),
-        expected: testCase.expected,
-        description: testCase.description,
-        input: testCase.input,
-      };
-    }
-  }
-
-  private createSafeExecutionCode(
-    code: string,
-    input: unknown,
-    language: string,
-  ): string {
-    let processedCode = code;
-    if (language === 'typescript') {
-      processedCode = this.removeTypeScriptTypes(code);
-    }
-
-    return `
-      ${processedCode}
-      
-      if (typeof main !== 'function' && typeof solution !== 'function') {
-        throw new Error('Function main or solution is not defined');
-      }
-      
-      const func = typeof main === 'function' ? main : solution;
-      return func(${JSON.stringify(input)});
-    `;
-  }
-
-  private removeTypeScriptTypes(code: string): string {
-    let result = code;
-
-    // Видаляємо типи параметрів функцій
-    result = result.replace(/:\s*[a-zA-Z<>[\]()|&, \s]+(?=\s*[,)])/g, '');
-
-    // Видаляємо типи змінних
-    result = result.replace(
-      /const\s+(\w+):\s*[a-zA-Z<>[\]()|&, \s]+/g,
-      'const $1',
-    );
-    result = result.replace(/let\s+(\w+):\s*[a-zA-Z<>[\]()|&, \s]+/g, 'let $1');
-    result = result.replace(/var\s+(\w+):\s*[a-zA-Z<>[\]()|&, \s]+/g, 'var $1');
-
-    // Видаляємо return типи функцій
-    result = result.replace(
-      /function\s+(\w+)\s*\([^)]*\)\s*:\s*[a-zA-Z<>[\]()|&, \s]+/g,
-      (match) => {
-        return match.replace(/:\s*[a-zA-Z<>[\]()|&, \s]+$/, '');
-      },
-    );
-
-    // Видаляємо interface та type declarations
-    result = result.replace(/interface\s+\w+\s*\{[^}]*\}/g, '');
-    result = result.replace(/type\s+\w+\s*=\s*[^;]+;/g, '');
-
-    // Видаляємо import statements
-    result = result.replace(/import\s+.*?from\s+['"][^'"]+['"];?\n?/g, '');
-
-    // Видаляємо export statements
-    result = result.replace(/export\s+/g, '');
-
-    // Видаляємо залишкові типи
-    result = result.replace(/:\s*[a-zA-Z<>[\]()|&, \s]+/g, '');
-
-    return result;
-  }
-
-  private executeCodeSafely(code: string): unknown {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-implied-eval
-      const executeCode = new Function(code) as () => unknown;
-      return executeCode();
-    } catch (error) {
-      throw new Error(
-        `Code execution failed: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
   }
 
   private calculateScore(

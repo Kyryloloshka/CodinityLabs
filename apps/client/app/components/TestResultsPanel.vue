@@ -23,6 +23,9 @@
         <UBadge v-if="fullFailedTests > 0" color="error" variant="subtle" size="xs">
           {{ fullFailedTests }} не пройдено
         </UBadge>
+        <UBadge v-if="fullTimeoutTests > 0" color="warning" variant="subtle" size="xs">
+          {{ fullTimeoutTests }} таймаут
+        </UBadge>
       </div>
     </div>
 
@@ -59,8 +62,8 @@
           @click="$emit('update:selectedResultIndex', index)"
           class="px-3 py-1 text-xs rounded-full transition-colors"
           :class="selectedResultIndex === index 
-            ? (test.passed ? 'bg-green-700 text-white' : 'bg-red-700 text-white')
-            : (test.passed ? 'bg-green-200 text-green-700 hover:bg-green-300' : 'bg-red-200 text-red-700 hover:bg-red-300')"
+            ? (test.passed ? 'bg-success text-success-light' : test.timeout ? 'bg-warning text-warning-light' : 'bg-error text-error-light')
+            : (test.passed ? 'bg-success/20 text-success hover:bg-success/30' : test.timeout ? 'bg-warning/20 text-warning hover:bg-warning/30' : 'bg-error/20 text-error hover:bg-error/30')"
         >
           Тест {{ index + 1 }}
         </button>
@@ -70,16 +73,20 @@
       <div v-if="selectedResultIndex >= 0 && checkResults.tests[selectedResultIndex]">
         <div 
           class="border rounded p-3"
-          :class="checkResults.tests[selectedResultIndex].passed ? 'border-success bg-success' : 'border-error bg-error'"
+          :class="checkResults.tests[selectedResultIndex].passed 
+            ? 'border-success bg-success' 
+            : checkResults.tests[selectedResultIndex].timeout 
+              ? 'border-warning bg-warning' 
+              : 'border-error bg-error'"
         >
           <div class="flex items-center justify-between mb-2">
             <span class="text-xs font-medium text-theme-primary">{{ checkResults.tests[selectedResultIndex].description }}</span>
             <UBadge 
-              :color="checkResults.tests[selectedResultIndex].passed ? 'success' : 'error'"
+              :color="checkResults.tests[selectedResultIndex].passed ? 'success' : checkResults.tests[selectedResultIndex].timeout ? 'warning' : 'error'"
               variant="solid"
               size="xs"
             >
-              {{ checkResults.tests[selectedResultIndex].passed ? '✓' : '✗' }}
+              {{ checkResults.tests[selectedResultIndex].passed ? '✓' : checkResults.tests[selectedResultIndex].timeout ? '⏱' : '✗' }}
             </UBadge>
           </div>
           
@@ -94,7 +101,12 @@
             </div>
             <div class="flex justify-between">
               <span class="text-theme-secondary">Отримано:</span>
-              <span class="font-mono" :class="checkResults.tests[selectedResultIndex].passed ? 'text-green-600' : 'text-red-600'">
+              <span class="font-mono" 
+                :class="checkResults.tests[selectedResultIndex].passed 
+                  ? 'text-success' 
+                  : checkResults.tests[selectedResultIndex].timeout 
+                    ? 'text-warning' 
+                    : 'text-error'">
                 {{ checkResults.tests[selectedResultIndex].actual }}
               </span>
             </div>
@@ -126,6 +138,11 @@ const fullPassedTests = computed(() => {
 
 const fullFailedTests = computed(() => {
   if (!props.fullTestResults?.tests) return 0
-  return props.fullTestResults.tests.filter((test: any) => !test.passed).length
+  return props.fullTestResults.tests.filter((test: any) => !test.passed && !test.timeout).length
+})
+
+const fullTimeoutTests = computed(() => {
+  if (!props.fullTestResults?.tests) return 0
+  return props.fullTestResults.tests.filter((test: any) => test.timeout).length
 })
 </script> 

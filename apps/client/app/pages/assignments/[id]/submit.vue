@@ -41,6 +41,7 @@
           :selected-result-index="selectedResultIndex"
           :total-tests="assignment?.testCases?.length || 0"
           :full-test-results="fullTestResults"
+          :testing="testing"
           @update:active-tab="activeTab = $event"
           @update:selected-test-case-index="selectedTestCaseIndex = $event"
           @update:selected-result-index="selectedResultIndex = $event"
