@@ -527,6 +527,9 @@ importers:
       eslint:
         specifier: ^9.32.0
         version: 9.32.0(jiti@2.5.1)
+      joi:
+        specifier: ^17.13.3
+        version: 17.13.3
       jose:
         specifier: ^5.2.0
         version: 5.10.0
