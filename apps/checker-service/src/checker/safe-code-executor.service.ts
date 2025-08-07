@@ -173,7 +173,7 @@ export class SafeCodeExecutorService {
   private async executeWithTimeout(
     code: string,
     input: unknown,
-    sandbox: any,
+    sandbox: Record<string, unknown>,
     timeout: number,
   ): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -204,13 +204,13 @@ export class SafeCodeExecutorService {
           timeout: timeout,
           displayErrors: false,
           breakOnSigint: false,
-        });
+        }) as unknown;
 
         clearTimeout(timeoutId);
         resolve(String(result));
       } catch (error) {
         clearTimeout(timeoutId);
-        reject(error);
+        reject(error instanceof Error ? error : new Error(String(error)));
       }
     });
   }

@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString, MinLength, IsEnum, IsOptional, ValidateIf } from 'class-validator';
+import {
+  IsEmail,
+  IsString,
+  MinLength,
+  IsEnum,
+  IsOptional,
+  ValidateIf,
+} from 'class-validator';
 import { UserRole } from '@prisma/client';
 
 export class LoginDto {
@@ -143,11 +150,11 @@ export class UpdateProfileDto {
   name?: string;
 
   @ApiProperty({
-    description: 'Поточний пароль (обов\'язковий для зміни паролю)',
+    description: "Поточний пароль (обов'язковий для зміни паролю)",
     example: 'currentPassword123',
     required: false,
   })
-  @ValidateIf((o) => o.newPassword !== undefined)
+  @ValidateIf((o: any) => o.newPassword !== undefined)
   @IsString({ message: 'Поточний пароль має бути рядком' })
   currentPassword?: string;
 
@@ -167,7 +174,7 @@ export class UpdateProfileDto {
     example: 'newPassword123',
     required: false,
   })
-  @ValidateIf((o) => o.newPassword !== undefined)
+  @ValidateIf((o: any) => o.newPassword !== undefined)
   @IsString({ message: 'Підтвердження паролю має бути рядком' })
   confirmPassword?: string;
 }

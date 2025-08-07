@@ -67,7 +67,7 @@ export class UsersService {
       console.log('UsersService.findOne - searching for id:', id);
       const user = await this.userRepository.findById(id);
       console.log('UsersService.findOne - found user:', user);
-      
+
       if (!user) {
         throw new UserNotFoundException(id);
       }

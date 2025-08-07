@@ -29,10 +29,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     try {
       console.log('JWT Strategy - payload.sub:', payload.sub);
       console.log('JWT Strategy - payload:', payload);
-      
+
       const user = await this.usersService.findOne(payload.sub);
       console.log('JWT Strategy - found user:', user);
-      
+
       if (!user) {
         throw new UnauthorizedException('Користувача не знайдено');
       }

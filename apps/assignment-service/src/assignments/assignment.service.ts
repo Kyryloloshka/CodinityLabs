@@ -7,6 +7,7 @@ import {
   PaginationDto,
   PaginatedResponseDto,
 } from '../common/dto/pagination.dto';
+import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class AssignmentService {
@@ -20,7 +21,7 @@ export class AssignmentService {
       throw new Error('Потрібно мінімум 3 публічних тести для завдання');
     }
 
-    return this.prisma.assignment.create({
+    return await this.prisma.assignment.create({
       data: {
         ...assignmentData,
         deadline: new Date(assignmentData.deadline),

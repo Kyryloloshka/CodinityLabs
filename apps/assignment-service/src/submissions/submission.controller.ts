@@ -59,8 +59,10 @@ export class SubmissionController {
     @Param('userId') userId: string,
     @Param('assignmentId') assignmentId: string,
   ) {
-    const submissions =
-      await this.submissionService.findByUserAndAssignment(userId, assignmentId);
+    const submissions = await this.submissionService.findByUserAndAssignment(
+      userId,
+      assignmentId,
+    );
     return ApiResponseDto.success(
       submissions,
       'User assignment submissions retrieved successfully',
@@ -84,7 +86,8 @@ export class SubmissionController {
 
   @Get('assignment/:assignmentId/statistics')
   async getAssignmentStatistics(@Param('assignmentId') assignmentId: string) {
-    const statistics = await this.submissionService.getAssignmentStatistics(assignmentId);
+    const statistics =
+      await this.submissionService.getAssignmentStatistics(assignmentId);
     return ApiResponseDto.success(
       statistics,
       'Assignment statistics retrieved successfully',

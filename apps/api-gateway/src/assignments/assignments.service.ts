@@ -347,7 +347,9 @@ export class AssignmentsService {
       const statistics = await this.getAssignmentStatistics(assignmentId);
 
       // Отримуємо інформацію про користувачів
-      const userIds = statistics.userStatistics.map((stat: any) => stat.userId);
+      const userIds = (statistics.userStatistics as any[]).map(
+        (stat: any) => stat.userId,
+      );
       const users = await Promise.all(
         userIds.map(async (userId: string) => {
           try {
@@ -366,15 +368,15 @@ export class AssignmentsService {
       );
 
       // Додаємо інформацію про користувачів до статистики
-      const userMap: any = {};
+      const userMap: Record<string, any> = {};
       users.forEach((user: any) => {
-        userMap[user.id] = user;
+        userMap[user.id as string] = user;
       });
 
-      statistics.userStatistics = statistics.userStatistics.map(
+      statistics.userStatistics = (statistics.userStatistics as any[]).map(
         (stat: any) => ({
           ...stat,
-          user: userMap[stat.userId] || {
+          user: userMap[stat.userId as string] || {
             id: stat.userId,
             name: `Студент ${stat.userId.slice(0, 8)}`,
             email: 'unknown@example.com',
@@ -385,7 +387,7 @@ export class AssignmentsService {
       );
 
       return statistics;
-    } catch (error) {
+    } catch {
       throw new HttpException(
         'Failed to fetch assignment statistics with users',
         HttpStatus.INTERNAL_SERVER_ERROR,

@@ -238,7 +238,10 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
-    const updateData: any = {};
+    const updateData: Partial<{
+      name: string;
+      password: string;
+    }> = {};
 
     // Оновлення імені
     if (updateProfileDto.name) {
