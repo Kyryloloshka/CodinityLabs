@@ -7,6 +7,17 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 
+// Proper Prisma types using Prisma.SubmissionGetPayload
+type SubmissionWithAssignment = Prisma.SubmissionGetPayload<{
+  include: {
+    assignment: {
+      include: {
+        testCases: true;
+      };
+    };
+  };
+}>;
+
 interface TestResult {
   passed: boolean;
   actual: string;
@@ -40,7 +51,9 @@ export class SubmissionService {
     this.checkerServiceUrl = url;
   }
 
-  async create(createSubmissionDto: CreateSubmissionDto) {
+  async create(
+    createSubmissionDto: CreateSubmissionDto,
+  ): Promise<SubmissionWithAssignment> {
     // Check max attempts before creating submission
     const maxAttemptsCheck = await this.checkMaxAttempts(
       createSubmissionDto.userId,
@@ -187,8 +200,8 @@ export class SubmissionService {
     }
   }
 
-  async findAll() {
-    return this.prisma.submission.findMany({
+  async findAll(): Promise<SubmissionWithAssignment[]> {
+    return await this.prisma.submission.findMany({
       include: {
         assignment: {
           include: {
@@ -199,7 +212,7 @@ export class SubmissionService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string): Promise<SubmissionWithAssignment> {
     const submission = await this.prisma.submission.findUnique({
       where: { id },
       include: {
@@ -218,8 +231,8 @@ export class SubmissionService {
     return submission;
   }
 
-  async findByUser(userId: string) {
-    return this.prisma.submission.findMany({
+  async findByUser(userId: string): Promise<SubmissionWithAssignment[]> {
+    return await this.prisma.submission.findMany({
       where: { userId },
       include: {
         assignment: {
@@ -231,8 +244,10 @@ export class SubmissionService {
     });
   }
 
-  async findByAssignment(assignmentId: string) {
-    return this.prisma.submission.findMany({
+  async findByAssignment(
+    assignmentId: string,
+  ): Promise<SubmissionWithAssignment[]> {
+    return await this.prisma.submission.findMany({
       where: { assignmentId },
       include: {
         assignment: {
@@ -244,8 +259,11 @@ export class SubmissionService {
     });
   }
 
-  async findByUserAndAssignment(userId: string, assignmentId: string) {
-    return this.prisma.submission.findMany({
+  async findByUserAndAssignment(
+    userId: string,
+    assignmentId: string,
+  ): Promise<SubmissionWithAssignment[]> {
+    return await this.prisma.submission.findMany({
       where: {
         userId,
         assignmentId,
@@ -268,10 +286,10 @@ export class SubmissionService {
     status: SubmissionStatus,
     testResults?: Prisma.InputJsonValue,
     score?: number,
-  ) {
+  ): Promise<SubmissionWithAssignment> {
     await this.findOne(id);
 
-    return this.prisma.submission.update({
+    return await this.prisma.submission.update({
       where: { id },
       data: {
         status,
@@ -288,10 +306,10 @@ export class SubmissionService {
     });
   }
 
-  async remove(id: string) {
+  async remove(id: string): Promise<{ id: string }> {
     await this.findOne(id);
 
-    return this.prisma.submission.delete({
+    return await this.prisma.submission.delete({
       where: { id },
     });
   }
@@ -313,34 +331,44 @@ export class SubmissionService {
 
     // Групуємо подання по користувачах
     const userSubmissions = submissions.reduce(
-      (acc, submission) => {
+      (
+        acc: Record<string, SubmissionWithAssignment[]>,
+        submission: SubmissionWithAssignment,
+      ) => {
         if (!acc[submission.userId]) {
           acc[submission.userId] = [];
         }
         acc[submission.userId].push(submission);
         return acc;
       },
-      {} as Record<string, typeof submissions>,
+      {} as Record<string, SubmissionWithAssignment[]>,
     );
 
     // Підраховуємо статистику для кожного користувача
     const statistics = Object.entries(userSubmissions).map(
-      ([userId, userSubs]) => {
+      ([userId, userSubs]: [string, SubmissionWithAssignment[]]) => {
         const totalSubmissions = userSubs.length;
         const completedSubmissions = userSubs.filter(
-          (sub) => sub.status === 'COMPLETED',
+          (sub: SubmissionWithAssignment) =>
+            sub.status === SubmissionStatus.COMPLETED,
         ).length;
         const failedSubmissions = userSubs.filter(
-          (sub) => sub.status === 'FAILED',
+          (sub: SubmissionWithAssignment) =>
+            sub.status === SubmissionStatus.FAILED,
         ).length;
         const pendingSubmissions = userSubs.filter(
-          (sub) => sub.status === 'PENDING' || sub.status === 'PROCESSING',
+          (sub: SubmissionWithAssignment) =>
+            sub.status === SubmissionStatus.PENDING ||
+            sub.status === SubmissionStatus.PROCESSING,
         ).length;
 
         // Знаходимо найкращий результат
         const bestSubmission = userSubs
-          .filter((sub) => sub.score !== null)
-          .sort((a, b) => (b.score || 0) - (a.score || 0))[0];
+          .filter((sub: SubmissionWithAssignment) => sub.score !== null)
+          .sort(
+            (a: SubmissionWithAssignment, b: SubmissionWithAssignment) =>
+              (b.score || 0) - (a.score || 0),
+          )[0];
 
         return {
           userId,

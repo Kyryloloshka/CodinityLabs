@@ -7,15 +7,38 @@ import {
   PaginationDto,
   PaginatedResponseDto,
 } from '../common/dto/pagination.dto';
-import { Assignment, TestCase, AssignmentSettings } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
-type AssignmentWithRelations = Assignment & {
-  testCases: TestCase[];
-  settings: AssignmentSettings | null;
-  _count?: {
-    submissions: number;
+// Type for methods that need _count (like findAll)
+type AssignmentWithRelations = Prisma.AssignmentGetPayload<{
+  include: {
+    testCases: true;
+    settings: true;
+    _count: {
+      select: {
+        submissions: true;
+      };
+    };
   };
-};
+}>;
+
+// Type for methods that don't need _count (like create, findOne, update, delete)
+type AssignmentWithBasicRelations = Prisma.AssignmentGetPayload<{
+  include: {
+    testCases: true;
+    settings: true;
+  };
+}>;
+
+type SubmissionWithAssignment = Prisma.SubmissionGetPayload<{
+  include: {
+    assignment: {
+      include: {
+        testCases: true;
+      };
+    };
+  };
+}>;
 
 interface WhereFilter {
   OR?: Array<{
@@ -33,7 +56,7 @@ export class AssignmentService {
 
   async create(
     createAssignmentDto: CreateAssignmentDto,
-  ): Promise<AssignmentWithRelations> {
+  ): Promise<AssignmentWithBasicRelations> {
     const { testCases, settings, ...assignmentData } = createAssignmentDto;
 
     const publicTests = testCases.filter((tc) => tc.isPublic);
@@ -41,7 +64,7 @@ export class AssignmentService {
       throw new Error('Потрібно мінімум 3 публічних тести для завдання');
     }
 
-    return (await this.prisma.assignment.create({
+    return await this.prisma.assignment.create({
       data: {
         ...assignmentData,
         deadline: new Date(assignmentData.deadline),
@@ -58,7 +81,7 @@ export class AssignmentService {
         testCases: true,
         settings: true,
       },
-    })) as unknown as AssignmentWithRelations;
+    });
   }
 
   async findAll(
@@ -112,9 +135,9 @@ export class AssignmentService {
         orderBy: {
           createdAt: 'desc',
         },
-      })) as unknown as AssignmentWithRelations[],
+      })) as AssignmentWithRelations[],
 
-      this.prisma.assignment.count({ where }) as Promise<number>,
+      await this.prisma.assignment.count({ where }),
     ]);
 
     const totalPages = Math.ceil(total / limit);
@@ -186,9 +209,9 @@ export class AssignmentService {
         orderBy: {
           createdAt: 'desc',
         },
-      })) as unknown as AssignmentWithRelations[],
+      })) as AssignmentWithRelations[],
 
-      this.prisma.assignment.count({ where }) as Promise<number>,
+      await this.prisma.assignment.count({ where }),
     ]);
 
     const totalPages = Math.ceil(total / limit);
@@ -206,14 +229,14 @@ export class AssignmentService {
     };
   }
 
-  async findOne(id: string): Promise<AssignmentWithRelations> {
-    const assignment = (await this.prisma.assignment.findUnique({
+  async findOne(id: string): Promise<AssignmentWithBasicRelations> {
+    const assignment = await this.prisma.assignment.findUnique({
       where: { id },
       include: {
         testCases: true,
         settings: true,
       },
-    })) as unknown as AssignmentWithRelations | null;
+    });
 
     if (!assignment) {
       throw new AssignmentNotFoundException(id);
@@ -222,8 +245,8 @@ export class AssignmentService {
     return assignment;
   }
 
-  async findOneForStudent(id: string): Promise<AssignmentWithRelations> {
-    const assignment = (await this.prisma.assignment.findUnique({
+  async findOneForStudent(id: string): Promise<AssignmentWithBasicRelations> {
+    const assignment = await this.prisma.assignment.findUnique({
       where: { id },
       include: {
         testCases: {
@@ -231,7 +254,7 @@ export class AssignmentService {
         },
         settings: true,
       },
-    })) as unknown as AssignmentWithRelations | null;
+    });
 
     if (!assignment) {
       throw new AssignmentNotFoundException(id);
@@ -240,14 +263,14 @@ export class AssignmentService {
     return assignment;
   }
 
-  async findOneForTeacher(id: string): Promise<AssignmentWithRelations> {
-    const assignment = (await this.prisma.assignment.findUnique({
+  async findOneForTeacher(id: string): Promise<AssignmentWithBasicRelations> {
+    const assignment = await this.prisma.assignment.findUnique({
       where: { id },
       include: {
         testCases: true,
         settings: true,
       },
-    })) as unknown as AssignmentWithRelations | null;
+    });
 
     if (!assignment) {
       throw new AssignmentNotFoundException(id);
@@ -259,7 +282,7 @@ export class AssignmentService {
   async update(
     id: string,
     updateAssignmentDto: UpdateAssignmentDto,
-  ): Promise<AssignmentWithRelations> {
+  ): Promise<AssignmentWithBasicRelations> {
     const { testCases, settings, ...assignmentData } = updateAssignmentDto;
 
     const existingAssignment = await this.prisma.assignment.findUnique({
@@ -271,7 +294,7 @@ export class AssignmentService {
       throw new AssignmentNotFoundException(id);
     }
 
-    return (await this.prisma.assignment.update({
+    return await this.prisma.assignment.update({
       where: { id },
       data: {
         ...assignmentData,
@@ -297,10 +320,10 @@ export class AssignmentService {
         testCases: true,
         settings: true,
       },
-    })) as unknown as AssignmentWithRelations;
+    });
   }
 
-  async remove(id: string): Promise<AssignmentWithRelations> {
+  async remove(id: string): Promise<AssignmentWithBasicRelations> {
     const assignment = await this.prisma.assignment.findUnique({
       where: { id },
     });
@@ -309,13 +332,13 @@ export class AssignmentService {
       throw new AssignmentNotFoundException(id);
     }
 
-    return (await this.prisma.assignment.delete({
+    return await this.prisma.assignment.delete({
       where: { id },
       include: {
         testCases: true,
         settings: true,
       },
-    })) as unknown as AssignmentWithRelations;
+    });
   }
 
   async checkMaxAttempts(
@@ -352,7 +375,7 @@ export class AssignmentService {
   }
 
   async getAssignmentStatistics(assignmentId: string) {
-    const submissions = await this.prisma.submission.findMany({
+    const submissions = (await this.prisma.submission.findMany({
       where: { assignmentId },
       include: {
         assignment: {
@@ -364,38 +387,45 @@ export class AssignmentService {
       orderBy: {
         createdAt: 'desc',
       },
-    });
+    })) as SubmissionWithAssignment[];
 
     // Групуємо подання по користувачах
     const userSubmissions = submissions.reduce(
-      (acc, submission) => {
+      (
+        acc: Record<string, SubmissionWithAssignment[]>,
+        submission: SubmissionWithAssignment,
+      ) => {
         if (!acc[submission.userId]) {
           acc[submission.userId] = [];
         }
         acc[submission.userId].push(submission);
         return acc;
       },
-      {} as Record<string, typeof submissions>,
+      {} as Record<string, SubmissionWithAssignment[]>,
     );
 
     // Підраховуємо статистику для кожного користувача
     const statistics = Object.entries(userSubmissions).map(
-      ([userId, userSubs]) => {
+      ([userId, userSubs]: [string, SubmissionWithAssignment[]]) => {
         const totalSubmissions = userSubs.length;
         const completedSubmissions = userSubs.filter(
-          (sub) => sub.status === 'COMPLETED',
+          (sub: SubmissionWithAssignment) => sub.status === 'COMPLETED',
         ).length;
         const failedSubmissions = userSubs.filter(
-          (sub) => sub.status === 'FAILED',
+          (sub: SubmissionWithAssignment) => sub.status === 'FAILED',
         ).length;
         const pendingSubmissions = userSubs.filter(
-          (sub) => sub.status === 'PENDING' || sub.status === 'PROCESSING',
+          (sub: SubmissionWithAssignment) =>
+            sub.status === 'PENDING' || sub.status === 'PROCESSING',
         ).length;
 
         // Знаходимо найкращий результат
         const bestSubmission = userSubs
-          .filter((sub) => sub.score !== null)
-          .sort((a, b) => (b.score || 0) - (a.score || 0))[0];
+          .filter((sub: SubmissionWithAssignment) => sub.score !== null)
+          .sort(
+            (a: SubmissionWithAssignment, b: SubmissionWithAssignment) =>
+              (b.score || 0) - (a.score || 0),
+          )[0];
 
         return {
           userId,

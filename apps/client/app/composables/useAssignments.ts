@@ -148,7 +148,6 @@ interface CheckCodeResponse {
 }
 
 export const useAssignments = () => {
-  const config = useRuntimeConfig()
   const api = useApi()
 
   const getAssignments = async (page?: number, limit?: number, search?: string, difficulty?: number, status?: string): Promise<PaginatedResponse<Assignment>> => {
