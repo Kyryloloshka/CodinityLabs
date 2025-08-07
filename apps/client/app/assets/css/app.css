@@ -176,22 +176,9 @@ body {
 .border-theme-secondary { border-color: var(--border-secondary); }
 .border-theme-focus { border-color: var(--border-focus); }
 
-/* Dark mode utility classes for Tailwind */
-.dark\:bg-theme-primary { background-color: var(--bg-primary); }
-.dark\:bg-theme-secondary { background-color: var(--bg-secondary); }
-.dark\:bg-theme-tertiary { background-color: var(--bg-tertiary); }
-.dark\:bg-theme-card { background-color: var(--bg-card); }
-
-.dark\:text-theme-primary { color: var(--text-primary); }
-.dark\:text-theme-secondary { color: var(--text-secondary); }
-.dark\:text-theme-muted { color: var(--text-muted); }
-
-.dark\:border-theme-primary { border-color: var(--border-primary); }
-.dark\:border-theme-secondary { border-color: var(--border-secondary); }
 
 /* Hover states */
 .hover\:bg-theme-hover:hover { background-color: var(--bg-hover); }
-.dark\:hover\:bg-theme-hover:hover { background-color: var(--bg-hover); }
 
 /* Focus states */
 .focus\:border-theme-focus:focus { border-color: var(--border-focus); }

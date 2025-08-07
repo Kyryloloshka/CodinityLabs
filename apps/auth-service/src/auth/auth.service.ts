@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  Inject,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import {
@@ -6,6 +11,7 @@ import {
   RegisterDto,
   AuthResponseDto,
   RefreshTokenDto,
+  UpdateProfileDto,
 } from '../common/dto/auth.dto';
 import { CreateUserDto } from '../common/dto/user.dto';
 import { JwtPayload } from './strategies/jwt.strategy';
@@ -202,6 +208,101 @@ export class AuthService {
       }
       throw new UnauthorizedException('Invalid refresh token');
     }
+  }
+
+  async updateProfile(
+    userId: string,
+    updateProfileDto: UpdateProfileDto,
+  ): Promise<{
+    user: { id: string; email: string; name: string; role: UserRole };
+    accessToken: string;
+  }> {
+    console.log('AuthService.updateProfile - userId:', userId);
+    console.log(
+      'AuthService.updateProfile - updateProfileDto:',
+      updateProfileDto,
+    );
+
+    const user = await this.usersService.findOne(userId);
+    console.log('AuthService.updateProfile - found user:', user);
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Отримуємо користувача з паролем для перевірки
+    const userWithPassword = await this.usersService.findByEmailWithPassword(
+      user.email,
+    );
+    if (!userWithPassword) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const updateData: any = {};
+
+    // Оновлення імені
+    if (updateProfileDto.name) {
+      updateData.name = updateProfileDto.name;
+    }
+
+    // Оновлення паролю
+    if (updateProfileDto.newPassword) {
+      if (!updateProfileDto.currentPassword) {
+        throw new BadRequestException(
+          "Поточний пароль обов'язковий для зміни паролю",
+        );
+      }
+
+      if (!updateProfileDto.confirmPassword) {
+        throw new BadRequestException("Підтвердження паролю обов'язкове");
+      }
+
+      // Перевіряємо співпадіння паролів
+      if (updateProfileDto.newPassword !== updateProfileDto.confirmPassword) {
+        throw new BadRequestException(
+          'Новий пароль та підтвердження не співпадають',
+        );
+      }
+
+      // Перевіряємо поточний пароль
+      const isCurrentPasswordValid = await bcrypt.compare(
+        updateProfileDto.currentPassword,
+        userWithPassword.password,
+      );
+      if (!isCurrentPasswordValid) {
+        throw new UnauthorizedException('Невірний поточний пароль');
+      }
+
+      // Хешуємо новий пароль
+      updateData.password = await bcrypt.hash(updateProfileDto.newPassword, 10);
+    }
+
+    // Якщо немає даних для оновлення
+    if (Object.keys(updateData).length === 0) {
+      throw new BadRequestException('Немає даних для оновлення');
+    }
+
+    const updatedUser = await this.usersService.update(userId, updateData);
+
+    // Генеруємо новий токен з оновленими даними
+    const validatedUser: ValidatedUser = {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      name: updatedUser.name,
+    };
+
+    const { accessToken } = this.generateTokens(validatedUser);
+
+    return {
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        role: updatedUser.role,
+      },
+      accessToken,
+    };
   }
 
   verifyToken(token: string): JwtPayload {

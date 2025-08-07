@@ -19,11 +19,11 @@
       </div>
 
       <div v-else-if="error" class="text-center py-8">
-        <UIcon name="i-heroicons-exclamation-triangle" class="h-6 w-6 text-red-500 mx-auto mb-2" />
-        <p class="text-red-500 text-sm">{{ error }}</p>
+        <UIcon name="i-heroicons-exclamation-triangle" class="h-6 w-6 text-red-700 dark:text-red-400 mx-auto mb-2" />
+        <p class="text-red-700 dark:text-red-400 text-sm">{{ error }}</p>
         <button
           @click="$emit('refresh')"
-          class="mt-2 px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+          class="mt-2 px-3 py-1 text-xs bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white rounded transition-colors"
         >
           Спробувати знову
         </button>
@@ -35,7 +35,7 @@
       </div>
 
       <div v-else class="space-y-2">
-        <div class="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
+        <div class="mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded text-xs text-blue-800 dark:text-blue-300">
           <UIcon name="i-heroicons-information-circle" class="h-3 w-3 inline mr-1" />
           При перегляді історії показуються тільки публічні тестові випадки
         </div>
@@ -117,15 +117,15 @@ const formatDate = (dateString: string) => {
 const getStatusClass = (status: string) => {
   switch (status) {
     case 'COMPLETED':
-      return 'bg-green-100 text-green-800'
+      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200'
     case 'FAILED':
-      return 'bg-red-100 text-red-800'
+      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
     case 'PROCESSING':
-      return 'bg-yellow-100 text-yellow-800'
+      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
     case 'PENDING':
-      return 'bg-gray-100 text-gray-800'
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
     default:
-      return 'bg-gray-100 text-gray-800'
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
   }
 }
 

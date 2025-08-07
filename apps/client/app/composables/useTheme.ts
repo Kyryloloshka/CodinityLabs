@@ -13,7 +13,16 @@ export const useTheme = () => {
   
   const updateTheme = () => {
     if (process.client) {
+      // Встановлюємо data-theme атрибут для наших CSS змінних
       document.documentElement.setAttribute('data-theme', theme.value)
+      
+      // Додаємо/видаляємо клас 'dark' для Tailwind CSS
+      if (theme.value === 'dark') {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
+      
       localStorage.setItem('theme', theme.value)
     }
   }
@@ -31,10 +40,8 @@ export const useTheme = () => {
       
       updateTheme()
       
-      document.documentElement.setAttribute('data-theme', theme.value)
-      
+      // Додаткове забезпечення правильного встановлення
       setTimeout(() => {
-        document.documentElement.setAttribute('data-theme', theme.value)
         updateTheme()
       }, 100)
     }

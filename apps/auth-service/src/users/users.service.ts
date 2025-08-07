@@ -64,12 +64,16 @@ export class UsersService {
 
   async findOne(id: string): Promise<UserResponseDto> {
     try {
+      console.log('UsersService.findOne - searching for id:', id);
       const user = await this.userRepository.findById(id);
+      console.log('UsersService.findOne - found user:', user);
+      
       if (!user) {
         throw new UserNotFoundException(id);
       }
       return this.mapToUserResponse(user);
     } catch (error) {
+      console.error('UsersService.findOne - error:', error);
       if (error instanceof UserNotFoundException) {
         throw error;
       }

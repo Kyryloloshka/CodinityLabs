@@ -64,7 +64,7 @@
               <UButton
                 @click="editAssignment"
                 variant="solid"
-                color="warning"
+                class="bg-yellow-500"
               >
                 <UIcon name="i-heroicons-pencil" class="mr-2 h-4 w-4" />
                 Редагувати

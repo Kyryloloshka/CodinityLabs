@@ -1,5 +1,9 @@
 export default defineNuxtPlugin(async () => {
   const authStore = useAuthStore()
+  const { initTheme } = useTheme()
+  
+  // Ініціалізуємо тему
+  initTheme()
   
   try {
     // Ініціалізуємо авторизацію при завантаженні додатку

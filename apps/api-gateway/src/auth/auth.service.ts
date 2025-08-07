@@ -383,4 +383,47 @@ export class AuthService {
       );
     }
   }
+
+  async updateProfile(
+    userId: string,
+    updateProfileDto: any,
+    token: string,
+  ): Promise<{ user: UserResponseDto; accessToken: string }> {
+    try {
+      const { data } = await firstValueFrom(
+        this.httpService.patch<{
+          user: UserResponseDto;
+          accessToken: string;
+        }>(`${this.authServiceUrl}/auth/profile`, updateProfileDto, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }),
+      );
+      return data;
+    } catch (error: unknown) {
+      const status = this.getErrorStatus(error);
+      const errorResponse = this.getErrorResponse(error);
+
+      if (status === 400) {
+        throw new HttpException(
+          errorResponse?.error?.message || 'Invalid request data',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      if (status === 401) {
+        throw new HttpException(
+          errorResponse?.error?.message || 'Invalid token or current password',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      throw new HttpException(
+        errorResponse?.error?.message || 'Failed to update profile',
+        status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
