@@ -27,7 +27,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: JwtPayload) {
     try {
+      console.log('JWT Strategy - payload.sub:', payload.sub);
+      console.log('JWT Strategy - payload:', payload);
+
       const user = await this.usersService.findOne(payload.sub);
+      console.log('JWT Strategy - found user:', user);
+
       if (!user) {
         throw new UnauthorizedException('Користувача не знайдено');
       }
@@ -37,7 +42,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         role: user.role,
         name: user.name,
       };
-    } catch {
+    } catch (error) {
+      console.error('JWT Strategy - error:', error);
       throw new UnauthorizedException('Невірний токен');
     }
   }

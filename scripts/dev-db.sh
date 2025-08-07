@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# Database management script for development environment
-
 set -e
 
 AUTH_SERVICE_CONTAINER="auth-service-dev"

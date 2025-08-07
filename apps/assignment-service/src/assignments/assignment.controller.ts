@@ -33,10 +33,7 @@ export class AssignmentController {
   @Get()
   async findAll(@Query() paginationDto: PaginationDto) {
     const result = await this.assignmentService.findAll(paginationDto);
-    return ApiResponseDto.success(
-      result,
-      'Assignments retrieved successfully',
-    );
+    return ApiResponseDto.success(result, 'Assignments retrieved successfully');
   }
 
   @Get('teacher/:teacherId')
@@ -44,7 +41,10 @@ export class AssignmentController {
     @Param('teacherId') teacherId: string,
     @Query() paginationDto: PaginationDto,
   ) {
-    const result = await this.assignmentService.findByTeacher(teacherId, paginationDto);
+    const result = await this.assignmentService.findByTeacher(
+      teacherId,
+      paginationDto,
+    );
     return ApiResponseDto.success(
       result,
       'Teacher assignments retrieved successfully',
@@ -97,5 +97,30 @@ export class AssignmentController {
   async remove(@Param('id') id: string) {
     await this.assignmentService.remove(id);
     return ApiResponseDto.success(null, 'Assignment deleted successfully');
+  }
+
+  @Get(':id/check-max-attempts/:userId')
+  async checkMaxAttempts(
+    @Param('id') assignmentId: string,
+    @Param('userId') userId: string,
+  ) {
+    const result = await this.assignmentService.checkMaxAttempts(
+      userId,
+      assignmentId,
+    );
+    return ApiResponseDto.success(
+      result,
+      'Max attempts check completed successfully',
+    );
+  }
+
+  @Get(':id/statistics')
+  async getAssignmentStatistics(@Param('id') assignmentId: string) {
+    const statistics =
+      await this.assignmentService.getAssignmentStatistics(assignmentId);
+    return ApiResponseDto.success(
+      statistics,
+      'Assignment statistics retrieved successfully',
+    );
   }
 }

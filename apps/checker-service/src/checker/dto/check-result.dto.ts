@@ -15,8 +15,25 @@ export class TestResultDto {
   timeout?: boolean; // Додаємо поле для відстеження таймауту
 }
 
+export class CheckSettingsDto {
+  timeout: number;
+  maxAttempts: number | null; // null = необмежено
+  passingThreshold: number;
+  allowPartialScore: boolean;
+  strictMode: boolean;
+}
+
 export class CheckResultDto {
   lint: LintErrorDto[];
   tests: TestResultDto[];
   score: number;
+  testStats: {
+    total: number;
+    passed: number;
+    failed: number;
+    timeout: number;
+    public: number;
+  };
+  passedThreshold: boolean; // Чи пройшов поріг проходження
+  settings: CheckSettingsDto; // Використані налаштування
 }

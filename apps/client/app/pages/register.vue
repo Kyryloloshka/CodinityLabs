@@ -106,7 +106,7 @@
                 <option value="STUDENT">Студент</option>
                 <option value="TEACHER">Викладач</option>
               </select>
-              <div v-if="errors.role" class="mt-1 text-sm text-red-600">
+              <div v-if="errors.role" class="mt-1 text-sm text-red-800 dark:text-red-400">
                 {{ errors.role }}
               </div>
             </div>

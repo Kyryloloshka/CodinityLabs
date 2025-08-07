@@ -1,4 +1,8 @@
 import tailwindcss from "@tailwindcss/vite";
+import { validateEnv } from './config/env.validation';
+
+// Validate environment variables
+const envVars = validateEnv();
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -28,7 +32,8 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      apiBaseUrl: process.env.API_BASE_URL || 'http://localhost:5000',
+      apiBaseUrl: envVars.API_BASE_URL,
+      tokenRefreshIntervalMs: envVars.TOKEN_REFRESH_INTERVAL_MS,
     }
   },
   devServer: {

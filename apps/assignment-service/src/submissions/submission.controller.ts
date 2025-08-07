@@ -54,6 +54,21 @@ export class SubmissionController {
     );
   }
 
+  @Get('user/:userId/assignment/:assignmentId')
+  async findByUserAndAssignment(
+    @Param('userId') userId: string,
+    @Param('assignmentId') assignmentId: string,
+  ) {
+    const submissions = await this.submissionService.findByUserAndAssignment(
+      userId,
+      assignmentId,
+    );
+    return ApiResponseDto.success(
+      submissions,
+      'User assignment submissions retrieved successfully',
+    );
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const submission = await this.submissionService.findOne(id);
@@ -67,5 +82,15 @@ export class SubmissionController {
   async remove(@Param('id') id: string) {
     await this.submissionService.remove(id);
     return ApiResponseDto.success(null, 'Submission deleted successfully');
+  }
+
+  @Get('assignment/:assignmentId/statistics')
+  async getAssignmentStatistics(@Param('assignmentId') assignmentId: string) {
+    const statistics =
+      await this.submissionService.getAssignmentStatistics(assignmentId);
+    return ApiResponseDto.success(
+      statistics,
+      'Assignment statistics retrieved successfully',
+    );
   }
 }

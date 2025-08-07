@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CheckDto, TestCaseDto } from './dto/check.dto';
+import { CheckDto, TestCaseDto, CheckSettingsDto } from './dto/check.dto';
 import {
   CheckResultDto,
   LintErrorDto,
@@ -14,21 +14,57 @@ export class CheckerService {
   ) {}
 
   async checkCode(checkDto: CheckDto): Promise<CheckResultDto> {
-    const { code, testCases, language = 'javascript' } = checkDto;
+    const { code, testCases, language = 'javascript', settings } = checkDto;
 
-    // Базова перевірка коду з урахуванням мови програмування
+    const defaultSettings = {
+      timeout: 2000,
+      maxAttempts: null, // Необмежено за замовчуванням
+      passingThreshold: 80.0,
+      allowPartialScore: true,
+      strictMode: false,
+    };
+
+    const finalSettings = {
+      timeout: settings?.timeout ?? defaultSettings.timeout,
+      maxAttempts: settings?.maxAttempts ?? defaultSettings.maxAttempts,
+      passingThreshold:
+        settings?.passingThreshold ?? defaultSettings.passingThreshold,
+      allowPartialScore:
+        settings?.allowPartialScore ?? defaultSettings.allowPartialScore,
+      strictMode: settings?.strictMode ?? defaultSettings.strictMode,
+    };
+
     const lintResults = this.runLintAnalysis(code, language);
 
-    // Виконання тестів в безпечному середовищі
-    const testResults = await this.runTestsSafely(code, testCases, language);
+    const allTestResults = await this.runTestsSafely(
+      code,
+      testCases,
+      language,
+      finalSettings,
+    );
 
-    // Розрахунок score
-    const score = this.calculateScore(lintResults, testResults);
+    const publicTestResults = allTestResults.filter(
+      (_, index) => testCases[index]?.isPublic !== false,
+    );
+
+    const testStats = this.calculateTestStats(allTestResults, testCases);
+
+    const score = this.calculateScore(
+      lintResults,
+      allTestResults,
+      finalSettings,
+    );
+
+    // Перевіряємо чи пройшов поріг проходження
+    const passedThreshold = score >= (finalSettings.passingThreshold || 80.0);
 
     return {
       lint: lintResults,
-      tests: testResults,
+      tests: publicTestResults,
       score,
+      testStats,
+      passedThreshold,
+      settings: finalSettings,
     };
   }
 
@@ -36,7 +72,6 @@ export class CheckerService {
     const lintErrors: LintErrorDto[] = [];
 
     try {
-      // Перевірка на основі мови програмування
       switch (language) {
         case 'javascript':
         case 'typescript':
@@ -56,7 +91,6 @@ export class CheckerService {
     code: string,
     lintErrors: LintErrorDto[],
   ): void {
-    // Перевірка на наявність функції main або solution
     if (
       !code.includes('function main') &&
       !code.includes('const main') &&
@@ -74,7 +108,6 @@ export class CheckerService {
       });
     }
 
-    // Базова перевірка синтаксису
     try {
       this.validateJavaScriptSyntax(code);
     } catch (syntaxError) {
@@ -109,22 +142,23 @@ export class CheckerService {
     code: string,
     testCases: TestCaseDto[],
     language: string,
+    settings: CheckSettingsDto,
   ): Promise<TestResultDto[]> {
     const results: TestResultDto[] = [];
 
-    // Виконуємо тести послідовно в безпечному середовищі
     for (const testCase of testCases) {
       try {
         const result = await this.safeCodeExecutorService.executeCodeSafely(
           code,
           testCase,
           language,
-          1000, // 1 секунда таймаут
+          settings.timeout || 2000,
         );
+
         results.push(result);
       } catch (error) {
         console.error('Test execution error:', error);
-        results.push({
+        const errorResult = {
           passed: false,
           actual:
             'Error: ' +
@@ -133,7 +167,9 @@ export class CheckerService {
           description: testCase.description,
           input: testCase.input,
           timeout: false,
-        });
+        };
+
+        results.push(errorResult);
       }
     }
 
@@ -143,6 +179,7 @@ export class CheckerService {
   private calculateScore(
     lintErrors: LintErrorDto[],
     testResults: TestResultDto[],
+    settings: CheckSettingsDto,
   ): number {
     if (testResults.length === 0) {
       return 0;
@@ -158,10 +195,59 @@ export class CheckerService {
       (error) => error.severity === 1,
     ).length;
 
-    // Максимальний штраф 30 балів
     const lintPenalty = Math.min(30, errorCount * 3 + warningCount * 1);
     const lintScore = Math.max(0, 30 - lintPenalty);
 
-    return Math.round(testScore + lintScore);
+    let finalScore = Math.round(testScore + lintScore);
+
+    // Якщо не дозволяємо часткові бали і не всі тести пройшли
+    if (!settings.allowPartialScore && passedTests < testResults.length) {
+      finalScore = 0;
+    }
+
+    return finalScore;
+  }
+
+  private calculateTestStats(
+    allTestResults: TestResultDto[],
+    testCases: TestCaseDto[],
+  ): {
+    total: number;
+    passed: number;
+    failed: number;
+    timeout: number;
+    public: number;
+  } {
+    let total = 0;
+    let passed = 0;
+    let failed = 0;
+    let timeout = 0;
+    let publicCount = 0;
+
+    for (let i = 0; i < allTestResults.length; i++) {
+      const testResult = allTestResults[i];
+      const testCase = testCases[i];
+
+      total++;
+      if (testResult.passed) {
+        passed++;
+      } else {
+        failed++;
+      }
+      if (testResult.timeout) {
+        timeout++;
+      }
+      if (testCase?.isPublic !== false) {
+        publicCount++;
+      }
+    }
+
+    return {
+      total,
+      passed,
+      failed,
+      timeout,
+      public: publicCount,
+    };
   }
 }

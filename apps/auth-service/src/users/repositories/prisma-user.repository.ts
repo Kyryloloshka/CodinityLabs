@@ -22,9 +22,17 @@ export class PrismaUserRepository implements IUserRepository {
   }
 
   async findById(id: string): Promise<User | null> {
-    return this.prisma.user.findUnique({
-      where: { id },
-    });
+    console.log('PrismaUserRepository.findById - searching for id:', id);
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id },
+      });
+      console.log('PrismaUserRepository.findById - found user:', user);
+      return user;
+    } catch (error) {
+      console.error('PrismaUserRepository.findById - error:', error);
+      throw error;
+    }
   }
 
   async findByEmail(email: string): Promise<User | null> {

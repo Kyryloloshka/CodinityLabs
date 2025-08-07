@@ -205,7 +205,8 @@ export class AssignmentsController {
   @Get(':id')
   @ApiOperation({
     summary: 'Get assignment by ID',
-    description: 'Get assignment by ID from Assignment Service (shows all test cases)',
+    description:
+      'Get assignment by ID from Assignment Service (shows all test cases)',
   })
   @ApiParam({
     name: 'id',
@@ -231,7 +232,8 @@ export class AssignmentsController {
   @Get(':id/student')
   @ApiOperation({
     summary: 'Get assignment for student',
-    description: 'Get assignment by ID with only public test cases visible to students',
+    description:
+      'Get assignment by ID with only public test cases visible to students',
   })
   @ApiParam({
     name: 'id',
@@ -393,5 +395,39 @@ export class AssignmentsController {
   })
   async checkCode(@Body() checkDto: CheckDto): Promise<CheckResultDto> {
     return this.assignmentsService.checkCode(checkDto);
+  }
+
+  @Get(':id/check-max-attempts/:userId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Check max attempts for user',
+    description:
+      'Check if user has reached maximum attempts limit for assignment',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Assignment identifier',
+    example: 'a82940b0-cff0-42df-b4c4-0ff66a2a30fc',
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'User identifier',
+    example: 'user123',
+  })
+  @ApiOkResponse({
+    description: 'Max attempts check completed successfully',
+  })
+  @ApiNotFoundResponse({
+    description: 'Assignment not found',
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error',
+  })
+  async checkMaxAttempts(
+    @Param('id', ParseUUIDPipe) assignmentId: string,
+    @Param('userId') userId: string,
+  ): Promise<any> {
+    return this.assignmentsService.checkMaxAttempts(userId, assignmentId);
   }
 }

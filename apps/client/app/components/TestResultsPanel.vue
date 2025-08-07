@@ -1,6 +1,5 @@
 <template>
   <div v-if="checkResults" class="space-y-3">
-    <!-- Score -->
     <div class="flex items-center justify-between p-2 bg-theme-secondary rounded">
       <span class="text-xs font-medium text-theme-primary">Загальний результат:</span>
       <UBadge 
@@ -13,23 +12,57 @@
       </UBadge>
     </div>
 
-    <!-- Test Statistics -->
+    <!-- Інформація про налаштування та поріг проходження -->
+    <div v-if="checkResults.settings" class="p-2 bg-theme-secondary rounded">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-medium text-theme-primary">Налаштування перевірки:</span>
+        <UBadge 
+          :color="checkResults.passedThreshold ? 'success' : 'error'"
+          variant="outline"
+          size="sm"
+        >
+          {{ checkResults.passedThreshold ? 'Пройшов поріг' : 'Не пройшов поріг' }}
+        </UBadge>
+      </div>
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <div>
+          <span class="text-theme-secondary">Поріг:</span>
+          <span class="text-theme-primary ml-1">{{ checkResults.settings.passingThreshold }}%</span>
+        </div>
+        <div>
+          <span class="text-theme-secondary">Таймаут:</span>
+          <span class="text-theme-primary ml-1">{{ (checkResults.settings.timeout / 1000).toFixed(1) }}с</span>
+        </div>
+        <div>
+          <span class="text-theme-secondary">Спроб:</span>
+          <span class="text-theme-primary ml-1">
+            {{ checkResults.settings.maxAttempts === null ? 'Необмежено' : checkResults.settings.maxAttempts }}
+          </span>
+        </div>
+        <div>
+          <span class="text-theme-secondary">Режим:</span>
+          <span class="text-theme-primary ml-1">
+            {{ checkResults.settings.strictMode ? 'Строгий' : 'Звичайний' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
     <div class="flex items-center justify-between p-2 bg-theme-secondary rounded">
       <span class="text-xs font-medium text-theme-primary">Статистика тестів:</span>
       <div class="flex items-center gap-2">
-        <UBadge v-if="fullPassedTests > 0" color="success" variant="subtle" size="xs">
-          {{ fullPassedTests }} пройдено
+        <UBadge v-if="checkResults.testStats?.passed > 0" color="success" variant="subtle" size="sm">
+          {{ checkResults.testStats.passed }} пройдено
         </UBadge>
-        <UBadge v-if="fullFailedTests > 0" color="error" variant="subtle" size="xs">
-          {{ fullFailedTests }} не пройдено
+        <UBadge v-if="checkResults.testStats?.failed > 0" color="error" variant="subtle" size="sm">
+          {{ checkResults.testStats.failed }} не пройдено
         </UBadge>
-        <UBadge v-if="fullTimeoutTests > 0" color="warning" variant="subtle" size="xs">
-          {{ fullTimeoutTests }} таймаут
+        <UBadge v-if="checkResults.testStats?.timeout > 0" color="warning" variant="subtle" size="sm">
+          {{ checkResults.testStats.timeout }} таймаут
         </UBadge>
       </div>
     </div>
 
-    <!-- Lint Errors -->
     <div v-if="checkResults.lint.length > 0">
       <h3 class="text-xs font-semibold text-theme-primary mb-2">Помилки коду</h3>
       <div class="space-y-1 max-h-24 overflow-y-auto">
@@ -50,11 +83,9 @@
       </div>
     </div>
 
-    <!-- Test Results Tabs -->
     <div>
-      <h3 class="text-xs font-semibold text-theme-primary mb-2">Результати тестів</h3>
+      <h3 class="text-xs font-semibold text-theme-primary mb-2">Результати тестів (публічні тестові випадки)</h3>
       
-      <!-- Test Result Tabs -->
       <div class="flex items-center gap-1 mb-3 flex-wrap">
         <button
           v-for="(test, index) in checkResults.tests"
@@ -69,7 +100,6 @@
         </button>
       </div>
 
-      <!-- Test Result Content -->
       <div v-if="selectedResultIndex >= 0 && checkResults.tests[selectedResultIndex]">
         <div 
           class="border rounded p-3"
@@ -121,7 +151,6 @@
 interface Props {
   checkResults?: any
   selectedResultIndex: number
-  fullTestResults?: any
 }
 
 interface Emits {
@@ -130,19 +159,4 @@ interface Emits {
 
 const props = defineProps<Props>()
 defineEmits<Emits>()
-
-const fullPassedTests = computed(() => {
-  if (!props.fullTestResults?.tests) return 0
-  return props.fullTestResults.tests.filter((test: any) => test.passed).length
-})
-
-const fullFailedTests = computed(() => {
-  if (!props.fullTestResults?.tests) return 0
-  return props.fullTestResults.tests.filter((test: any) => !test.passed && !test.timeout).length
-})
-
-const fullTimeoutTests = computed(() => {
-  if (!props.fullTestResults?.tests) return 0
-  return props.fullTestResults.tests.filter((test: any) => test.timeout).length
-})
 </script> 

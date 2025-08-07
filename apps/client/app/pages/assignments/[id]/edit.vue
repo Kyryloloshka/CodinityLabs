@@ -179,7 +179,6 @@
               </div>
             </div>
 
-            <!-- Кнопки дій -->
             <div class="flex justify-end gap-4 mt-8 pt-6 border-t border-theme-primary">
               <UButton
                 @click="navigateTo('/assignments')"
@@ -217,13 +216,11 @@ const authStore = useAuthStore()
 const { updateAssignment, getAssignment } = useAssignments()
 const toast = useToast()
 
-// Реактивні дані
 const assignment = ref<any>(null)
 const loading = ref(true)
 const error = ref('')
 const saving = ref(false)
 
-// Форма завдання
 const form = ref({
   title: '',
   description: '',
@@ -232,17 +229,14 @@ const form = ref({
   testCases: [] as { input: string; expected: string; description: string; isPublic: boolean }[]
 })
 
-// Отримуємо ID завдання з URL
 const assignmentId = route.params.id as string
 
-// Завантаження завдання
 const loadAssignment = async () => {
   try {
     loading.value = true
     error.value = ''
     assignment.value = await getAssignment(assignmentId)
     
-    // Заповнюємо форму даними завдання
     form.value = {
       title: assignment.value.title,
       description: assignment.value.description,
@@ -259,14 +253,12 @@ const loadAssignment = async () => {
     error.value = 'Помилка завантаження завдання'
     console.error(err)
     
-    // Перевіряємо, чи це помилка 404 (завдання не знайдено)
     if (err?.status === 404 || err?.statusCode === 404) {
       toast.add({
         title: 'Помилка',
         description: 'Таке завдання не доступне',
         color: 'error'
       })
-      // Затримка перед перенаправленням
       setTimeout(async () => {
         await navigateTo('/assignments')
       }, 2000)

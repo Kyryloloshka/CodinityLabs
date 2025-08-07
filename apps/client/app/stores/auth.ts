@@ -24,6 +24,13 @@ interface RegisterCredentials {
   role: string
 }
 
+interface UpdateProfileData {
+  name?: string;
+  currentPassword?: string;
+  newPassword?: string;
+  confirmPassword?: string;
+}
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null as User | null,
@@ -129,6 +136,13 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    async logoutAndRedirect() {
+      this.logout()
+      if (import.meta.client) {
+        await navigateTo('/login')
+      }
+    },
+
     async initializeAuth() {
       try {
         if (import.meta.client) {
@@ -146,10 +160,8 @@ export const useAuthStore = defineStore('auth', {
         }
       } catch (error) {
         console.error('Auth initialization error:', error)
-        // При помилці очищаємо дані авторизації
         this.logout()
       } finally {
-        // Завжди позначаємо як ініціалізоване, навіть при помилці
         this.isInitialized = true
       }
     },
@@ -186,6 +198,45 @@ export const useAuthStore = defineStore('auth', {
       return {
         'Authorization': `Bearer ${this.accessToken}`,
         'Content-Type': 'application/json',
+      }
+    },
+
+    async updateProfile(profileData: UpdateProfileData) {
+      try {
+        const config = useRuntimeConfig()
+        const response = await $fetch<{ 
+          user: User; 
+          accessToken: string 
+        }>(`${config.public.apiBaseUrl}/users/profile`, {
+          method: 'PATCH',
+          headers: await this.getAuthHeaders(),
+          body: profileData,
+          credentials: 'include',
+        })
+
+        // Оновлюємо дані користувача в store
+        this.user = response.user
+        
+        // Оновлюємо токен
+        this.accessToken = response.accessToken
+
+        if (import.meta.client) {
+          localStorage.setItem('user', JSON.stringify(response.user))
+          localStorage.setItem('accessToken', response.accessToken)
+        }
+
+        return { success: true }
+      } catch (error) {
+        console.error('Profile update error:', error)
+        if (error && typeof error === 'object' && 'status' in error) {
+          if (error.status === 400) {
+            return { success: false, error: 'Невірні дані для оновлення' }
+          }
+          if (error.status === 401) {
+            return { success: false, error: 'Невірний поточний пароль' }
+          }
+        }
+        return { success: false, error: 'Помилка оновлення профілю' }
       }
     },
   },

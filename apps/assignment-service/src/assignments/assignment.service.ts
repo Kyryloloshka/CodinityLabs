@@ -7,37 +7,86 @@ import {
   PaginationDto,
   PaginatedResponseDto,
 } from '../common/dto/pagination.dto';
+import { Prisma } from '@prisma/client';
+
+// Type for methods that need _count (like findAll)
+type AssignmentWithRelations = Prisma.AssignmentGetPayload<{
+  include: {
+    testCases: true;
+    settings: true;
+    _count: {
+      select: {
+        submissions: true;
+      };
+    };
+  };
+}>;
+
+// Type for methods that don't need _count (like create, findOne, update, delete)
+type AssignmentWithBasicRelations = Prisma.AssignmentGetPayload<{
+  include: {
+    testCases: true;
+    settings: true;
+  };
+}>;
+
+type SubmissionWithAssignment = Prisma.SubmissionGetPayload<{
+  include: {
+    assignment: {
+      include: {
+        testCases: true;
+      };
+    };
+  };
+}>;
+
+interface WhereFilter {
+  OR?: Array<{
+    title?: { contains: string; mode: 'insensitive' };
+    description?: { contains: string; mode: 'insensitive' };
+  }>;
+  difficulty?: number;
+  deadline?: { gt: Date } | { lte: Date };
+  teacherId?: string;
+}
 
 @Injectable()
 export class AssignmentService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createAssignmentDto: CreateAssignmentDto) {
-    const { testCases, ...assignmentData } = createAssignmentDto;
+  async create(
+    createAssignmentDto: CreateAssignmentDto,
+  ): Promise<AssignmentWithBasicRelations> {
+    const { testCases, settings, ...assignmentData } = createAssignmentDto;
 
-    // Валідація: мінімум 3 публічних тести
-    const publicTests = testCases.filter(tc => tc.isPublic);
+    const publicTests = testCases.filter((tc) => tc.isPublic);
     if (publicTests.length < 3) {
       throw new Error('Потрібно мінімум 3 публічних тести для завдання');
     }
 
-    return this.prisma.assignment.create({
+    return await this.prisma.assignment.create({
       data: {
         ...assignmentData,
         deadline: new Date(assignmentData.deadline),
         testCases: {
           create: testCases,
         },
+        settings: settings
+          ? {
+              create: settings,
+            }
+          : undefined,
       },
       include: {
         testCases: true,
+        settings: true,
       },
     });
   }
 
   async findAll(
     paginationDto?: PaginationDto,
-  ): Promise<PaginatedResponseDto<any>> {
+  ): Promise<PaginatedResponseDto<AssignmentWithRelations>> {
     const {
       page = 1,
       limit = 10,
@@ -47,8 +96,7 @@ export class AssignmentService {
     } = paginationDto || {};
     const skip = (page - 1) * limit;
 
-    // Build where clause for filtering
-    const where: any = {};
+    const where: WhereFilter = {};
 
     if (search) {
       where.OR = [
@@ -71,12 +119,13 @@ export class AssignmentService {
     }
 
     const [assignments, total] = await Promise.all([
-      this.prisma.assignment.findMany({
+      (await this.prisma.assignment.findMany({
         where,
         skip,
         take: limit,
         include: {
           testCases: true,
+          settings: true,
           _count: {
             select: {
               submissions: true,
@@ -86,8 +135,9 @@ export class AssignmentService {
         orderBy: {
           createdAt: 'desc',
         },
-      }),
-      this.prisma.assignment.count({ where }),
+      })) as AssignmentWithRelations[],
+
+      await this.prisma.assignment.count({ where }),
     ]);
 
     const totalPages = Math.ceil(total / limit);
@@ -108,7 +158,7 @@ export class AssignmentService {
   async findByTeacher(
     teacherId: string,
     paginationDto?: PaginationDto,
-  ): Promise<PaginatedResponseDto<any>> {
+  ): Promise<PaginatedResponseDto<AssignmentWithRelations>> {
     const {
       page = 1,
       limit = 10,
@@ -118,8 +168,9 @@ export class AssignmentService {
     } = paginationDto || {};
     const skip = (page - 1) * limit;
 
-    // Build where clause for filtering
-    const where: any = { teacherId };
+    const where: WhereFilter = {
+      teacherId,
+    };
 
     if (search) {
       where.OR = [
@@ -142,12 +193,13 @@ export class AssignmentService {
     }
 
     const [assignments, total] = await Promise.all([
-      this.prisma.assignment.findMany({
+      (await this.prisma.assignment.findMany({
         where,
         skip,
         take: limit,
         include: {
           testCases: true,
+          settings: true,
           _count: {
             select: {
               submissions: true,
@@ -157,8 +209,9 @@ export class AssignmentService {
         orderBy: {
           createdAt: 'desc',
         },
-      }),
-      this.prisma.assignment.count({ where }),
+      })) as AssignmentWithRelations[],
+
+      await this.prisma.assignment.count({ where }),
     ]);
 
     const totalPages = Math.ceil(total / limit);
@@ -176,16 +229,12 @@ export class AssignmentService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string): Promise<AssignmentWithBasicRelations> {
     const assignment = await this.prisma.assignment.findUnique({
       where: { id },
       include: {
         testCases: true,
-        _count: {
-          select: {
-            submissions: true,
-          },
-        },
+        settings: true,
       },
     });
 
@@ -196,18 +245,14 @@ export class AssignmentService {
     return assignment;
   }
 
-  async findOneForStudent(id: string) {
+  async findOneForStudent(id: string): Promise<AssignmentWithBasicRelations> {
     const assignment = await this.prisma.assignment.findUnique({
       where: { id },
       include: {
         testCases: {
-          where: { isPublic: true }, // Показуємо тільки публічні тести студентам
+          where: { isPublic: true },
         },
-        _count: {
-          select: {
-            submissions: true,
-          },
-        },
+        settings: true,
       },
     });
 
@@ -218,16 +263,12 @@ export class AssignmentService {
     return assignment;
   }
 
-  async findOneForTeacher(id: string) {
+  async findOneForTeacher(id: string): Promise<AssignmentWithBasicRelations> {
     const assignment = await this.prisma.assignment.findUnique({
       where: { id },
       include: {
-        testCases: true, // Показуємо всі тести викладачу
-        _count: {
-          select: {
-            submissions: true,
-          },
-        },
+        testCases: true,
+        settings: true,
       },
     });
 
@@ -238,44 +279,172 @@ export class AssignmentService {
     return assignment;
   }
 
-  async update(id: string, updateAssignmentDto: UpdateAssignmentDto) {
-    await this.findOne(id);
+  async update(
+    id: string,
+    updateAssignmentDto: UpdateAssignmentDto,
+  ): Promise<AssignmentWithBasicRelations> {
+    const { testCases, settings, ...assignmentData } = updateAssignmentDto;
 
-    const { testCases, ...assignmentData } = updateAssignmentDto;
+    const existingAssignment = await this.prisma.assignment.findUnique({
+      where: { id },
+      include: { testCases: true },
+    });
 
-    // Валідація: мінімум 3 публічних тести (якщо оновлюються тести)
-    if (testCases) {
-      const publicTests = testCases.filter(tc => tc.isPublic);
-      if (publicTests.length < 3) {
-        throw new Error('Потрібно мінімум 3 публічних тести для завдання');
-      }
+    if (!existingAssignment) {
+      throw new AssignmentNotFoundException(id);
     }
 
-    return this.prisma.assignment.update({
+    return await this.prisma.assignment.update({
       where: { id },
       data: {
         ...assignmentData,
-        ...(assignmentData.deadline && {
-          deadline: new Date(assignmentData.deadline),
-        }),
-        ...(testCases && {
-          testCases: {
-            deleteMany: {},
-            create: testCases,
-          },
-        }),
+        deadline: assignmentData.deadline
+          ? new Date(assignmentData.deadline)
+          : undefined,
+        testCases: testCases
+          ? {
+              deleteMany: {},
+              create: testCases,
+            }
+          : undefined,
+        settings: settings
+          ? {
+              upsert: {
+                create: settings,
+                update: settings,
+              },
+            }
+          : undefined,
       },
       include: {
         testCases: true,
+        settings: true,
       },
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
-
-    return this.prisma.assignment.delete({
+  async remove(id: string): Promise<AssignmentWithBasicRelations> {
+    const assignment = await this.prisma.assignment.findUnique({
       where: { id },
     });
+
+    if (!assignment) {
+      throw new AssignmentNotFoundException(id);
+    }
+
+    return await this.prisma.assignment.delete({
+      where: { id },
+      include: {
+        testCases: true,
+        settings: true,
+      },
+    });
+  }
+
+  async checkMaxAttempts(
+    userId: string,
+    assignmentId: string,
+  ): Promise<{
+    canSubmit: boolean;
+    currentAttempts: number;
+    maxAttempts: number | null;
+  }> {
+    const assignment = await this.prisma.assignment.findUnique({
+      where: { id: assignmentId },
+      include: { settings: true },
+    });
+
+    if (!assignment) {
+      throw new AssignmentNotFoundException(assignmentId);
+    }
+
+    const currentAttempts = await this.prisma.submission.count({
+      where: {
+        userId,
+        assignmentId,
+      },
+    });
+
+    const maxAttempts = assignment.settings?.maxAttempts || null;
+
+    return {
+      canSubmit: maxAttempts === null || currentAttempts < maxAttempts,
+      currentAttempts,
+      maxAttempts,
+    };
+  }
+
+  async getAssignmentStatistics(assignmentId: string) {
+    const submissions = (await this.prisma.submission.findMany({
+      where: { assignmentId },
+      include: {
+        assignment: {
+          include: {
+            testCases: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })) as SubmissionWithAssignment[];
+
+    // Групуємо подання по користувачах
+    const userSubmissions = submissions.reduce(
+      (
+        acc: Record<string, SubmissionWithAssignment[]>,
+        submission: SubmissionWithAssignment,
+      ) => {
+        if (!acc[submission.userId]) {
+          acc[submission.userId] = [];
+        }
+        acc[submission.userId].push(submission);
+        return acc;
+      },
+      {} as Record<string, SubmissionWithAssignment[]>,
+    );
+
+    // Підраховуємо статистику для кожного користувача
+    const statistics = Object.entries(userSubmissions).map(
+      ([userId, userSubs]: [string, SubmissionWithAssignment[]]) => {
+        const totalSubmissions = userSubs.length;
+        const completedSubmissions = userSubs.filter(
+          (sub: SubmissionWithAssignment) => sub.status === 'COMPLETED',
+        ).length;
+        const failedSubmissions = userSubs.filter(
+          (sub: SubmissionWithAssignment) => sub.status === 'FAILED',
+        ).length;
+        const pendingSubmissions = userSubs.filter(
+          (sub: SubmissionWithAssignment) =>
+            sub.status === 'PENDING' || sub.status === 'PROCESSING',
+        ).length;
+
+        // Знаходимо найкращий результат
+        const bestSubmission = userSubs
+          .filter((sub: SubmissionWithAssignment) => sub.score !== null)
+          .sort(
+            (a: SubmissionWithAssignment, b: SubmissionWithAssignment) =>
+              (b.score || 0) - (a.score || 0),
+          )[0];
+
+        return {
+          userId,
+          totalSubmissions,
+          completedSubmissions,
+          failedSubmissions,
+          pendingSubmissions,
+          bestScore: bestSubmission?.score || null,
+          lastSubmission: userSubs[0], // Перший в списку (найновіший через orderBy)
+          submissions: userSubs,
+        };
+      },
+    );
+
+    return {
+      assignmentId,
+      totalUsers: statistics.length,
+      totalSubmissions: submissions.length,
+      userStatistics: statistics,
+    };
   }
 }

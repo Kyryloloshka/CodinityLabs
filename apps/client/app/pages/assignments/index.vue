@@ -1,6 +1,5 @@
 <template>
   <div class="">
-    <!-- Заголовок сторінки -->
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-theme-primary">
         {{ isTeacher ? 'Мої завдання' : 'Доступні завдання' }}
@@ -10,7 +9,6 @@
       </p>
     </div>
 
-    <!-- Кнопка створення завдання для викладачів -->
     <div v-if="isTeacher" class="mb-6">
       <UButton
         @click="navigateTo('/assignments/create')"
@@ -22,7 +20,6 @@
       </UButton>
     </div>
 
-    <!-- Інформація для неавторизованих користувачів -->
     <div v-if="!authStore.isAuthenticated" class="mb-6">
       <div class="bg-theme-secondary border border-theme-primary rounded-lg p-4">
         <div class="flex">
@@ -37,7 +34,6 @@
       </div>
     </div>
 
-    <!-- Фільтри та пошук -->
     <div class="mb-6 flex flex-col sm:flex-row gap-4">
       <div class="flex-1">
         <input
@@ -84,12 +80,10 @@
       </div>
     </div>
 
-    <!-- Індикатор результатів -->
     <div v-if="hasActiveFilters" class="mb-4 text-sm text-theme-secondary">
       Знайдено {{ totalItems }} завдань
     </div>
 
-    <!-- Завантаження -->
     <div v-if="loading" class="flex justify-center py-12">
       <div class="text-center">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-primary mx-auto"></div>
@@ -97,7 +91,6 @@
       </div>
     </div>
 
-    <!-- Помилка -->
     <div v-else-if="error" class="bg-error border border-error rounded-lg p-4">
       <div class="flex">
         <UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-error" />
@@ -108,7 +101,6 @@
       </div>
     </div>
 
-    <!-- Список завдань -->
     <div v-else-if="filteredAssignments.length > 0" class="grid gap-6">
       <div
         v-for="assignment in filteredAssignments"
@@ -157,7 +149,6 @@
             </div>
             
             <div class="flex items-center gap-2 ml-4">
-              <!-- Для студентів -->
               <template v-if="!isTeacher && authStore.isAuthenticated">
                 <UButton
                   @click="viewAssignment(assignment)"
@@ -178,7 +169,6 @@
                 </UButton>
               </template>
               
-              <!-- Для неавторизованих користувачів -->
               <template v-if="!authStore.isAuthenticated">
                 <UButton
                   @click="viewAssignment(assignment)"
@@ -198,7 +188,6 @@
                 </UButton>
               </template>
               
-              <!-- Для викладачів -->
               <div class="flex items-end flex-col gap-2" v-if="isTeacher">
                 <UButton
                   @click="viewAssignment(assignment)"
@@ -207,6 +196,15 @@
                 >
                   <UIcon name="i-heroicons-eye" class="mr-1 h-4 w-4" />
                   Переглянути
+                </UButton>
+                <UButton
+                  @click="viewStatistics(assignment)"
+                  variant="ghost"
+                  color="info"
+                  class="text-theme-primary hover:bg-theme-hover"
+                >
+                  <UIcon name="i-heroicons-chart-bar" class="mr-1 h-4 w-4" />
+                  Статистика
                 </UButton>
                 <UButton
                   @click="editAssignment(assignment)"
@@ -231,7 +229,6 @@
       </div>
     </div>
 
-    <!-- Порожній стан -->
     <div v-else class="text-center py-12">
       <UIcon name="i-heroicons-document-text" class="mx-auto h-12 w-12 text-theme-muted" />
       <h3 class="mt-2 text-sm font-medium text-theme-primary">
@@ -252,7 +249,6 @@
       </div>
     </div>
 
-    <!-- Пагінація -->
     <div v-if="totalPages > 1" class="mt-8 flex items-center justify-between">
       <div class="text-sm text-theme-secondary">
         Показано {{ (currentPage - 1) * pageSize + 1 }}-{{ Math.min(currentPage * pageSize, totalItems) }} з {{ totalItems }} завдань
@@ -306,12 +302,10 @@ definePageMeta({
 const authStore = useAuthStore()
 const { getAssignments, getTeacherAssignments, deleteAssignment: deleteAssignmentApi } = useAssignments()
 
-// Реактивні дані
 const assignments = ref<any[]>([])
 const loading = ref(true)
 const error = ref('')
 
-// Пагінація
 const currentPage = ref(1)
 const pageSize = ref(5)
 const totalPages = ref(1)
@@ -319,19 +313,15 @@ const totalItems = ref(0)
 const hasNext = ref(false)
 const hasPrev = ref(false)
 
-// Фільтри
 const searchQuery = ref('')
 const difficultyFilter = ref('')
 const statusFilter = ref('')
 
-// Дебаунс для пошуку
 const debouncedSearchQuery = ref('')
 let searchTimeout: NodeJS.Timeout | null = null
 
-// Обчислювані властивості
 const isTeacher = computed(() => authStore.user?.role === 'TEACHER')
 
-// Використовуємо assignments напряму, оскільки фільтрація тепер на сервері
 const filteredAssignments = computed(() => assignments.value)
 
 const loadAssignments = async (page = 1) => {
@@ -339,7 +329,6 @@ const loadAssignments = async (page = 1) => {
     loading.value = true
     error.value = ''
     
-    // Prepare filter parameters
     const search = debouncedSearchQuery.value || undefined
     const difficulty = difficultyFilter.value ? parseInt(difficultyFilter.value) : undefined
     const status = statusFilter.value || undefined
@@ -426,6 +415,10 @@ const formatDate = (dateString: string) => {
 
 const viewAssignment = (assignment: any) => {
   navigateTo(`/assignments/${assignment.id}`)
+}
+
+const viewStatistics = (assignment: any) => {
+  navigateTo(`/assignments/${assignment.id}/user-submissions`)
 }
 
 const editAssignment = (assignment: any) => {

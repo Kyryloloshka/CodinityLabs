@@ -1,6 +1,5 @@
 <template>
   <div class="h-screen flex flex-col bg-theme-primary transition-colors duration-300">
-    <!-- Header -->
     <AssignmentSubmitHeader
       :assignment="assignment"
       :selected-language="selectedLanguage"
@@ -9,9 +8,7 @@
       @reset-code="resetCode"
     />
 
-    <!-- Main Content -->
     <div class="flex-1 flex overflow-hidden">
-      <!-- Left Panel - Problem Description -->
       <div 
         class="relative"
         :style="{ width: `${leftPanelWidth}px` }"
@@ -21,14 +18,12 @@
           :total-test-cases-count="totalTestCasesCount"
           :loading="loading"
         />
-        <!-- Resize handle -->
         <div
           class="absolute top-0 right-0 w-1 h-full bg-theme-secondary hover:bg-theme-primary cursor-col-resize transition-colors duration-200"
           @mousedown="startResize('left', $event)"
         ></div>
       </div>
 
-      <!-- Center Panel - Test Cases & Results -->
       <div 
         class="relative"
         :style="{ width: `${centerPanelWidth}px` }"
@@ -40,20 +35,22 @@
           :selected-test-case-index="selectedTestCaseIndex"
           :selected-result-index="selectedResultIndex"
           :total-tests="assignment?.testCases?.length || 0"
-          :full-test-results="fullTestResults"
+          :submissions="submissions"
+          :history-loading="historyLoading"
+          :history-error="historyError"
           :testing="testing"
           @update:active-tab="activeTab = $event"
           @update:selected-test-case-index="selectedTestCaseIndex = $event"
           @update:selected-result-index="selectedResultIndex = $event"
+          @refresh-history="loadSubmissionHistory"
+          @select-submission="handleSelectSubmission"
         />
-        <!-- Resize handle -->
         <div
           class="absolute top-0 right-0 w-1 h-full bg-theme-secondary hover:bg-theme-primary cursor-col-resize transition-colors duration-200"
           @mousedown="startResize('center', $event)"
         ></div>
       </div>
 
-      <!-- Right Panel - Code Editor -->
       <div 
         class="relative flex-1"
         :style="{ width: `${rightPanelWidth}px` }"
@@ -65,9 +62,9 @@
           :submitting="submitting"
           @update:submission-code="submissionCode = $event"
           @update:language="selectedLanguage = $event"
-                @file-upload-start="() => { isFileUploading = true }"
-      @file-upload-end="() => { isFileUploading = false }"
-      @programmatic-language-change="(newLanguage) => { isProgrammaticLanguageChange = true; selectedLanguage = newLanguage; nextTick(() => { isProgrammaticLanguageChange = false }) }"
+          @file-upload-start="() => { isFileUploading = true }"
+          @file-upload-end="() => { isFileUploading = false }"
+          @programmatic-language-change="(newLanguage) => { isProgrammaticLanguageChange = true; selectedLanguage = newLanguage; nextTick(() => { isProgrammaticLanguageChange = false }) }"
           @test-code="testCode"
           @submit-solution="submitSolution"
         />
@@ -85,10 +82,9 @@ definePageMeta({
 
 const route = useRoute()
 const authStore = useAuthStore()
-const { getAssignment, getAssignmentForStudent, createSubmission, checkCode } = useAssignments()
+const { getAssignment, getAssignmentForStudent, createSubmission, checkCode, getUserAssignmentSubmissions } = useAssignments()
 const toast = useToast()
 
-// Реактивні дані
 const assignment = ref<any>(null)
 const loading = ref(true)
 const error = ref('')
@@ -96,7 +92,6 @@ const submitting = ref(false)
 const testing = ref(false)
 const submissionCode = ref('')
 const checkResults = ref<any>(null)
-const fullTestResults = ref<any>(null) // Зберігаємо повні результати для статистики
 const selectedLanguage = ref('javascript')
 const selectedTestCaseIndex = ref(0)
 const selectedResultIndex = ref(0)
@@ -105,7 +100,11 @@ const totalTestCasesCount = ref(0)
 const isFileUploading = ref(false)
 const isProgrammaticLanguageChange = ref(false)
 
-// Resize state
+// History variables
+const submissions = ref<any[]>([])
+const historyLoading = ref(false)
+const historyError = ref('')
+
 const leftPanelWidth = ref(400)
 const centerPanelWidth = ref(400)
 const rightPanelWidth = ref(400)
@@ -117,30 +116,23 @@ const startWidth = ref(0)
 const assignmentId = route.params.id as string
 
 const codeTemplates = {
-  javascript: `// Ваше рішення
-function solution(input) {
-  // Введіть вашу логіку тут
+  javascript: `function solution(input) {
   return input;
 }
 
-// Функція main для тестування
 function main(args) {
-  // Приклад використання
   const result = solution(args);
   return result;
 }`,
   
-  typescript: `// Ваше рішення
-function solution(input: string): string {
-  // Введіть вашу логіку тут
+  typescript: `function solution(input: string): string {
   return input;
 }
 
-// Функція main для тестування
 function main(args: string): string {
-  // Приклад використання
   const result: string = solution(args);
-  return result;}`
+  return result;
+}`
 }
 
 const resetCode = () => {
@@ -161,6 +153,7 @@ const loadAssignment = async () => {
     }
     
     resetCode()
+    await loadSubmissionHistory()
   } catch (err: any) {
     error.value = 'Помилка завантаження завдання'
     console.error(err)
@@ -186,7 +179,61 @@ const loadAssignment = async () => {
   }
 }
 
-// Перевірка коду
+const calculateTestStats = (tests: any[]) => {
+  return {
+    passed: tests.filter((test: any) => test.passed).length,
+    failed: tests.filter((test: any) => !test.passed && !test.timeout).length,
+    timeout: tests.filter((test: any) => test.timeout).length,
+  }
+}
+
+const loadSubmissionHistory = async () => {
+  try {
+    historyLoading.value = true
+    historyError.value = ''
+    submissions.value = await getUserAssignmentSubmissions(authStore.user!.id, assignmentId)
+  } catch (err: any) {
+    console.error('Error loading submission history:', err)
+    historyError.value = 'Помилка завантаження історії подань'
+  } finally {
+    historyLoading.value = false
+  }
+}
+
+const handleSelectSubmission = (submission: any) => {
+  // Load the selected submission's code into the editor
+  submissionCode.value = submission.code
+  selectedLanguage.value = submission.language || 'javascript'
+  
+  // Show the submission results if available, but only public test cases
+  if (submission.testResults) {
+    // Filter only public test cases for students
+    const publicTestResults = submission.testResults.filter((test: any) => {
+      // Check if this test case is public from the stored result
+      return test.isPublic === true
+    })
+    
+    // Calculate test statistics
+    const testStats = calculateTestStats(publicTestResults)
+    
+    checkResults.value = {
+      lint: submission.eslintReport || [],
+      tests: publicTestResults,
+      score: submission.score || 0,
+      testStats
+    }
+    activeTab.value = 'results'
+  } else {
+    activeTab.value = 'history'
+  }
+  
+  toast.add({
+    title: 'Завантажено',
+    description: `Завантажено подання від ${new Date(submission.createdAt).toLocaleString('uk-UA')}`,
+    color: 'primary'
+  })
+}
+
 const testCode = async () => {
   if (!submissionCode.value.trim()) return
 
@@ -197,33 +244,27 @@ const testCode = async () => {
     const request = {
       code: submissionCode.value,
       language: selectedLanguage.value,
-      assignmentId: assignmentId // Передаємо ID завдання замість тестів
+      assignmentId: assignmentId
     }
     
-    const fullResults = await checkCode(request)
+    const results = await checkCode(request)
     
-    // Зберігаємо повні результати для статистики
-    fullTestResults.value = fullResults
-    
-    // Фільтруємо результати тільки видимими тестами для відображення
-    const visibleTestCases = assignment.value.testCases
-    const visibleTestResults = fullResults.tests.filter((result: any) => {
-      return visibleTestCases.some((visibleTest: any) => 
-        visibleTest.input === result.input && 
-        visibleTest.expected === result.expected &&
-        visibleTest.description === result.description
-      )
+    // Calculate test statistics for public tests only
+    const publicTests = results.tests.filter((test: any, index: number) => {
+      const testCase = assignment.value?.testCases?.[index]
+      return testCase?.isPublic === true
     })
     
-    // Оновлюємо результати тільки видимими тестами для відображення
+    const testStats = calculateTestStats(publicTests)
+    
     checkResults.value = {
-      ...fullResults,
-      tests: visibleTestResults
+      ...results,
+      tests: publicTests,
+      testStats
     }
     
-    // Автоматично переключаємося на вкладку результатів
     activeTab.value = 'results'
-    selectedResultIndex.value = 0 // Default to first result
+    selectedResultIndex.value = 0
   } catch (err: any) {
     error.value = 'Помилка перевірки коду'
     console.error('Error testing code:', err)
@@ -243,9 +284,20 @@ const submitSolution = async () => {
   try {
     submitting.value = true
     
-    // Якщо ще не тестували код, спочатку протестуємо
-    if (!fullTestResults.value) {
+    if (!checkResults.value) {
       await testCode()
+    } else {
+      // Ensure we have testStats for the current results
+      if (!checkResults.value.testStats) {
+        const publicTests = checkResults.value.tests.filter((test: any, index: number) => {
+          const testCase = assignment.value?.testCases?.[index]
+          return testCase?.isPublic === true
+        })
+        
+        const testStats = calculateTestStats(publicTests)
+        
+        checkResults.value.testStats = testStats
+      }
     }
     
     await createSubmission({
@@ -255,21 +307,51 @@ const submitSolution = async () => {
       language: selectedLanguage.value
     })
 
-    await navigateTo(`/assignments/${assignmentId}`)
+    // Show success message and refresh history
+    toast.add({
+      title: 'Успішно',
+      description: 'Рішення успішно надіслано',
+      color: 'success'
+    })
+    
+    // Refresh submission history
+    await loadSubmissionHistory()
+    
+    // Switch to history tab to show the new submission
+    activeTab.value = 'history'
+    
   } catch (err: any) {
     console.error('Error submitting solution:', err)
-    toast.add({
-      title: 'Помилка',
-      description: 'Помилка відправки рішення',
-      color: 'error'
-    })
+    
+    // Handle specific error for max attempts limit
+    if (err?.status === 429 || err?.statusCode === 429) {
+      const errorData = err?.data || err?.response?.data
+      const currentAttempts = errorData?.currentAttempts
+      const maxAttempts = errorData?.maxAttempts
+      
+      let description = 'Досягнуто максимальну кількість спроб для цього завдання'
+      if (currentAttempts !== undefined && maxAttempts !== undefined) {
+        description = `Досягнуто ліміт спроб (${currentAttempts}/${maxAttempts}) для цього завдання`
+      }
+      
+      toast.add({
+        title: 'Ліміт спроб досягнуто',
+        description,
+        color: 'error'
+      })
+    } else {
+      toast.add({
+        title: 'Помилка',
+        description: 'Помилка відправки рішення',
+        color: 'error'
+      })
+    }
   } finally {
     submitting.value = false
   }
 }
 
 watch(selectedLanguage, () => {
-  // Не скидаємо код, якщо завантажується файл або програмна зміна мови
   if (!isFileUploading.value && !isProgrammaticLanguageChange.value) {
     resetCode()
   }
@@ -279,7 +361,6 @@ onMounted(() => {
   loadAssignment()
 })
 
-// Resize functionality
 const startResize = (panel: 'left' | 'center', event: MouseEvent) => {
   isResizing.value = true
   currentResizePanel.value = panel

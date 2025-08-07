@@ -1,9 +1,7 @@
 <template>
   <div class="min-h-screen bg-theme-primary transition-colors duration-300">
-    <!-- Показуємо завантажувальний екран поки авторизація не ініціалізується -->
     <AppLoader v-if="!authStore.isInitialized" />
     
-    <!-- Показуємо основний контент тільки після ініціалізації -->
     <template v-else>
       <AppHeader />
       
@@ -17,6 +15,5 @@
 </template>
 
 <script setup lang="ts">
-// Layout за замовчуванням з хедером та навігацією
 const authStore = useAuthStore()
 </script> 

@@ -9,6 +9,20 @@ export class CheckerController {
 
   @Post()
   async checkCode(@Body() checkDto: CheckDto): Promise<CheckResultDto> {
-    return this.checkerService.checkCode(checkDto);
+    console.log('🔍 Checker Service: Received check request', {
+      hasCode: !!checkDto.code,
+      language: checkDto.language,
+      testCasesCount: checkDto.testCases?.length,
+      hasSettings: !!checkDto.settings,
+    });
+
+    try {
+      const result = await this.checkerService.checkCode(checkDto);
+      console.log('✅ Checker Service: Check completed successfully');
+      return result;
+    } catch (error) {
+      console.error('❌ Checker Service: Check failed', error);
+      throw error;
+    }
   }
 }

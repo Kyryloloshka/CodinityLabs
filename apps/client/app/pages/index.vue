@@ -1,6 +1,5 @@
 <template>
   <div class="">
-    <!-- Заголовок -->
     <div class="mb-6">
       <h1 class="text-2xl font-bold text-theme-primary">
         {{ authStore.isAuthenticated ? 'Вітаємо!' : 'Ласкаво просимо до системи завдань' }}
@@ -15,7 +14,6 @@
      
     </div>
    
-    <!-- Публічні завдання -->
     <div class="mb-6">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-xl font-bold text-theme-primary">
@@ -34,7 +32,6 @@
         </div>
       </div>
 
-      <!-- Завантаження -->
       <div v-if="loading" class="flex justify-center py-8">
         <div class="text-center">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-primary mx-auto"></div>
@@ -42,7 +39,6 @@
         </div>
       </div>
 
-      <!-- Помилка -->
       <div v-else-if="error" class="bg-error border border-error rounded p-3">
         <div class="flex">
           <UIcon name="i-heroicons-exclamation-triangle" class="h-4 w-4 text-error" />
@@ -53,7 +49,6 @@
         </div>
       </div>
 
-      <!-- Список завдань -->
       <div v-else-if="assignments.length > 0" class="grid gap-4">
         <div
           v-for="assignment in assignments"
@@ -139,7 +134,6 @@
         </div>
       </div>
 
-      <!-- Порожній стан -->
       <div v-else class="text-center py-8">
         <UIcon name="i-heroicons-document-text" class="mx-auto h-8 w-8 text-theme-muted" />
         <h3 class="mt-2 text-sm font-medium text-theme-primary">
@@ -177,7 +171,6 @@ interface Assignment {
   }
 }
 
-// Реактивні дані
 const assignments = ref<Assignment[]>([])
 const loading = ref(true)
 const error = ref('')

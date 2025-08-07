@@ -19,6 +19,7 @@ import {
   ApiBadRequestResponse,
   ApiInternalServerErrorResponse,
   ApiBearerAuth,
+  ApiResponse,
 } from '@nestjs/swagger';
 import { AssignmentsService } from './assignments.service';
 import { SubmissionDto, CreateSubmissionDto } from './dto/submission.dto';
@@ -117,6 +118,91 @@ export class SubmissionsController {
     return this.assignmentsService.findSubmissionsByAssignment(assignmentId);
   }
 
+  @Get('assignment/:assignmentId/statistics')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get assignment statistics',
+    description:
+      'Get statistics for all submissions of a specific assignment grouped by users',
+  })
+  @ApiParam({
+    name: 'assignmentId',
+    description: 'Assignment identifier',
+    example: 'a82940b0-cff0-42df-b4c4-0ff66a2a30fc',
+  })
+  @ApiOkResponse({
+    description: 'Assignment statistics successfully retrieved',
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error',
+  })
+  async getAssignmentStatistics(
+    @Param('assignmentId', ParseUUIDPipe) assignmentId: string,
+  ): Promise<any> {
+    return this.assignmentsService.getAssignmentStatistics(assignmentId);
+  }
+
+  @Get('assignment/:assignmentId/statistics-with-users')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get assignment statistics with user information',
+    description:
+      'Get statistics for all submissions of a specific assignment grouped by users with user details',
+  })
+  @ApiParam({
+    name: 'assignmentId',
+    description: 'Assignment identifier',
+    example: 'a82940b0-cff0-42df-b4c4-0ff66a2a30fc',
+  })
+  @ApiOkResponse({
+    description:
+      'Assignment statistics with user information successfully retrieved',
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error',
+  })
+  async getAssignmentStatisticsWithUsers(
+    @Param('assignmentId', ParseUUIDPipe) assignmentId: string,
+  ): Promise<any> {
+    return this.assignmentsService.getAssignmentStatisticsWithUsers(
+      assignmentId,
+    );
+  }
+
+  @Get('user/:userId/assignment/:assignmentId')
+  @ApiOperation({
+    summary: 'Get user submissions for specific assignment',
+    description: 'Get all submissions for a specific user and assignment',
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'User identifier',
+    example: 'user123',
+  })
+  @ApiParam({
+    name: 'assignmentId',
+    description: 'Assignment identifier',
+    example: 'a82940b0-cff0-42df-b4c4-0ff66a2a30fc',
+  })
+  @ApiOkResponse({
+    description: 'User assignment submissions successfully retrieved',
+    type: [SubmissionDto],
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error',
+  })
+  async findByUserAndAssignment(
+    @Param('userId') userId: string,
+    @Param('assignmentId', ParseUUIDPipe) assignmentId: string,
+  ): Promise<SubmissionDto[]> {
+    return this.assignmentsService.findSubmissionsByUserAndAssignment(
+      userId,
+      assignmentId,
+    );
+  }
+
   @Post()
   @ApiOperation({
     summary: 'Create submission',
@@ -135,6 +221,10 @@ export class SubmissionsController {
   })
   @ApiInternalServerErrorResponse({
     description: 'Internal server error',
+  })
+  @ApiResponse({
+    status: 429,
+    description: 'Maximum attempts limit reached',
   })
   async create(
     @Body() createSubmissionDto: CreateSubmissionDto,

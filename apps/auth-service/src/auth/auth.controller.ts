@@ -7,6 +7,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Patch,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -21,6 +22,7 @@ import {
   RegisterDto,
   AuthResponseDto,
   RefreshTokenDto,
+  UpdateProfileDto,
 } from '../common/dto/auth.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import {
@@ -166,6 +168,48 @@ export class AuthController {
   })
   getProfile(@Request() req: { user: unknown }) {
     return req.user;
+  }
+
+  @Patch('profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Оновити профіль користувача',
+    description: 'Оновлення імені та/або паролю поточного користувача',
+  })
+  @ApiBody({
+    type: UpdateProfileDto,
+    description: 'Дані для оновлення профілю',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Профіль успішно оновлено',
+    type: ApiSuccessResponseDto<{
+      user: {
+        id: string;
+        email: string;
+        name: string;
+        role: string;
+      };
+      accessToken: string;
+    }>,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Невірні дані запиту',
+    type: ApiErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Невірний токен',
+    type: ApiErrorResponseDto,
+  })
+  async updateProfile(
+    @Request()
+    req: { user: { id: string; email: string; role: string; name: string } },
+    @Body() updateProfileDto: UpdateProfileDto,
+  ) {
+    return this.authService.updateProfile(req.user.id, updateProfileDto);
   }
 
   @Post('verify')

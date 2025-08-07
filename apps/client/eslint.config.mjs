@@ -5,7 +5,7 @@ import globals from 'globals'
 export default [
   js.configs.recommended,
   {
-    ignores: ['.nuxt/**/*', 'node_modules/**/*'],
+    ignores: ['.nuxt/**/*', 'node_modules/**/*', 'dist/**/*', '.output/**/*'],
   },
   {
     languageOptions: {

@@ -247,13 +247,11 @@ watch(() => appTheme.value, (newTheme) => {
   min-height: 400px;
 }
 
-/* Кастомні стилі для редактора */
 :deep(.monaco-editor) { 
   border-radius: 8px; 
   height: 100% !important;
 }
 
-/* Dark theme styles */
 [data-theme="dark"] :deep(.monaco-editor .margin) { 
   background-color: #0f1419; 
 }
@@ -282,7 +280,6 @@ watch(() => appTheme.value, (newTheme) => {
   background-color: #4b5563;
 }
 
-/* Light theme styles */
 [data-theme="light"] :deep(.monaco-editor .margin) { 
   background-color: #ffffff; 
 }

@@ -1,59 +1,44 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { TestCaseDto } from './dto/check.dto';
 import { TestResultDto } from './dto/check-result.dto';
 import * as vm from 'vm';
 
 @Injectable()
 export class SafeCodeExecutorService {
-  private readonly logger = new Logger(SafeCodeExecutorService.name);
-
   async executeCodeSafely(
     code: string,
     testCase: TestCaseDto,
     language: string,
-    timeout: number = 1000,
+    timeout: number,
   ): Promise<TestResultDto> {
+    const processedCode = this.processCode(code, language);
+    const sandbox = this.createSandbox();
+
     try {
-      // Підготовка коду для виконання
-      const processedCode = this.processCode(code, language);
-
-      // Створюємо безпечне середовище виконання
-      const sandbox = this.createSandbox();
-
-      // Виконуємо код з таймаутом
       const result = await this.executeWithTimeout(
         processedCode,
         testCase.input,
-        timeout,
         sandbox,
+        timeout,
       );
 
-      const actualString = String(result);
-      const passed = actualString === testCase.expected;
-
       return {
-        passed,
-        actual: actualString,
+        passed: result === testCase.expected,
+        actual: result,
         expected: testCase.expected,
         description: testCase.description,
         input: testCase.input,
         timeout: false,
       };
     } catch (error) {
-      this.logger.error(`Error executing code: ${error.message}`);
-
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      const isTimeout =
-        errorMessage.includes('timeout') || errorMessage.includes('timed out');
-
       return {
         passed: false,
-        actual: `Error: ${errorMessage}`,
+        actual:
+          'Error: ' + (error instanceof Error ? error.message : String(error)),
         expected: testCase.expected,
         description: testCase.description,
         input: testCase.input,
-        timeout: isTimeout,
+        timeout: error instanceof Error && error.message.includes('timeout'),
       };
     }
   }
@@ -188,22 +173,20 @@ export class SafeCodeExecutorService {
   private async executeWithTimeout(
     code: string,
     input: unknown,
+    sandbox: Record<string, unknown>,
     timeout: number,
-    sandbox: any,
-  ): Promise<unknown> {
+  ): Promise<string> {
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
-        reject(new Error('timeout'));
+        reject(new Error('Execution timeout'));
       }, timeout);
 
       try {
-        // Створюємо безпечну функцію
         const safeCode = `
           (function() {
             'use strict';
             ${code}
             
-            // Викликаємо функцію main або solution
             if (typeof main === 'function') {
               return main(${JSON.stringify(input)});
             } else if (typeof solution === 'function') {
@@ -214,7 +197,6 @@ export class SafeCodeExecutorService {
           })();
         `;
 
-        // Виконуємо код в безпечному середовищі
         const context = vm.createContext(sandbox);
         const script = new vm.Script(safeCode);
 
@@ -222,13 +204,13 @@ export class SafeCodeExecutorService {
           timeout: timeout,
           displayErrors: false,
           breakOnSigint: false,
-        });
+        }) as unknown;
 
         clearTimeout(timeoutId);
-        resolve(result);
+        resolve(String(result));
       } catch (error) {
         clearTimeout(timeoutId);
-        reject(error);
+        reject(error instanceof Error ? error : new Error(String(error)));
       }
     });
   }

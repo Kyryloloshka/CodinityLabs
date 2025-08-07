@@ -14,13 +14,10 @@ export class CodeExecutorService {
     timeout: number = 1000,
   ): Promise<TestResultDto> {
     try {
-      // Створюємо унікальний тег для контейнера
       const containerTag = `code-runner-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-      // Підготовка коду для виконання
       const processedCode = this.processCode(code, language);
 
-      // Запускаємо Docker контейнер
       const result = await this.runDockerContainer(
         containerTag,
         processedCode,
@@ -51,10 +48,12 @@ export class CodeExecutorService {
         };
       }
     } catch (error) {
-      this.logger.error(`Error executing code in container: ${error.message}`);
+      this.logger.error(
+        `Error executing code in container: ${(error as Error).message}`,
+      );
       return {
         passed: false,
-        actual: `Error: ${error.message}`,
+        actual: `Error: ${(error as Error).message}`,
         expected: testCase.expected,
         description: testCase.description,
         input: testCase.input,
@@ -146,48 +145,39 @@ export class CodeExecutorService {
       let stdout = '';
       let stderr = '';
 
-      dockerProcess.stdout.on('data', (data) => {
+      dockerProcess.stdout.on('data', (data: Buffer) => {
         stdout += data.toString();
       });
 
-      dockerProcess.stderr.on('data', (data) => {
+      dockerProcess.stderr.on('data', (data: Buffer) => {
         stderr += data.toString();
       });
 
-      // Таймаут для всього процесу
-      const processTimeout = setTimeout(() => {
-        dockerProcess.kill('SIGKILL');
-        resolve({
-          success: false,
-          error: 'Process timeout',
-          timeout: true,
-        });
-      }, timeout + 2000); // Додаємо 2 секунди для Docker overhead
-
-      dockerProcess.on('close', (code) => {
-        clearTimeout(processTimeout);
-
-        if (code === 0 && stdout) {
+      dockerProcess.on('close', (code: number | null) => {
+        if (code === 0) {
           try {
-            const result = JSON.parse(stdout);
+            const result = JSON.parse(stdout) as {
+              success: boolean;
+              result?: unknown;
+              error?: string;
+              timeout?: boolean;
+            };
             resolve(result);
-          } catch (error) {
+          } catch {
             resolve({
               success: false,
-              error: 'Invalid response format',
+              error: 'Invalid JSON response from container',
             });
           }
         } else {
           resolve({
             success: false,
             error: stderr || 'Container execution failed',
-            timeout: code === 137, // SIGKILL
           });
         }
       });
 
-      dockerProcess.on('error', (error) => {
-        clearTimeout(processTimeout);
+      dockerProcess.on('error', (error: Error) => {
         resolve({
           success: false,
           error: `Docker error: ${error.message}`,

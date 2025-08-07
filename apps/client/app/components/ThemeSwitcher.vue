@@ -4,7 +4,6 @@
     class="flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 cursor-pointer"
     :title="theme === 'light' ? 'Перемкнути на темну тему' : 'Перемкнути на світлу тему'"
   >
-    <!-- Sun icon for light theme -->
     <svg
       v-if="theme === 'dark'"
       class="w-5 h-5 text-yellow-500"
@@ -18,7 +17,6 @@
       />
     </svg>
     
-    <!-- Moon icon for dark theme -->
     <svg
       v-else
       class="w-5 h-5 text-theme-primary"

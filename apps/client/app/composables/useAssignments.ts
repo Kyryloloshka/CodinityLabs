@@ -9,6 +9,18 @@ interface TestCase {
   updatedAt: string
 }
 
+interface AssignmentSettings {
+  id: string
+  assignmentId: string
+  timeout: number
+  maxAttempts: number | null
+  passingThreshold: number
+  allowPartialScore: boolean
+  strictMode: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 interface Assignment {
   id: string
   title: string
@@ -19,6 +31,7 @@ interface Assignment {
   createdAt: string
   updatedAt: string
   testCases: TestCase[]
+  settings?: AssignmentSettings
   _count: {
     submissions: number
   }
@@ -48,6 +61,13 @@ interface CreateAssignment {
     description: string
     isPublic: boolean
   }[]
+  settings?: {
+    timeout: number
+    maxAttempts: number | null
+    passingThreshold: number
+    allowPartialScore: boolean
+    strictMode: boolean
+  }
 }
 
 interface UpdateAssignment {
@@ -62,6 +82,13 @@ interface UpdateAssignment {
     description: string
     isPublic: boolean
   }[]
+  settings?: {
+    timeout?: number
+    maxAttempts?: number | null
+    passingThreshold?: number
+    allowPartialScore?: boolean
+    strictMode?: boolean
+  }
 }
 
 interface Submission {
@@ -121,7 +148,6 @@ interface CheckCodeResponse {
 }
 
 export const useAssignments = () => {
-  const config = useRuntimeConfig()
   const api = useApi()
 
   const getAssignments = async (page?: number, limit?: number, search?: string, difficulty?: number, status?: string): Promise<PaginatedResponse<Assignment>> => {
@@ -159,8 +185,17 @@ export const useAssignments = () => {
   }
 
   const getAssignmentForTeacher = async (id: string): Promise<Assignment> => {
-    const response = await api.get<Assignment>(`/assignments/${id}/teacher`)
-    return response
+    try {
+      const response = await api.get<Assignment>(`/assignments/${id}/teacher`)
+      return response
+    } catch (error: any) {
+      if (error?.message === 'AUTH_CANCELLED') {
+        // Не прокидаємо помилку далі при скасуванні авторизації
+        throw error
+      }
+      console.error('Error fetching assignment for teacher:', error)
+      throw error
+    }
   }
 
   const createAssignment = async (assignment: CreateAssignment): Promise<Assignment> => {
@@ -212,12 +247,41 @@ export const useAssignments = () => {
     }
   }
 
+  const getUserAssignmentSubmissions = async (userId: string, assignmentId: string): Promise<Submission[]> => {
+    try {
+      const response = await api.get<Submission[]>(`/submissions/user/${userId}/assignment/${assignmentId}`)
+      return response
+    } catch (error) {
+      console.error('Error fetching user assignment submissions:', error)
+      throw error
+    }
+  }
+
   const getAssignmentSubmissions = async (assignmentId: string): Promise<Submission[]> => {
     try {
       const response = await api.get<Submission[]>(`/submissions/assignment/${assignmentId}`)
       return response
     } catch (error) {
       console.error('Error fetching assignment submissions:', error)
+      throw error
+    }
+  }
+
+  const getAssignmentStatistics = async (assignmentId: string): Promise<any> => {
+    const response = await api.get<any>(`/submissions/assignment/${assignmentId}/statistics`)
+    return response
+  }
+
+  const getAssignmentStatisticsWithUsers = async (assignmentId: string): Promise<any> => {
+    try {
+      const response = await api.get<any>(`/submissions/assignment/${assignmentId}/statistics-with-users`)
+      return response
+    } catch (error: any) {
+      if (error?.message === 'AUTH_CANCELLED') {
+        // Не прокидаємо помилку далі при скасуванні авторизації
+        throw error
+      }
+      console.error('Error fetching assignment statistics:', error)
       throw error
     }
   }
@@ -251,6 +315,16 @@ export const useAssignments = () => {
     }
   }
 
+  const checkMaxAttempts = async (userId: string, assignmentId: string): Promise<any> => {
+    try {
+      const response = await api.get<any>(`/assignments/${assignmentId}/check-max-attempts/${userId}`)
+      return response
+    } catch (error) {
+      console.error('Error checking max attempts:', error)
+      throw error
+    }
+  }
+
   return {
     getAssignments,
     getTeacherAssignments,
@@ -262,9 +336,13 @@ export const useAssignments = () => {
     deleteAssignment,
     getSubmissions,
     getUserSubmissions,
+    getUserAssignmentSubmissions,
     getAssignmentSubmissions,
+    getAssignmentStatistics,
+    getAssignmentStatisticsWithUsers,
     createSubmission,
     deleteSubmission,
     checkCode,
+    checkMaxAttempts,
   }
 } 

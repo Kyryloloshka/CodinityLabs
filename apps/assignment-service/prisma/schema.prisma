@@ -21,8 +21,24 @@ model Assignment {
   updatedAt   DateTime    @updatedAt
   testCases   TestCase[]
   submissions Submission[]
+  settings    AssignmentSettings?
 
   @@map("assignments")
+}
+
+model AssignmentSettings {
+  id                    String   @id @default(uuid())
+  assignmentId          String   @unique
+  timeout               Int      @default(2000) // Таймаут в мілісекундах (200мс-5с)
+  maxAttempts           Int?     // Максимальна кількість спроб (null = необмежено)
+  passingThreshold      Float    @default(80.0) // Поріг проходження тесту в відсотках
+  allowPartialScore     Boolean  @default(true) // Дозволити часткові бали
+  strictMode            Boolean  @default(false) // Строгий режим (всі тести мають пройти)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  assignment           Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@map("assignment_settings")
 }
 
 model TestCase {

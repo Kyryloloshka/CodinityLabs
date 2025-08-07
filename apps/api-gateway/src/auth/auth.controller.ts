@@ -272,6 +272,67 @@ export class AuthController {
     return req.user;
   }
 
+  @Patch('profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Update user profile',
+    description: 'Update current user profile (name and/or password)',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          description: 'New name',
+          example: 'Іван Петренко',
+        },
+        currentPassword: {
+          type: 'string',
+          description: 'Current password (required for password change)',
+          example: 'currentPassword123',
+        },
+        newPassword: {
+          type: 'string',
+          description: 'New password',
+          example: 'newPassword123',
+        },
+        confirmPassword: {
+          type: 'string',
+          description: 'Password confirmation',
+          example: 'newPassword123',
+        },
+      },
+    },
+    description: 'Profile update data',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Profile updated successfully',
+    type: ApiSuccessResponseDto<{
+      user: UserResponseDto;
+      accessToken: string;
+    }>,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid request data',
+    type: ApiErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid token or current password',
+    type: ApiErrorResponseDto,
+  })
+  async updateProfile(
+    @Req() req: Request & { user: UserResponseDto },
+    @Body() updateProfileDto: any,
+  ): Promise<{ user: UserResponseDto; accessToken: string }> {
+    const token = req.headers.authorization?.replace('Bearer ', '') || '';
+    return this.authService.updateProfile(req.user.id, updateProfileDto, token);
+  }
+
   @Get(':id')
   @ApiOperation({
     summary: 'Get user by ID',
