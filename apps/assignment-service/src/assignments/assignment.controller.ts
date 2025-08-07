@@ -116,7 +116,8 @@ export class AssignmentController {
 
   @Get(':id/statistics')
   async getAssignmentStatistics(@Param('id') assignmentId: string) {
-    const statistics = await this.assignmentService.getAssignmentStatistics(assignmentId);
+    const statistics =
+      await this.assignmentService.getAssignmentStatistics(assignmentId);
     return ApiResponseDto.success(
       statistics,
       'Assignment statistics retrieved successfully',
