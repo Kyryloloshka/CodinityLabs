@@ -168,7 +168,7 @@
                     </div>
                     <div>
                       <span class="text-theme-secondary">Отримано:</span>
-                      <div class="font-mono bg-theme-input p-1 rounded">{{ testResult.output }}</div>
+                      <div class="font-mono bg-theme-input p-1 rounded">{{ testResult.actual || testResult.output }}</div>
                     </div>
                   </div>
                 </div>
