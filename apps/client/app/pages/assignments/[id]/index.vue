@@ -27,7 +27,7 @@
                 Складність: {{ assignment.difficulty }}/10
               </UBadge>
               <span>Дедлайн: {{ formatDate(assignment.deadline) }}</span>
-              <span>{{ assignment._count.submissions }} подань</span>
+              <span>{{ assignment?._count?.submissions || 0 }} подань</span>
             </div>
           </div>
           

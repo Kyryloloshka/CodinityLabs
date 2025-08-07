@@ -119,6 +119,8 @@ export class SubmissionsController {
   }
 
   @Get('assignment/:assignmentId/statistics')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get assignment statistics',
     description:
@@ -142,6 +144,8 @@ export class SubmissionsController {
   }
 
   @Get('assignment/:assignmentId/statistics-with-users')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get assignment statistics with user information',
     description:

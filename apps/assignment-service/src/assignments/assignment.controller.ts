@@ -113,4 +113,13 @@ export class AssignmentController {
       'Max attempts check completed successfully',
     );
   }
+
+  @Get(':id/statistics')
+  async getAssignmentStatistics(@Param('id') assignmentId: string) {
+    const statistics = await this.assignmentService.getAssignmentStatistics(assignmentId);
+    return ApiResponseDto.success(
+      statistics,
+      'Assignment statistics retrieved successfully',
+    );
+  }
 }

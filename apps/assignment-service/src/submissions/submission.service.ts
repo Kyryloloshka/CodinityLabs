@@ -7,6 +7,23 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 
+interface TestResult {
+  passed: boolean;
+  actual: string;
+  expected: string;
+  description: string;
+  input: string;
+}
+
+interface TestResultWithVisibility extends TestResult {
+  isPublic: boolean;
+}
+
+interface CheckResult {
+  tests: TestResult[];
+  score: number;
+}
+
 @Injectable()
 export class SubmissionService {
   private readonly checkerServiceUrl: string;
@@ -57,7 +74,7 @@ export class SubmissionService {
     });
 
     // Run tests asynchronously
-    this.runTestsAsync(submission.id, createSubmissionDto);
+    void this.runTestsAsync(submission.id, createSubmissionDto);
 
     return submission;
   }
@@ -141,21 +158,20 @@ export class SubmissionService {
         this.httpService.post(`${this.checkerServiceUrl}/check`, checkRequest),
       );
 
-      const checkResult = response.data;
+      const checkResult = response.data as CheckResult;
 
       // Add isPublic information to test results
-      const testResultsWithVisibility = checkResult.tests.map(
-        (test: any, index: number) => ({
+      const testResultsWithVisibility: TestResultWithVisibility[] =
+        checkResult.tests.map((test: TestResult, index: number) => ({
           ...test,
           isPublic: assignment.testCases[index].isPublic,
-        }),
-      );
+        }));
 
       // Update submission with results
       await this.updateStatus(
         submissionId,
         SubmissionStatus.COMPLETED,
-        testResultsWithVisibility as Prisma.InputJsonValue,
+        testResultsWithVisibility as unknown as Prisma.InputJsonValue,
         checkResult.score,
       );
     } catch (error) {
