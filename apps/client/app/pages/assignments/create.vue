@@ -171,6 +171,100 @@
                 </div>
               </div>
             </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <label class="block text-sm font-medium text-theme-primary">
+                  Налаштування перевірки
+                </label>
+                <UButton
+                  @click="toggleSettings"
+                  variant="ghost"
+                  color="primary"
+                  size="sm"
+                >
+                  {{ showSettings ? 'Сховати' : 'Показати' }}
+                </UButton>
+              </div>
+              
+              <div v-if="showSettings" class="border border-theme-primary rounded-lg p-4 bg-theme-secondary">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label class="block text-sm font-medium text-theme-secondary mb-1">
+                      Таймаут (мс)
+                    </label>
+                    <input
+                      v-model="form.settings.timeout"
+                      type="number"
+                      min="200"
+                      max="5000"
+                      class="w-full px-3 py-2 text-sm border border-theme-secondary rounded-md shadow-sm bg-theme-input text-theme-primary focus:outline-none focus:ring-0"
+                    />
+                    <p class="text-xs text-theme-muted mt-1">Час виконання коду (200мс-5с)</p>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-theme-secondary mb-1">
+                      Поріг проходження (%)
+                    </label>
+                    <input
+                      v-model="form.settings.passingThreshold"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      class="w-full px-3 py-2 text-sm border border-theme-secondary rounded-md shadow-sm bg-theme-input text-theme-primary focus:outline-none focus:ring-0"
+                    />
+                    <p class="text-xs text-theme-muted mt-1">Мінімальний бал для проходження</p>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-theme-secondary mb-1">
+                      Максимальна кількість подань
+                    </label>
+                    <div class="flex items-center gap-2">
+                      <input
+                        v-model="form.settings.maxAttempts"
+                        type="number"
+                        min="1"
+                        max="100"
+                        :disabled="form.settings.unlimitedAttempts"
+                        class="flex-1 px-3 py-2 text-sm border border-theme-secondary rounded-md shadow-sm bg-theme-input text-theme-primary focus:outline-none focus:ring-0 disabled:opacity-50"
+                      />
+                      <label class="flex items-center">
+                        <input
+                          v-model="form.settings.unlimitedAttempts"
+                          type="checkbox"
+                          class="mr-2 rounded border-theme-secondary text-primary focus:ring-primary"
+                        />
+                        <span class="text-sm text-theme-secondary">Необмежено</span>
+                      </label>
+                    </div>
+                    <p class="text-xs text-theme-muted mt-1">Кількість подань для одного студента</p>
+                  </div>
+                  
+                  <div class="space-y-4">
+                    <label class="flex items-center">
+                      <input
+                        v-model="form.settings.allowPartialScore"
+                        type="checkbox"
+                        class="mr-2 rounded border-theme-secondary text-primary focus:ring-primary"
+                      />
+                      <span class="text-sm text-theme-secondary">Дозволити часткові бали</span>
+                    </label>
+                    
+                    <label class="flex items-center">
+                      <input
+                        v-model="form.settings.strictMode"
+                        type="checkbox"
+                        class="mr-2 rounded border-theme-secondary text-primary focus:ring-primary"
+                      />
+                      <span class="text-sm text-theme-secondary">Строгий режим (всі тести мають пройти)</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="flex justify-end gap-4 mt-8 pt-6 border-t border-theme-primary">
@@ -218,8 +312,18 @@ const form = ref({
   description: '',
   difficulty: 1,
   deadline: '',
-  testCases: [] as { input: string; expected: string; description: string; isPublic: boolean }[]
+  testCases: [] as { input: string; expected: string; description: string; isPublic: boolean }[],
+  settings: {
+    timeout: 2000, // 2 секунди
+    maxAttempts: null as number | null, // Необмежено за замовчуванням
+    passingThreshold: 80, // 80%
+    allowPartialScore: false,
+    strictMode: false,
+    unlimitedAttempts: true // Необмежено за замовчуванням
+  }
 })
+
+const showSettings = ref(false)
 
 const assignmentId = route.params.id as string
 const isEditing = computed(() => !!assignmentId && assignmentId !== 'create')
@@ -239,7 +343,23 @@ const loadAssignment = async () => {
         expected: tc.expected,
         description: tc.description,
         isPublic: tc.isPublic
-      }))
+      })),
+      settings: editingAssignment.value.settings || {
+        timeout: 2000,
+        maxAttempts: null,
+        passingThreshold: 80,
+        allowPartialScore: false,
+        strictMode: false,
+        unlimitedAttempts: true
+      }
+    }
+    
+    // Встановлюємо unlimitedAttempts на основі maxAttempts
+    if (form.value.settings.maxAttempts === null) {
+      form.value.settings.unlimitedAttempts = true
+      form.value.settings.maxAttempts = 3 // Значення за замовчуванням для відображення
+    } else {
+      form.value.settings.unlimitedAttempts = false
     }
   } catch (error) {
     console.error('Error loading assignment:', error)
@@ -258,6 +378,10 @@ const addTestCase = () => {
 
 const removeTestCase = (index: number) => {
   form.value.testCases.splice(index, 1)
+}
+
+const toggleSettings = () => {
+  showSettings.value = !showSettings.value
 }
 
 const saveAssignment = async () => {
@@ -301,6 +425,13 @@ const saveAssignment = async () => {
       ...form.value,
       difficulty: Number(form.value.difficulty),
       deadline: new Date(form.value.deadline).toISOString(),
+      settings: {
+        timeout: form.value.settings.timeout,
+        maxAttempts: form.value.settings.unlimitedAttempts ? null : form.value.settings.maxAttempts,
+        passingThreshold: form.value.settings.passingThreshold,
+        allowPartialScore: form.value.settings.allowPartialScore,
+        strictMode: form.value.settings.strictMode
+      },
       teacherId: authStore.user!.id
     }
 

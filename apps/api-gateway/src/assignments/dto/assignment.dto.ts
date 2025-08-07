@@ -8,8 +8,67 @@ import {
   Min,
   Max,
   IsBoolean,
+  IsOptional,
+  IsNumber,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+
+export class AssignmentSettingsDto {
+  @ApiProperty({
+    description: 'Унікальний ідентифікатор налаштувань',
+    example: '72dc290e-6d96-4abd-ac3e-b03f6a921baf',
+  })
+  id: string;
+
+  @ApiProperty({
+    description: 'ID завдання',
+    example: 'a82940b0-cff0-42df-b4c4-0ff66a2a30fc',
+  })
+  assignmentId: string;
+
+  @ApiProperty({
+    description: 'Таймаут виконання коду в мілісекундах',
+    example: 2000,
+  })
+  timeout: number;
+
+  @ApiProperty({
+    description: 'Максимальна кількість спроб (null = необмежено)',
+    example: null,
+    nullable: true,
+  })
+  maxAttempts: number | null;
+
+  @ApiProperty({
+    description: 'Поріг проходження тесту в відсотках',
+    example: 80.0,
+  })
+  passingThreshold: number;
+
+  @ApiProperty({
+    description: 'Дозволити часткові бали',
+    example: true,
+  })
+  allowPartialScore: boolean;
+
+  @ApiProperty({
+    description: 'Строгий режим перевірки',
+    example: false,
+  })
+  strictMode: boolean;
+
+  @ApiProperty({
+    description: 'Дата створення',
+    example: '2025-07-27T15:00:02.332Z',
+  })
+  createdAt: string;
+
+  @ApiProperty({
+    description: 'Дата оновлення',
+    example: '2025-07-27T15:00:02.332Z',
+  })
+  updatedAt: string;
+}
 
 export class TestCaseDto {
   @ApiProperty({
@@ -119,12 +178,79 @@ export class AssignmentDto {
   testCases: TestCaseDto[];
 
   @ApiProperty({
+    description: 'Налаштування перевірки завдання',
+    type: AssignmentSettingsDto,
+    required: false,
+  })
+  settings?: AssignmentSettingsDto;
+
+  @ApiProperty({
     description: 'Кількість подань',
     example: { submissions: 0 },
   })
   _count: {
     submissions: number;
   };
+}
+
+export class CreateAssignmentSettingsDto {
+  @ApiProperty({
+    description: 'Таймаут виконання коду в мілісекундах',
+    example: 2000,
+    minimum: 200,
+    maximum: 5000,
+    required: false,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(200)
+  @Max(5000)
+  timeout?: number;
+
+  @ApiProperty({
+    description: 'Максимальна кількість спроб (null = необмежено)',
+    example: null,
+    nullable: true,
+    minimum: 1,
+    maximum: 100,
+    required: false,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  maxAttempts?: number | null;
+
+  @ApiProperty({
+    description: 'Поріг проходження тесту в відсотках',
+    example: 80.0,
+    minimum: 0,
+    maximum: 100,
+    required: false,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  passingThreshold?: number;
+
+  @ApiProperty({
+    description: 'Дозволити часткові бали',
+    example: true,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  allowPartialScore?: boolean;
+
+  @ApiProperty({
+    description: 'Строгий режим перевірки',
+    example: false,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  strictMode?: boolean;
 }
 
 export class CreateTestCaseDto {
@@ -206,6 +332,16 @@ export class CreateAssignmentDto {
   @ValidateNested({ each: true })
   @Type(() => CreateTestCaseDto)
   testCases: CreateTestCaseDto[];
+
+  @ApiProperty({
+    description: 'Налаштування перевірки завдання',
+    type: CreateAssignmentSettingsDto,
+    required: false,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateAssignmentSettingsDto)
+  settings?: CreateAssignmentSettingsDto;
 }
 
 export class UpdateAssignmentDto {
@@ -262,4 +398,14 @@ export class UpdateAssignmentDto {
   @ValidateNested({ each: true })
   @Type(() => CreateTestCaseDto)
   testCases?: CreateTestCaseDto[];
+
+  @ApiProperty({
+    description: 'Налаштування перевірки завдання',
+    type: CreateAssignmentSettingsDto,
+    required: false,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateAssignmentSettingsDto)
+  settings?: CreateAssignmentSettingsDto;
 }

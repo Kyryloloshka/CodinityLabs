@@ -9,6 +9,18 @@ interface TestCase {
   updatedAt: string
 }
 
+interface AssignmentSettings {
+  id: string
+  assignmentId: string
+  timeout: number
+  maxAttempts: number | null
+  passingThreshold: number
+  allowPartialScore: boolean
+  strictMode: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 interface Assignment {
   id: string
   title: string
@@ -19,6 +31,7 @@ interface Assignment {
   createdAt: string
   updatedAt: string
   testCases: TestCase[]
+  settings?: AssignmentSettings
   _count: {
     submissions: number
   }
@@ -48,6 +61,13 @@ interface CreateAssignment {
     description: string
     isPublic: boolean
   }[]
+  settings?: {
+    timeout: number
+    maxAttempts: number | null
+    passingThreshold: number
+    allowPartialScore: boolean
+    strictMode: boolean
+  }
 }
 
 interface UpdateAssignment {
@@ -62,6 +82,13 @@ interface UpdateAssignment {
     description: string
     isPublic: boolean
   }[]
+  settings?: {
+    timeout?: number
+    maxAttempts?: number | null
+    passingThreshold?: number
+    allowPartialScore?: boolean
+    strictMode?: boolean
+  }
 }
 
 interface Submission {
@@ -289,6 +316,16 @@ export const useAssignments = () => {
     }
   }
 
+  const checkMaxAttempts = async (userId: string, assignmentId: string): Promise<any> => {
+    try {
+      const response = await api.get<any>(`/assignments/${assignmentId}/check-max-attempts/${userId}`)
+      return response
+    } catch (error) {
+      console.error('Error checking max attempts:', error)
+      throw error
+    }
+  }
+
   return {
     getAssignments,
     getTeacherAssignments,
@@ -307,5 +344,6 @@ export const useAssignments = () => {
     createSubmission,
     deleteSubmission,
     checkCode,
+    checkMaxAttempts,
   }
 } 

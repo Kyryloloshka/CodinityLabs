@@ -131,7 +131,8 @@ function main(args) {
 
 function main(args: string): string {
   const result: string = solution(args);
-  return result;}`
+  return result;
+}`
 }
 
 const resetCode = () => {
@@ -229,7 +230,7 @@ const handleSelectSubmission = (submission: any) => {
   toast.add({
     title: 'Завантажено',
     description: `Завантажено подання від ${new Date(submission.createdAt).toLocaleString('uk-UA')}`,
-    color: 'blue'
+    color: 'primary'
   })
 }
 
@@ -310,7 +311,7 @@ const submitSolution = async () => {
     toast.add({
       title: 'Успішно',
       description: 'Рішення успішно надіслано',
-      color: 'green'
+      color: 'success'
     })
     
     // Refresh submission history
@@ -321,11 +322,30 @@ const submitSolution = async () => {
     
   } catch (err: any) {
     console.error('Error submitting solution:', err)
-    toast.add({
-      title: 'Помилка',
-      description: 'Помилка відправки рішення',
-      color: 'error'
-    })
+    
+    // Handle specific error for max attempts limit
+    if (err?.status === 429 || err?.statusCode === 429) {
+      const errorData = err?.data || err?.response?.data
+      const currentAttempts = errorData?.currentAttempts
+      const maxAttempts = errorData?.maxAttempts
+      
+      let description = 'Досягнуто максимальну кількість спроб для цього завдання'
+      if (currentAttempts !== undefined && maxAttempts !== undefined) {
+        description = `Досягнуто ліміт спроб (${currentAttempts}/${maxAttempts}) для цього завдання`
+      }
+      
+      toast.add({
+        title: 'Ліміт спроб досягнуто',
+        description,
+        color: 'error'
+      })
+    } else {
+      toast.add({
+        title: 'Помилка',
+        description: 'Помилка відправки рішення',
+        color: 'error'
+      })
+    }
   } finally {
     submitting.value = false
   }

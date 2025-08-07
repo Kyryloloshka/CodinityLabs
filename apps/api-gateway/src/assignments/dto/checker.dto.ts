@@ -5,8 +5,73 @@ import {
   IsArray,
   ValidateNested,
   IsOptional,
+  IsInt,
+  IsNumber,
+  IsBoolean,
+  Min,
+  Max,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+
+export class CheckSettingsDto {
+  @ApiProperty({
+    description: 'Таймаут виконання коду в мілісекундах',
+    example: 2000,
+    minimum: 200,
+    maximum: 5000,
+    required: false,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(200)
+  @Max(5000)
+  timeout?: number;
+
+  @ApiProperty({
+    description: 'Максимальна кількість спроб (null = необмежено)',
+    example: null,
+    nullable: true,
+    minimum: 1,
+    maximum: 100,
+    required: false,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  maxAttempts?: number | null;
+
+  @ApiProperty({
+    description: 'Поріг проходження тесту в відсотках',
+    example: 80.0,
+    minimum: 0,
+    maximum: 100,
+    required: false,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  passingThreshold?: number;
+
+  @ApiProperty({
+    description: 'Дозволити часткові бали',
+    example: true,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  allowPartialScore?: boolean;
+
+  @ApiProperty({
+    description: 'Строгий режим перевірки',
+    example: false,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  strictMode?: boolean;
+}
 
 export class TestCaseDto {
   @ApiProperty({
@@ -36,42 +101,58 @@ export class TestCaseDto {
 
 export class CheckDto {
   @ApiProperty({
-    description: 'Код для перевірки',
+    description: 'Code to check',
     example: 'function main(input) { return input * 2; }',
   })
   @IsString()
-  @IsNotEmpty()
   code: string;
 
   @ApiProperty({
-    description: 'Мова програмування',
+    description: 'Programming language',
     example: 'javascript',
     required: false,
   })
-  @IsString()
   @IsOptional()
+  @IsString()
   language?: string;
 
   @ApiProperty({
-    description: 'ID завдання для автоматичного отримання тестів',
+    description: 'Assignment ID',
     example: 'a82940b0-cff0-42df-b4c4-0ff66a2a30fc',
     required: false,
   })
-  @IsString()
   @IsOptional()
+  @IsString()
   assignmentId?: string;
 
   @ApiProperty({
-    description:
-      'Тестові випадки (використовуються якщо assignmentId не передано)',
+    description: 'User ID for submission tracking',
+    example: 'user123',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  userId?: string;
+
+  @ApiProperty({
+    description: 'Test cases to run',
     type: [TestCaseDto],
     required: false,
   })
-  @IsArray()
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => TestCaseDto)
-  @IsOptional()
   testCases?: TestCaseDto[];
+
+  @ApiProperty({
+    description: 'Налаштування перевірки коду',
+    type: CheckSettingsDto,
+    required: false,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CheckSettingsDto)
+  settings?: CheckSettingsDto;
 }
 
 export class LintErrorDto {
@@ -174,4 +255,16 @@ export class CheckResultDto {
     timeout: number;
     public: number;
   };
+
+  @ApiProperty({
+    description: 'Чи пройшов поріг проходження',
+    example: true,
+  })
+  passedThreshold: boolean;
+
+  @ApiProperty({
+    description: 'Використані налаштування перевірки',
+    type: CheckSettingsDto,
+  })
+  settings: CheckSettingsDto;
 }

@@ -98,4 +98,19 @@ export class AssignmentController {
     await this.assignmentService.remove(id);
     return ApiResponseDto.success(null, 'Assignment deleted successfully');
   }
+
+  @Get(':id/check-max-attempts/:userId')
+  async checkMaxAttempts(
+    @Param('id') assignmentId: string,
+    @Param('userId') userId: string,
+  ) {
+    const result = await this.assignmentService.checkMaxAttempts(
+      userId,
+      assignmentId,
+    );
+    return ApiResponseDto.success(
+      result,
+      'Max attempts check completed successfully',
+    );
+  }
 }

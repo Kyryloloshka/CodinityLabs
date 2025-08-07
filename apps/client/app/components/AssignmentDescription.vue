@@ -20,6 +20,39 @@
           </div>
           <p class="text-sm text-theme-primary leading-relaxed">{{ assignment.description }}</p>
         </div>
+
+        <!-- Налаштування завдання -->
+        <div v-if="assignment.settings" class="border-t border-theme-primary pt-4">
+          <h3 class="text-sm font-medium text-theme-primary mb-3">Налаштування перевірки</h3>
+          <div class="space-y-2 text-xs">
+            <div class="flex justify-between items-center">
+              <span class="text-theme-secondary">Таймаут:</span>
+              <span class="text-theme-primary font-medium">{{ (assignment.settings.timeout / 1000).toFixed(1) }}с</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-theme-secondary">Спроби:</span>
+              <span class="text-theme-primary font-medium">
+                {{ assignment.settings.maxAttempts === null ? 'Необмежено подань' : `Макс. ${assignment.settings.maxAttempts} подань` }}
+              </span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-theme-secondary">Поріг:</span>
+              <span class="text-theme-primary font-medium">{{ assignment.settings.passingThreshold }}%</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-theme-secondary">Бали:</span>
+              <span class="text-theme-primary font-medium">
+                {{ assignment.settings.allowPartialScore ? 'Часткові' : 'Повні' }}
+              </span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-theme-secondary">Режим:</span>
+              <span class="text-theme-primary font-medium">
+                {{ assignment.settings.strictMode ? 'Строгий' : 'Звичайний' }}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

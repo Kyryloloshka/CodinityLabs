@@ -78,6 +78,17 @@
         <h2 class="text-xl font-semibold text-theme-primary mb-4">Опис завдання</h2>
         <div class="prose max-w-none">
           <p class="text-theme-primary whitespace-pre-wrap">{{ assignment.description }}</p>
+          
+          <!-- Налаштування завдання (інтегровані в опис) -->
+          <div v-if="assignment.settings" class="mt-4 pt-4 border-t border-theme-secondary">
+            <div class="flex flex-wrap gap-4 text-sm text-theme-secondary">
+              <span>⏱ {{ (assignment.settings.timeout / 1000).toFixed(1) }}с</span>
+              <span>📝 {{ assignment.settings.maxAttempts === null ? 'Необмежено подань' : `Макс. ${assignment.settings.maxAttempts} подань` }}</span>
+              <span>📊 {{ assignment.settings.passingThreshold }}% для проходження</span>
+              <span>{{ assignment.settings.allowPartialScore ? '✅' : '❌' }} часткові бали</span>
+              <span>{{ assignment.settings.strictMode ? '🔒' : '🔓' }} {{ assignment.settings.strictMode ? 'строгий' : 'звичайний' }} режим</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -112,7 +123,45 @@
         </div>
       </div>
 
-      <!-- Подання студентів (тільки для викладачів) -->
+      <!-- Налаштування перевірки (тільки для викладачів) -->
+      <div v-if="isTeacher && assignment.settings" class="bg-theme-card shadow rounded-lg p-6 mb-6 border border-theme-primary">
+        <h2 class="text-xl font-semibold text-theme-primary mb-4">Налаштування перевірки</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-theme-secondary mb-1">Таймаут</label>
+            <div class="bg-theme-input p-2 rounded border border-theme-primary text-theme-primary">
+              {{ assignment.settings.timeout }} мс ({{ (assignment.settings.timeout / 1000).toFixed(1) }} сек)
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-theme-secondary mb-1">Максимальна кількість спроб</label>
+            <div class="bg-theme-input p-2 rounded border border-theme-primary text-theme-primary">
+              {{ assignment.settings.maxAttempts === null ? 'Необмежено' : assignment.settings.maxAttempts }}
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-theme-secondary mb-1">Поріг проходження</label>
+            <div class="bg-theme-input p-2 rounded border border-theme-primary text-theme-primary">
+              {{ assignment.settings.passingThreshold }}%
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-theme-secondary mb-1">Режим оцінювання</label>
+            <div class="bg-theme-input p-2 rounded border border-theme-primary text-theme-primary">
+              <span v-if="assignment.settings.allowPartialScore">Часткові бали дозволені</span>
+              <span v-else>Тільки повні бали</span>
+              <br>
+              <span v-if="assignment.settings.strictMode">Строгий режим</span>
+              <span v-else>Звичайний режим</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Історія подань (тільки для викладачів) -->
       <div v-if="isTeacher" class="bg-theme-card shadow rounded-lg p-6 border border-theme-primary">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-xl font-semibold text-theme-primary">Статистика подань</h2>

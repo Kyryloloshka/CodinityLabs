@@ -19,6 +19,7 @@ import {
   ApiBadRequestResponse,
   ApiInternalServerErrorResponse,
   ApiBearerAuth,
+  ApiResponse,
 } from '@nestjs/swagger';
 import { AssignmentsService } from './assignments.service';
 import { SubmissionDto, CreateSubmissionDto } from './dto/submission.dto';
@@ -216,6 +217,10 @@ export class SubmissionsController {
   })
   @ApiInternalServerErrorResponse({
     description: 'Internal server error',
+  })
+  @ApiResponse({
+    status: 429,
+    description: 'Maximum attempts limit reached',
   })
   async create(
     @Body() createSubmissionDto: CreateSubmissionDto,

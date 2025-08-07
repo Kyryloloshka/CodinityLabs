@@ -424,12 +424,21 @@ export class AssignmentsService {
       );
       return response.data.data;
     } catch (error: unknown) {
-      if (isAxiosError(error) && error.response?.status === 400) {
-        const errorData = error.response.data as ErrorResponse;
-        throw new HttpException(
-          errorData.message || 'Invalid data',
-          HttpStatus.BAD_REQUEST,
-        );
+      if (isAxiosError(error)) {
+        if (error.response?.status === 400) {
+          const errorData = error.response.data as ErrorResponse;
+          throw new HttpException(
+            errorData.message || 'Invalid data',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+        if (error.response?.status === 429) {
+          const errorData = error.response.data as ErrorResponse;
+          throw new HttpException(
+            errorData.message || 'Maximum attempts limit reached',
+            HttpStatus.TOO_MANY_REQUESTS,
+          );
+        }
       }
       throw new HttpException(
         'Failed to create submission',
@@ -473,6 +482,16 @@ export class AssignmentsService {
             isPublic: testCase.isPublic,
           }),
         );
+
+        if (assignment.settings && assignment.settings.timeout) {
+          checkDto.settings = {
+            timeout: assignment.settings.timeout,
+            maxAttempts: assignment.settings.maxAttempts,
+            passingThreshold: assignment.settings.passingThreshold,
+            allowPartialScore: assignment.settings.allowPartialScore,
+            strictMode: assignment.settings.strictMode,
+          };
+        }
       }
 
       if (!checkDto.testCases || checkDto.testCases.length === 0) {
@@ -499,6 +518,25 @@ export class AssignmentsService {
       }
       throw new HttpException(
         'Failed to check code',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async checkMaxAttempts(userId: string, assignmentId: string): Promise<any> {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<ApiResponse<any>>(
+          `${this.assignmentServiceUrl}/assignments/${assignmentId}/check-max-attempts/${userId}`,
+        ),
+      );
+      return response.data.data;
+    } catch (error: unknown) {
+      if (isAxiosError(error) && error.response?.status === 404) {
+        throw new HttpException('Assignment not found', HttpStatus.NOT_FOUND);
+      }
+      throw new HttpException(
+        'Failed to check max attempts',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

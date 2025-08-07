@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CheckDto, TestCaseDto } from './dto/check.dto';
+import { CheckDto, TestCaseDto, CheckSettingsDto } from './dto/check.dto';
 import {
   CheckResultDto,
   LintErrorDto,
@@ -14,11 +14,34 @@ export class CheckerService {
   ) {}
 
   async checkCode(checkDto: CheckDto): Promise<CheckResultDto> {
-    const { code, testCases, language = 'javascript' } = checkDto;
+    const { code, testCases, language = 'javascript', settings } = checkDto;
+
+    const defaultSettings = {
+      timeout: 2000,
+      maxAttempts: null, // Необмежено за замовчуванням
+      passingThreshold: 80.0,
+      allowPartialScore: true,
+      strictMode: false,
+    };
+
+    const finalSettings = {
+      timeout: settings?.timeout ?? defaultSettings.timeout,
+      maxAttempts: settings?.maxAttempts ?? defaultSettings.maxAttempts,
+      passingThreshold:
+        settings?.passingThreshold ?? defaultSettings.passingThreshold,
+      allowPartialScore:
+        settings?.allowPartialScore ?? defaultSettings.allowPartialScore,
+      strictMode: settings?.strictMode ?? defaultSettings.strictMode,
+    };
 
     const lintResults = this.runLintAnalysis(code, language);
 
-    const allTestResults = await this.runTestsSafely(code, testCases, language);
+    const allTestResults = await this.runTestsSafely(
+      code,
+      testCases,
+      language,
+      finalSettings,
+    );
 
     const publicTestResults = allTestResults.filter(
       (_, index) => testCases[index]?.isPublic !== false,
@@ -26,13 +49,22 @@ export class CheckerService {
 
     const testStats = this.calculateTestStats(allTestResults, testCases);
 
-    const score = this.calculateScore(lintResults, allTestResults);
+    const score = this.calculateScore(
+      lintResults,
+      allTestResults,
+      finalSettings,
+    );
+
+    // Перевіряємо чи пройшов поріг проходження
+    const passedThreshold = score >= (finalSettings.passingThreshold || 80.0);
 
     return {
       lint: lintResults,
       tests: publicTestResults,
       score,
       testStats,
+      passedThreshold,
+      settings: finalSettings,
     };
   }
 
@@ -110,6 +142,7 @@ export class CheckerService {
     code: string,
     testCases: TestCaseDto[],
     language: string,
+    settings: CheckSettingsDto,
   ): Promise<TestResultDto[]> {
     const results: TestResultDto[] = [];
 
@@ -119,12 +152,13 @@ export class CheckerService {
           code,
           testCase,
           language,
-          1000,
+          settings.timeout || 2000,
         );
+
         results.push(result);
       } catch (error) {
         console.error('Test execution error:', error);
-        results.push({
+        const errorResult = {
           passed: false,
           actual:
             'Error: ' +
@@ -133,7 +167,9 @@ export class CheckerService {
           description: testCase.description,
           input: testCase.input,
           timeout: false,
-        });
+        };
+
+        results.push(errorResult);
       }
     }
 
@@ -143,6 +179,7 @@ export class CheckerService {
   private calculateScore(
     lintErrors: LintErrorDto[],
     testResults: TestResultDto[],
+    settings: CheckSettingsDto,
   ): number {
     if (testResults.length === 0) {
       return 0;
@@ -161,7 +198,14 @@ export class CheckerService {
     const lintPenalty = Math.min(30, errorCount * 3 + warningCount * 1);
     const lintScore = Math.max(0, 30 - lintPenalty);
 
-    return Math.round(testScore + lintScore);
+    let finalScore = Math.round(testScore + lintScore);
+
+    // Якщо не дозволяємо часткові бали і не всі тести пройшли
+    if (!settings.allowPartialScore && passedTests < testResults.length) {
+      finalScore = 0;
+    }
+
+    return finalScore;
   }
 
   private calculateTestStats(

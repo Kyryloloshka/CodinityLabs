@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
 import { SubmissionNotFoundException } from '../common/exceptions/custom.exceptions';
@@ -24,6 +24,23 @@ export class SubmissionService {
   }
 
   async create(createSubmissionDto: CreateSubmissionDto) {
+    // Check max attempts before creating submission
+    const maxAttemptsCheck = await this.checkMaxAttempts(
+      createSubmissionDto.userId,
+      createSubmissionDto.assignmentId,
+    );
+
+    if (!maxAttemptsCheck.canSubmit) {
+      throw new HttpException(
+        {
+          message: 'Maximum attempts limit reached',
+          currentAttempts: maxAttemptsCheck.currentAttempts,
+          maxAttempts: maxAttemptsCheck.maxAttempts,
+        },
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
     // Create submission with PENDING status
     const submission = await this.prisma.submission.create({
       data: {
@@ -45,7 +62,56 @@ export class SubmissionService {
     return submission;
   }
 
-  private async runTestsAsync(submissionId: string, submissionData: CreateSubmissionDto) {
+  private async checkMaxAttempts(
+    userId: string,
+    assignmentId: string,
+  ): Promise<{
+    canSubmit: boolean;
+    currentAttempts: number;
+    maxAttempts: number | null;
+  }> {
+    // Get assignment with settings
+    const assignment = await this.prisma.assignment.findUnique({
+      where: { id: assignmentId },
+      include: {
+        settings: true,
+      },
+    });
+
+    if (!assignment) {
+      throw new HttpException('Assignment not found', HttpStatus.NOT_FOUND);
+    }
+
+    // If no maxAttempts is set, user can always submit
+    if (!assignment.settings?.maxAttempts) {
+      return {
+        canSubmit: true,
+        currentAttempts: 0,
+        maxAttempts: null,
+      };
+    }
+
+    // Count current submissions for this user and assignment
+    const currentAttempts = await this.prisma.submission.count({
+      where: {
+        userId,
+        assignmentId,
+      },
+    });
+
+    const canSubmit = currentAttempts < assignment.settings.maxAttempts;
+
+    return {
+      canSubmit,
+      currentAttempts,
+      maxAttempts: assignment.settings.maxAttempts,
+    };
+  }
+
+  private async runTestsAsync(
+    submissionId: string,
+    submissionData: CreateSubmissionDto,
+  ) {
     try {
       // Get assignment with test cases
       const assignment = await this.prisma.assignment.findUnique({
@@ -58,7 +124,7 @@ export class SubmissionService {
       }
 
       // Prepare test cases for checker service
-      const testCases = assignment.testCases.map(testCase => ({
+      const testCases = assignment.testCases.map((testCase) => ({
         input: testCase.input,
         expected: testCase.expected,
         description: testCase.description,
@@ -72,16 +138,18 @@ export class SubmissionService {
       };
 
       const response = await firstValueFrom(
-        this.httpService.post(`${this.checkerServiceUrl}/check`, checkRequest)
+        this.httpService.post(`${this.checkerServiceUrl}/check`, checkRequest),
       );
 
-      const checkResult = response.data as any;
+      const checkResult = response.data;
 
       // Add isPublic information to test results
-      const testResultsWithVisibility = checkResult.tests.map((test: any, index: number) => ({
-        ...test,
-        isPublic: assignment.testCases[index].isPublic,
-      }));
+      const testResultsWithVisibility = checkResult.tests.map(
+        (test: any, index: number) => ({
+          ...test,
+          isPublic: assignment.testCases[index].isPublic,
+        }),
+      );
 
       // Update submission with results
       await this.updateStatus(
@@ -90,10 +158,9 @@ export class SubmissionService {
         testResultsWithVisibility as Prisma.InputJsonValue,
         checkResult.score,
       );
-
     } catch (error) {
       console.error('Error running tests for submission:', submissionId, error);
-      
+
       // Update submission with FAILED status
       await this.updateStatus(
         submissionId,
@@ -163,9 +230,9 @@ export class SubmissionService {
 
   async findByUserAndAssignment(userId: string, assignmentId: string) {
     return this.prisma.submission.findMany({
-      where: { 
+      where: {
         userId,
-        assignmentId 
+        assignmentId,
       },
       include: {
         assignment: {
@@ -229,37 +296,48 @@ export class SubmissionService {
     });
 
     // Групуємо подання по користувачах
-    const userSubmissions = submissions.reduce((acc, submission) => {
-      if (!acc[submission.userId]) {
-        acc[submission.userId] = [];
-      }
-      acc[submission.userId].push(submission);
-      return acc;
-    }, {} as Record<string, typeof submissions>);
+    const userSubmissions = submissions.reduce(
+      (acc, submission) => {
+        if (!acc[submission.userId]) {
+          acc[submission.userId] = [];
+        }
+        acc[submission.userId].push(submission);
+        return acc;
+      },
+      {} as Record<string, typeof submissions>,
+    );
 
     // Підраховуємо статистику для кожного користувача
-    const statistics = Object.entries(userSubmissions).map(([userId, userSubs]) => {
-      const totalSubmissions = userSubs.length;
-      const completedSubmissions = userSubs.filter(sub => sub.status === 'COMPLETED').length;
-      const failedSubmissions = userSubs.filter(sub => sub.status === 'FAILED').length;
-      const pendingSubmissions = userSubs.filter(sub => sub.status === 'PENDING' || sub.status === 'PROCESSING').length;
-      
-      // Знаходимо найкращий результат
-      const bestSubmission = userSubs
-        .filter(sub => sub.score !== null)
-        .sort((a, b) => (b.score || 0) - (a.score || 0))[0];
+    const statistics = Object.entries(userSubmissions).map(
+      ([userId, userSubs]) => {
+        const totalSubmissions = userSubs.length;
+        const completedSubmissions = userSubs.filter(
+          (sub) => sub.status === 'COMPLETED',
+        ).length;
+        const failedSubmissions = userSubs.filter(
+          (sub) => sub.status === 'FAILED',
+        ).length;
+        const pendingSubmissions = userSubs.filter(
+          (sub) => sub.status === 'PENDING' || sub.status === 'PROCESSING',
+        ).length;
 
-      return {
-        userId,
-        totalSubmissions,
-        completedSubmissions,
-        failedSubmissions,
-        pendingSubmissions,
-        bestScore: bestSubmission?.score || null,
-        lastSubmission: userSubs[0], // Перший в списку (найновіший через orderBy)
-        submissions: userSubs,
-      };
-    });
+        // Знаходимо найкращий результат
+        const bestSubmission = userSubs
+          .filter((sub) => sub.score !== null)
+          .sort((a, b) => (b.score || 0) - (a.score || 0))[0];
+
+        return {
+          userId,
+          totalSubmissions,
+          completedSubmissions,
+          failedSubmissions,
+          pendingSubmissions,
+          bestScore: bestSubmission?.score || null,
+          lastSubmission: userSubs[0], // Перший в списку (найновіший через orderBy)
+          submissions: userSubs,
+        };
+      },
+    );
 
     return {
       assignmentId,

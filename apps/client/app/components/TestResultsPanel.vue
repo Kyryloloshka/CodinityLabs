@@ -12,6 +12,42 @@
       </UBadge>
     </div>
 
+    <!-- Інформація про налаштування та поріг проходження -->
+    <div v-if="checkResults.settings" class="p-2 bg-theme-secondary rounded">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-medium text-theme-primary">Налаштування перевірки:</span>
+        <UBadge 
+          :color="checkResults.passedThreshold ? 'success' : 'error'"
+          variant="outline"
+          size="sm"
+        >
+          {{ checkResults.passedThreshold ? 'Пройшов поріг' : 'Не пройшов поріг' }}
+        </UBadge>
+      </div>
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <div>
+          <span class="text-theme-secondary">Поріг:</span>
+          <span class="text-theme-primary ml-1">{{ checkResults.settings.passingThreshold }}%</span>
+        </div>
+        <div>
+          <span class="text-theme-secondary">Таймаут:</span>
+          <span class="text-theme-primary ml-1">{{ (checkResults.settings.timeout / 1000).toFixed(1) }}с</span>
+        </div>
+        <div>
+          <span class="text-theme-secondary">Спроб:</span>
+          <span class="text-theme-primary ml-1">
+            {{ checkResults.settings.maxAttempts === null ? 'Необмежено' : checkResults.settings.maxAttempts }}
+          </span>
+        </div>
+        <div>
+          <span class="text-theme-secondary">Режим:</span>
+          <span class="text-theme-primary ml-1">
+            {{ checkResults.settings.strictMode ? 'Строгий' : 'Звичайний' }}
+          </span>
+        </div>
+      </div>
+    </div>
+
     <div class="flex items-center justify-between p-2 bg-theme-secondary rounded">
       <span class="text-xs font-medium text-theme-primary">Статистика тестів:</span>
       <div class="flex items-center gap-2">
