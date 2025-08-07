@@ -23,6 +23,16 @@
           <UIcon name="i-heroicons-chart-bar" class="h-3 w-3" />
           Результати
         </button>
+        <button
+          @click="$emit('update:activeTab', 'history')"
+          class="flex items-center gap-1 px-3 py-2 text-xs font-medium transition-colors"
+          :class="activeTab === 'history' 
+            ? 'text-theme-primary border-b-2 border-theme-primary' 
+            : 'text-theme-secondary hover:text-theme-primary'"
+        >
+          <UIcon name="i-heroicons-clock" class="h-3 w-3" />
+          Історія
+        </button>
       </div>
 
       <TestCasesPanel
@@ -37,6 +47,15 @@
         :check-results="checkResults"
         :selected-result-index="selectedResultIndex"
         @update:selected-result-index="$emit('update:selectedResultIndex', $event)"
+      />
+
+      <SubmissionHistory
+        v-else-if="activeTab === 'history'"
+        :submissions="submissions"
+        :loading="historyLoading"
+        :error="historyError"
+        @refresh="$emit('refresh-history')"
+        @select-submission="$emit('select-submission', $event)"
       />
 
       <div v-else-if="activeTab === 'testCases' && !assignment" class="text-center py-8">
@@ -61,12 +80,17 @@ interface Props {
   selectedResultIndex: number
   testing?: boolean
   totalTests?: number
+  submissions?: any[]
+  historyLoading?: boolean
+  historyError?: string
 }
 
 interface Emits {
   (e: 'update:activeTab', value: string): void
   (e: 'update:selectedTestCaseIndex', value: number): void
   (e: 'update:selectedResultIndex', value: number): void
+  (e: 'refresh-history'): void
+  (e: 'select-submission', submission: any): void
 }
 
 defineProps<Props>()

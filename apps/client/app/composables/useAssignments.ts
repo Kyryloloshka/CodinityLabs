@@ -212,6 +212,16 @@ export const useAssignments = () => {
     }
   }
 
+  const getUserAssignmentSubmissions = async (userId: string, assignmentId: string): Promise<Submission[]> => {
+    try {
+      const response = await api.get<Submission[]>(`/submissions/user/${userId}/assignment/${assignmentId}`)
+      return response
+    } catch (error) {
+      console.error('Error fetching user assignment submissions:', error)
+      throw error
+    }
+  }
+
   const getAssignmentSubmissions = async (assignmentId: string): Promise<Submission[]> => {
     try {
       const response = await api.get<Submission[]>(`/submissions/assignment/${assignmentId}`)
@@ -262,6 +272,7 @@ export const useAssignments = () => {
     deleteAssignment,
     getSubmissions,
     getUserSubmissions,
+    getUserAssignmentSubmissions,
     getAssignmentSubmissions,
     createSubmission,
     deleteSubmission,

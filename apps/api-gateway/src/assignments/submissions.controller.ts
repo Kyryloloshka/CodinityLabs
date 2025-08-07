@@ -117,6 +117,35 @@ export class SubmissionsController {
     return this.assignmentsService.findSubmissionsByAssignment(assignmentId);
   }
 
+  @Get('user/:userId/assignment/:assignmentId')
+  @ApiOperation({
+    summary: 'Get user submissions for specific assignment',
+    description: 'Get all submissions for a specific user and assignment',
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'User identifier',
+    example: 'user123',
+  })
+  @ApiParam({
+    name: 'assignmentId',
+    description: 'Assignment identifier',
+    example: 'a82940b0-cff0-42df-b4c4-0ff66a2a30fc',
+  })
+  @ApiOkResponse({
+    description: 'User assignment submissions successfully retrieved',
+    type: [SubmissionDto],
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error',
+  })
+  async findByUserAndAssignment(
+    @Param('userId') userId: string,
+    @Param('assignmentId', ParseUUIDPipe) assignmentId: string,
+  ): Promise<SubmissionDto[]> {
+    return this.assignmentsService.findSubmissionsByUserAndAssignment(userId, assignmentId);
+  }
+
   @Post()
   @ApiOperation({
     summary: 'Create submission',

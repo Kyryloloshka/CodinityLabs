@@ -35,11 +35,15 @@
           :selected-test-case-index="selectedTestCaseIndex"
           :selected-result-index="selectedResultIndex"
           :total-tests="assignment?.testCases?.length || 0"
-
+          :submissions="submissions"
+          :history-loading="historyLoading"
+          :history-error="historyError"
           :testing="testing"
           @update:active-tab="activeTab = $event"
           @update:selected-test-case-index="selectedTestCaseIndex = $event"
           @update:selected-result-index="selectedResultIndex = $event"
+          @refresh-history="loadSubmissionHistory"
+          @select-submission="handleSelectSubmission"
         />
         <div
           class="absolute top-0 right-0 w-1 h-full bg-theme-secondary hover:bg-theme-primary cursor-col-resize transition-colors duration-200"
@@ -78,7 +82,7 @@ definePageMeta({
 
 const route = useRoute()
 const authStore = useAuthStore()
-const { getAssignment, getAssignmentForStudent, createSubmission, checkCode } = useAssignments()
+const { getAssignment, getAssignmentForStudent, createSubmission, checkCode, getUserAssignmentSubmissions } = useAssignments()
 const toast = useToast()
 
 const assignment = ref<any>(null)
@@ -95,6 +99,11 @@ const activeTab = ref('testCases')
 const totalTestCasesCount = ref(0)
 const isFileUploading = ref(false)
 const isProgrammaticLanguageChange = ref(false)
+
+// History variables
+const submissions = ref<any[]>([])
+const historyLoading = ref(false)
+const historyError = ref('')
 
 const leftPanelWidth = ref(400)
 const centerPanelWidth = ref(400)
@@ -143,6 +152,7 @@ const loadAssignment = async () => {
     }
     
     resetCode()
+    await loadSubmissionHistory()
   } catch (err: any) {
     error.value = 'Помилка завантаження завдання'
     console.error(err)
@@ -168,6 +178,61 @@ const loadAssignment = async () => {
   }
 }
 
+const calculateTestStats = (tests: any[]) => {
+  return {
+    passed: tests.filter((test: any) => test.passed).length,
+    failed: tests.filter((test: any) => !test.passed && !test.timeout).length,
+    timeout: tests.filter((test: any) => test.timeout).length,
+  }
+}
+
+const loadSubmissionHistory = async () => {
+  try {
+    historyLoading.value = true
+    historyError.value = ''
+    submissions.value = await getUserAssignmentSubmissions(authStore.user!.id, assignmentId)
+  } catch (err: any) {
+    console.error('Error loading submission history:', err)
+    historyError.value = 'Помилка завантаження історії подань'
+  } finally {
+    historyLoading.value = false
+  }
+}
+
+const handleSelectSubmission = (submission: any) => {
+  // Load the selected submission's code into the editor
+  submissionCode.value = submission.code
+  selectedLanguage.value = submission.language || 'javascript'
+  
+  // Show the submission results if available, but only public test cases
+  if (submission.testResults) {
+    // Filter only public test cases for students
+    const publicTestResults = submission.testResults.filter((test: any) => {
+      // Check if this test case is public from the stored result
+      return test.isPublic === true
+    })
+    
+    // Calculate test statistics
+    const testStats = calculateTestStats(publicTestResults)
+    
+    checkResults.value = {
+      lint: submission.eslintReport || [],
+      tests: publicTestResults,
+      score: submission.score || 0,
+      testStats
+    }
+    activeTab.value = 'results'
+  } else {
+    activeTab.value = 'history'
+  }
+  
+  toast.add({
+    title: 'Завантажено',
+    description: `Завантажено подання від ${new Date(submission.createdAt).toLocaleString('uk-UA')}`,
+    color: 'blue'
+  })
+}
+
 const testCode = async () => {
   if (!submissionCode.value.trim()) return
 
@@ -183,7 +248,19 @@ const testCode = async () => {
     
     const results = await checkCode(request)
     
-    checkResults.value = results
+    // Calculate test statistics for public tests only
+    const publicTests = results.tests.filter((test: any, index: number) => {
+      const testCase = assignment.value?.testCases?.[index]
+      return testCase?.isPublic === true
+    })
+    
+    const testStats = calculateTestStats(publicTests)
+    
+    checkResults.value = {
+      ...results,
+      tests: publicTests,
+      testStats
+    }
     
     activeTab.value = 'results'
     selectedResultIndex.value = 0
@@ -208,6 +285,18 @@ const submitSolution = async () => {
     
     if (!checkResults.value) {
       await testCode()
+    } else {
+      // Ensure we have testStats for the current results
+      if (!checkResults.value.testStats) {
+        const publicTests = checkResults.value.tests.filter((test: any, index: number) => {
+          const testCase = assignment.value?.testCases?.[index]
+          return testCase?.isPublic === true
+        })
+        
+        const testStats = calculateTestStats(publicTests)
+        
+        checkResults.value.testStats = testStats
+      }
     }
     
     await createSubmission({
@@ -217,7 +306,19 @@ const submitSolution = async () => {
       language: selectedLanguage.value
     })
 
-    await navigateTo(`/assignments/${assignmentId}`)
+    // Show success message and refresh history
+    toast.add({
+      title: 'Успішно',
+      description: 'Рішення успішно надіслано',
+      color: 'green'
+    })
+    
+    // Refresh submission history
+    await loadSubmissionHistory()
+    
+    // Switch to history tab to show the new submission
+    activeTab.value = 'history'
+    
   } catch (err: any) {
     console.error('Error submitting solution:', err)
     toast.add({

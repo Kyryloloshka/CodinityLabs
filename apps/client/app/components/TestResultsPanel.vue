@@ -48,7 +48,7 @@
     </div>
 
     <div>
-      <h3 class="text-xs font-semibold text-theme-primary mb-2">Результати тестів (публічні)</h3>
+      <h3 class="text-xs font-semibold text-theme-primary mb-2">Результати тестів (публічні тестові випадки)</h3>
       
       <div class="flex items-center gap-1 mb-3 flex-wrap">
         <button

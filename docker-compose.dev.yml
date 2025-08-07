@@ -93,6 +93,7 @@ services:
       - "5556:5556"
     depends_on:
       - postgres-assignment
+      - checker-service
     networks:
       - kpi-network-dev
     restart: unless-stopped
@@ -104,6 +105,7 @@ services:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://postgres:postgres@postgres-assignment:5432/assignment_db
       - PORT=8200
+      - CHECKER_SERVICE_URL=http://checker-service-dev:8300
     command: ["npm", "run", "start:dev"]
 
   checker-service:

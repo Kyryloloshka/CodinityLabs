@@ -323,6 +323,25 @@ export class AssignmentsService {
     }
   }
 
+  async findSubmissionsByUserAndAssignment(
+    userId: string,
+    assignmentId: string,
+  ): Promise<SubmissionDto[]> {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<ApiResponse<SubmissionDto[]>>(
+          `${this.assignmentServiceUrl}/submissions/user/${userId}/assignment/${assignmentId}`,
+        ),
+      );
+      return response.data.data;
+    } catch {
+      throw new HttpException(
+        'Failed to fetch user assignment submissions',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   async createSubmission(
     createSubmissionDto: CreateSubmissionDto,
   ): Promise<SubmissionDto> {
