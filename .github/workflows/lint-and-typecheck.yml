@@ -24,6 +24,10 @@ jobs:
         with:
           node-version: 22.x
           cache: 'pnpm'
+      
+      - name: Copy .env.example to .env
+        run: |
+          cp ./apps/client/.env.example ./apps/client/.env
           
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
