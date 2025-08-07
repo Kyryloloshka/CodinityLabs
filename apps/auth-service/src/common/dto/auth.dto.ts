@@ -138,6 +138,10 @@ export class TokenPayloadDto {
   exp: number;
 }
 
+interface UpdateProfileContext {
+  newPassword?: string;
+}
+
 export class UpdateProfileDto {
   @ApiProperty({
     description: "Ім'я користувача",
@@ -154,7 +158,7 @@ export class UpdateProfileDto {
     example: 'currentPassword123',
     required: false,
   })
-  @ValidateIf((o: any) => o.newPassword !== undefined)
+  @ValidateIf((o: UpdateProfileContext) => o.newPassword !== undefined)
   @IsString({ message: 'Поточний пароль має бути рядком' })
   currentPassword?: string;
 
@@ -174,7 +178,7 @@ export class UpdateProfileDto {
     example: 'newPassword123',
     required: false,
   })
-  @ValidateIf((o: any) => o.newPassword !== undefined)
+  @ValidateIf((o: UpdateProfileContext) => o.newPassword !== undefined)
   @IsString({ message: 'Підтвердження паролю має бути рядком' })
   confirmPassword?: string;
 }

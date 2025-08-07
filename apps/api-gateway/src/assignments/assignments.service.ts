@@ -2,15 +2,15 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
-import { AxiosError } from 'axios';
-import {
-  AssignmentDto,
-  CreateAssignmentDto,
-  UpdateAssignmentDto,
-} from './dto/assignment.dto';
-import { SubmissionDto, CreateSubmissionDto } from './dto/submission.dto';
-import { CheckDto, CheckResultDto } from './dto/checker.dto';
 import { AuthService } from '../auth/auth.service';
+import { CreateAssignmentDto } from './dto/assignment.dto';
+import { UpdateAssignmentDto } from './dto/assignment.dto';
+import { CreateSubmissionDto } from './dto/submission.dto';
+import { CheckDto } from './dto/checker.dto';
+import { CheckResultDto } from './dto/checker.dto';
+import { AssignmentDto } from './dto/assignment.dto';
+import { SubmissionDto } from './dto/submission.dto';
+import type { AxiosError } from 'axios';
 
 interface ApiResponse<T> {
   data: T;
@@ -36,8 +36,41 @@ interface ErrorResponse {
   message?: string;
 }
 
+interface UserStatistics {
+  userId: string;
+  totalSubmissions: number;
+  successfulSubmissions: number;
+  averageScore: number;
+  lastSubmissionDate?: string;
+}
+
+interface AssignmentStatistics {
+  assignmentId: string;
+  totalSubmissions: number;
+  uniqueUsers: number;
+  averageScore: number;
+  userStatistics: UserStatistics[];
+}
+
+interface UserInfo {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  createdAt: string;
+}
+
+interface UserStatisticsWithUser extends UserStatistics {
+  user: UserInfo;
+}
+
+interface AssignmentStatisticsWithUsers
+  extends Omit<AssignmentStatistics, 'userStatistics'> {
+  userStatistics: UserStatisticsWithUser[];
+}
+
 function isAxiosError(error: unknown): error is AxiosError<unknown> {
-  return error instanceof AxiosError;
+  return typeof error === 'object' && error !== null && 'isAxiosError' in error;
 }
 
 @Injectable()
@@ -49,19 +82,16 @@ export class AssignmentsService {
     private readonly configService: ConfigService,
     private readonly authService: AuthService,
   ) {
-    const url = this.configService.get<string>('ASSIGNMENT_SERVICE_URL');
-    if (!url) {
-      throw new Error('ASSIGNMENT_SERVICE_URL is not defined');
-    }
-    this.assignmentServiceUrl = url;
+    this.assignmentServiceUrl =
+      this.configService.get<string>('ASSIGNMENT_SERVICE_URL') ||
+      'http://localhost:3002';
   }
 
   private get checkerServiceUrl(): string {
-    const url = this.configService.get<string>('CHECKER_SERVICE_URL');
-    if (!url) {
-      throw new Error('CHECKER_SERVICE_URL is not defined');
-    }
-    return url;
+    return (
+      this.configService.get<string>('CHECKER_SERVICE_URL') ||
+      'http://localhost:3003'
+    );
   }
 
   async findAll(
@@ -325,11 +355,13 @@ export class AssignmentsService {
     }
   }
 
-  async getAssignmentStatistics(assignmentId: string): Promise<any> {
+  async getAssignmentStatistics(
+    assignmentId: string,
+  ): Promise<AssignmentStatistics> {
     try {
       const response = await firstValueFrom(
-        this.httpService.get<ApiResponse<any>>(
-          `${this.assignmentServiceUrl}/submissions/assignment/${assignmentId}/statistics`,
+        this.httpService.get<ApiResponse<AssignmentStatistics>>(
+          `${this.assignmentServiceUrl}/assignments/${assignmentId}/statistics`,
         ),
       );
       return response.data.data;
@@ -341,15 +373,15 @@ export class AssignmentsService {
     }
   }
 
-  async getAssignmentStatisticsWithUsers(assignmentId: string): Promise<any> {
+  async getAssignmentStatisticsWithUsers(
+    assignmentId: string,
+  ): Promise<AssignmentStatisticsWithUsers> {
     try {
       // Отримуємо статистику
       const statistics = await this.getAssignmentStatistics(assignmentId);
 
       // Отримуємо інформацію про користувачів
-      const userIds = (statistics.userStatistics as any[]).map(
-        (stat: any) => stat.userId,
-      );
+      const userIds = statistics.userStatistics.map(stat => stat.userId);
       const users = await Promise.all(
         userIds.map(async (userId: string) => {
           try {
@@ -368,25 +400,27 @@ export class AssignmentsService {
       );
 
       // Додаємо інформацію про користувачів до статистики
-      const userMap: Record<string, any> = {};
-      users.forEach((user: any) => {
-        userMap[user.id as string] = user;
+      const userMap: Record<string, UserInfo> = {};
+      users.forEach(user => {
+        userMap[user.id] = user;
       });
 
-      statistics.userStatistics = (statistics.userStatistics as any[]).map(
-        (stat: any) => ({
+      const userStatisticsWithUsers: UserStatisticsWithUser[] =
+        statistics.userStatistics.map(stat => ({
           ...stat,
-          user: userMap[stat.userId as string] || {
+          user: userMap[stat.userId] || {
             id: stat.userId,
             name: `Студент ${stat.userId.slice(0, 8)}`,
             email: 'unknown@example.com',
             role: 'STUDENT',
             createdAt: new Date().toISOString(),
           },
-        }),
-      );
+        }));
 
-      return statistics;
+      return {
+        ...statistics,
+        userStatistics: userStatisticsWithUsers,
+      };
     } catch {
       throw new HttpException(
         'Failed to fetch assignment statistics with users',
@@ -525,18 +559,28 @@ export class AssignmentsService {
     }
   }
 
-  async checkMaxAttempts(userId: string, assignmentId: string): Promise<any> {
+  async checkMaxAttempts(
+    userId: string,
+    assignmentId: string,
+  ): Promise<{
+    canSubmit: boolean;
+    currentAttempts: number;
+    maxAttempts: number | null;
+  }> {
     try {
       const response = await firstValueFrom(
-        this.httpService.get<ApiResponse<any>>(
+        this.httpService.get<
+          ApiResponse<{
+            canSubmit: boolean;
+            currentAttempts: number;
+            maxAttempts: number | null;
+          }>
+        >(
           `${this.assignmentServiceUrl}/assignments/${assignmentId}/check-max-attempts/${userId}`,
         ),
       );
       return response.data.data;
-    } catch (error: unknown) {
-      if (isAxiosError(error) && error.response?.status === 404) {
-        throw new HttpException('Assignment not found', HttpStatus.NOT_FOUND);
-      }
+    } catch {
       throw new HttpException(
         'Failed to check max attempts',
         HttpStatus.INTERNAL_SERVER_ERROR,
