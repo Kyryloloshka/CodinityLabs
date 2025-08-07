@@ -198,6 +198,15 @@
                   Переглянути
                 </UButton>
                 <UButton
+                  @click="viewStatistics(assignment)"
+                  variant="ghost"
+                  color="info"
+                  class="text-theme-primary hover:bg-theme-hover"
+                >
+                  <UIcon name="i-heroicons-chart-bar" class="mr-1 h-4 w-4" />
+                  Статистика
+                </UButton>
+                <UButton
                   @click="editAssignment(assignment)"
                   variant="ghost"
                   class="text-theme-primary hover:bg-theme-hover"
@@ -406,6 +415,10 @@ const formatDate = (dateString: string) => {
 
 const viewAssignment = (assignment: any) => {
   navigateTo(`/assignments/${assignment.id}`)
+}
+
+const viewStatistics = (assignment: any) => {
+  navigateTo(`/assignments/${assignment.id}/user-submissions`)
 }
 
 const editAssignment = (assignment: any) => {

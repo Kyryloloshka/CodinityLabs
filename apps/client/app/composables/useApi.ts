@@ -25,10 +25,7 @@ export const useApi = () => {
         if (refreshed) {
           throw new Error('RETRY_REQUEST')
         } else {
-          authStore.logout()
-          if (import.meta.client) {
-            window.location.href = '/'
-          }
+          await authStore.logoutAndRedirect()
           throw new Error('AUTH_FAILED')
         }
       } else {
@@ -71,11 +68,14 @@ export const useApi = () => {
             options.body = data
           }
 
-          return await $fetch<T>(`${config.public.apiBaseUrl}${endpoint}`, options)
+          // Якщо retry успішний, повертаємо результат без помилки
+          const retryResponse = await $fetch<T>(`${config.public.apiBaseUrl}${endpoint}`, options)
+          return await handleResponse(retryResponse)
         }
         
         if (handledError instanceof Error && handledError.message === 'AUTH_FAILED') {
-          throw new Error('Unauthorized')
+          // Не прокидаємо помилку далі, просто завершуємо виконання
+          throw new Error('AUTH_CANCELLED')
         }
         
         throw handledError

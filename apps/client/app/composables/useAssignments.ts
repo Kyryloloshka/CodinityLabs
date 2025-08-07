@@ -159,8 +159,17 @@ export const useAssignments = () => {
   }
 
   const getAssignmentForTeacher = async (id: string): Promise<Assignment> => {
-    const response = await api.get<Assignment>(`/assignments/${id}/teacher`)
-    return response
+    try {
+      const response = await api.get<Assignment>(`/assignments/${id}/teacher`)
+      return response
+    } catch (error: any) {
+      if (error?.message === 'AUTH_CANCELLED') {
+        // Не прокидаємо помилку далі при скасуванні авторизації
+        throw error
+      }
+      console.error('Error fetching assignment for teacher:', error)
+      throw error
+    }
   }
 
   const createAssignment = async (assignment: CreateAssignment): Promise<Assignment> => {
@@ -232,6 +241,25 @@ export const useAssignments = () => {
     }
   }
 
+  const getAssignmentStatistics = async (assignmentId: string): Promise<any> => {
+    const response = await api.get<any>(`/submissions/assignment/${assignmentId}/statistics`)
+    return response
+  }
+
+  const getAssignmentStatisticsWithUsers = async (assignmentId: string): Promise<any> => {
+    try {
+      const response = await api.get<any>(`/submissions/assignment/${assignmentId}/statistics-with-users`)
+      return response
+    } catch (error: any) {
+      if (error?.message === 'AUTH_CANCELLED') {
+        // Не прокидаємо помилку далі при скасуванні авторизації
+        throw error
+      }
+      console.error('Error fetching assignment statistics:', error)
+      throw error
+    }
+  }
+
   const createSubmission = async (submission: CreateSubmission): Promise<Submission> => {
     try {
       const response = await api.post<Submission>('/submissions', submission)
@@ -274,6 +302,8 @@ export const useAssignments = () => {
     getUserSubmissions,
     getUserAssignmentSubmissions,
     getAssignmentSubmissions,
+    getAssignmentStatistics,
+    getAssignmentStatisticsWithUsers,
     createSubmission,
     deleteSubmission,
     checkCode,

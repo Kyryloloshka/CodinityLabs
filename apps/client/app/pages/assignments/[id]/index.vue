@@ -114,46 +114,25 @@
 
       <!-- Подання студентів (тільки для викладачів) -->
       <div v-if="isTeacher" class="bg-theme-card shadow rounded-lg p-6 border border-theme-primary">
-        <h2 class="text-xl font-semibold text-theme-primary mb-4">Подання студентів</h2>
-        
-        <div v-if="submissionsLoading" class="text-center py-4">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-primary mx-auto"></div>
-          <p class="mt-2 text-sm text-theme-secondary">Завантаження подань...</p>
-        </div>
-        
-        <div v-else-if="submissions.length > 0" class="space-y-4">
-          <div
-            v-for="submission in submissions"
-            :key="submission.id"
-            class="border border-theme-primary rounded-lg p-4 bg-theme-secondary"
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold text-theme-primary">Статистика подань</h2>
+          <UButton
+            :to="`/assignments/${assignmentId}/user-submissions`"
+            variant="solid"
+            color="info"
+            class="text-theme-primary"
           >
-            <div class="flex items-center justify-between mb-2">
-              <div class="flex items-center gap-2">
-                <UIcon name="i-heroicons-user" class="h-4 w-4 text-theme-muted" />
-                <span class="font-medium text-theme-primary">Студент ID: {{ submission.userId }}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <UBadge :color="getStatusColor(submission.status)" variant="subtle">
-                  {{ getStatusLabel(submission.status) }}
-                </UBadge>
-                <span class="text-sm text-theme-secondary">{{ formatDate(submission.createdAt) }}</span>
-              </div>
-            </div>
-            
-            <div class="bg-theme-input p-3 rounded border border-theme-primary font-mono text-sm overflow-x-auto text-theme-primary">
-              <pre>{{ submission.code }}</pre>
-            </div>
-            
-            <div v-if="submission.score !== null" class="mt-2">
-              <span class="text-sm font-medium text-theme-primary">Оцінка: {{ submission.score }}</span>
-            </div>
-          </div>
+            <UIcon name="i-heroicons-chart-bar" class="mr-2 h-4 w-4" />
+            Переглянути статистику
+          </UButton>
         </div>
         
-        <div v-else class="text-center py-8">
-          <UIcon name="i-heroicons-document-text" class="mx-auto h-12 w-12 text-theme-muted" />
-          <h3 class="mt-2 text-sm font-medium text-theme-primary">Немає подань</h3>
-          <p class="mt-1 text-sm text-theme-secondary">Студенти ще не здавали рішення для цього завдання</p>
+        <div class="text-center py-8">
+          <UIcon name="i-heroicons-chart-bar" class="mx-auto h-12 w-12 text-theme-muted" />
+          <h3 class="mt-2 text-sm font-medium text-theme-primary">Статистика подань</h3>
+          <p class="mt-1 text-sm text-theme-secondary">
+            Натисніть кнопку вище, щоб переглянути детальну статистику по всім студентам
+          </p>
         </div>
       </div>
     </div>
@@ -170,13 +149,11 @@ definePageMeta({
 
 const route = useRoute()
 const authStore = useAuthStore()
-const { getAssignment, getAssignmentForStudent, getAssignmentForTeacher, getAssignmentSubmissions } = useAssignments()
+const { getAssignment, getAssignmentForStudent, getAssignmentForTeacher } = useAssignments()
 const toast = useToast()
 
 const assignment = ref<any>(null)
-const submissions = ref<any[]>([])
 const loading = ref(true)
-const submissionsLoading = ref(false)
 const error = ref('')
 
 const isTeacher = computed(() => authStore.user?.role === 'TEACHER')
@@ -226,40 +203,6 @@ const loadAssignment = async () => {
   }
 }
 
-const loadSubmissions = async () => {
-  if (!isTeacher.value) return
-  
-  try {
-    submissionsLoading.value = true
-    submissions.value = await getAssignmentSubmissions(assignmentId.value)
-  } catch (err) {
-    console.error('Error loading submissions:', err)
-  } finally {
-    submissionsLoading.value = false
-  }
-}
-
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'PENDING': return 'info'
-    case 'PROCESSING': return 'warning'
-    case 'COMPLETED': return 'success'
-    case 'FAILED': return 'error'
-    default: return 'neutral'
-  }
-}
-
-const getStatusLabel = (status: string) => {
-  switch (status) {
-    case 'PENDING': return 'Очікує'
-    case 'PROCESSING': return 'Обробляється'
-    case 'COMPLETED': return 'Завершено'
-    case 'FAILED': return 'Помилка'
-    default: return 'Невідомо'
-  }
-}
-
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString('uk-UA', {
     year: 'numeric',
@@ -286,6 +229,5 @@ const loginToSubmit = () => {
 // Завантаження даних при монтуванні
 onMounted(() => {
   loadAssignment()
-  loadSubmissions()
 })
 </script> 

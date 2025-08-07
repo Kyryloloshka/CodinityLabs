@@ -212,4 +212,60 @@ export class SubmissionService {
       where: { id },
     });
   }
+
+  async getAssignmentStatistics(assignmentId: string) {
+    const submissions = await this.prisma.submission.findMany({
+      where: { assignmentId },
+      include: {
+        assignment: {
+          include: {
+            testCases: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    // Групуємо подання по користувачах
+    const userSubmissions = submissions.reduce((acc, submission) => {
+      if (!acc[submission.userId]) {
+        acc[submission.userId] = [];
+      }
+      acc[submission.userId].push(submission);
+      return acc;
+    }, {} as Record<string, typeof submissions>);
+
+    // Підраховуємо статистику для кожного користувача
+    const statistics = Object.entries(userSubmissions).map(([userId, userSubs]) => {
+      const totalSubmissions = userSubs.length;
+      const completedSubmissions = userSubs.filter(sub => sub.status === 'COMPLETED').length;
+      const failedSubmissions = userSubs.filter(sub => sub.status === 'FAILED').length;
+      const pendingSubmissions = userSubs.filter(sub => sub.status === 'PENDING' || sub.status === 'PROCESSING').length;
+      
+      // Знаходимо найкращий результат
+      const bestSubmission = userSubs
+        .filter(sub => sub.score !== null)
+        .sort((a, b) => (b.score || 0) - (a.score || 0))[0];
+
+      return {
+        userId,
+        totalSubmissions,
+        completedSubmissions,
+        failedSubmissions,
+        pendingSubmissions,
+        bestScore: bestSubmission?.score || null,
+        lastSubmission: userSubs[0], // Перший в списку (найновіший через orderBy)
+        submissions: userSubs,
+      };
+    });
+
+    return {
+      assignmentId,
+      totalUsers: statistics.length,
+      totalSubmissions: submissions.length,
+      userStatistics: statistics,
+    };
+  }
 }

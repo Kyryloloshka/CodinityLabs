@@ -129,6 +129,13 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    async logoutAndRedirect() {
+      this.logout()
+      if (import.meta.client) {
+        await navigateTo('/login')
+      }
+    },
+
     async initializeAuth() {
       try {
         if (import.meta.client) {

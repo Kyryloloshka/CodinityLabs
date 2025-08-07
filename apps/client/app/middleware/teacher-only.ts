@@ -1,4 +1,4 @@
-export default defineNuxtRouteMiddleware(() => {
+export default defineNuxtRouteMiddleware((to) => {
   const authStore = useAuthStore()
 
   // Чекаємо поки додаток ініціалізується
@@ -9,10 +9,15 @@ export default defineNuxtRouteMiddleware(() => {
   }
 
   if (!authStore.isAuthenticated) {
+    // Зберігаємо поточну сторінку для редіректу після авторизації
+    if (process.client) {
+      sessionStorage.setItem('redirectAfterAuth', to.fullPath)
+    }
     return navigateTo('/login')
   }
 
   if (authStore.user?.role !== 'TEACHER') {
+    console.warn('User is not a teacher, redirecting to home')
     return navigateTo('/')
   }
 }) 

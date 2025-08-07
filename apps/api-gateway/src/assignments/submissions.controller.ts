@@ -117,6 +117,55 @@ export class SubmissionsController {
     return this.assignmentsService.findSubmissionsByAssignment(assignmentId);
   }
 
+  @Get('assignment/:assignmentId/statistics')
+  @ApiOperation({
+    summary: 'Get assignment statistics',
+    description:
+      'Get statistics for all submissions of a specific assignment grouped by users',
+  })
+  @ApiParam({
+    name: 'assignmentId',
+    description: 'Assignment identifier',
+    example: 'a82940b0-cff0-42df-b4c4-0ff66a2a30fc',
+  })
+  @ApiOkResponse({
+    description: 'Assignment statistics successfully retrieved',
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error',
+  })
+  async getAssignmentStatistics(
+    @Param('assignmentId', ParseUUIDPipe) assignmentId: string,
+  ): Promise<any> {
+    return this.assignmentsService.getAssignmentStatistics(assignmentId);
+  }
+
+  @Get('assignment/:assignmentId/statistics-with-users')
+  @ApiOperation({
+    summary: 'Get assignment statistics with user information',
+    description:
+      'Get statistics for all submissions of a specific assignment grouped by users with user details',
+  })
+  @ApiParam({
+    name: 'assignmentId',
+    description: 'Assignment identifier',
+    example: 'a82940b0-cff0-42df-b4c4-0ff66a2a30fc',
+  })
+  @ApiOkResponse({
+    description:
+      'Assignment statistics with user information successfully retrieved',
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal server error',
+  })
+  async getAssignmentStatisticsWithUsers(
+    @Param('assignmentId', ParseUUIDPipe) assignmentId: string,
+  ): Promise<any> {
+    return this.assignmentsService.getAssignmentStatisticsWithUsers(
+      assignmentId,
+    );
+  }
+
   @Get('user/:userId/assignment/:assignmentId')
   @ApiOperation({
     summary: 'Get user submissions for specific assignment',
@@ -143,7 +192,10 @@ export class SubmissionsController {
     @Param('userId') userId: string,
     @Param('assignmentId', ParseUUIDPipe) assignmentId: string,
   ): Promise<SubmissionDto[]> {
-    return this.assignmentsService.findSubmissionsByUserAndAssignment(userId, assignmentId);
+    return this.assignmentsService.findSubmissionsByUserAndAssignment(
+      userId,
+      assignmentId,
+    );
   }
 
   @Post()

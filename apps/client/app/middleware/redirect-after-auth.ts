@@ -11,6 +11,7 @@ export default defineNuxtRouteMiddleware((to: any) => {
   const publicPages = ['/login', '/register', '/', '/assignments']
 
   const isAssignmentView = /^\/assignments\/[^/]+$/.test(to.path) && !to.path.includes('/edit') && !to.path.includes('/submit')
+  const isTeacherPage = to.path.includes('/user-submissions') || to.path.includes('/edit')
 
   if (!authStore.isAuthenticated && !publicPages.includes(to.path) && !isAssignmentView) {
     if (import.meta.client) {

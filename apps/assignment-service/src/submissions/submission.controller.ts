@@ -81,4 +81,13 @@ export class SubmissionController {
     await this.submissionService.remove(id);
     return ApiResponseDto.success(null, 'Submission deleted successfully');
   }
+
+  @Get('assignment/:assignmentId/statistics')
+  async getAssignmentStatistics(@Param('assignmentId') assignmentId: string) {
+    const statistics = await this.submissionService.getAssignmentStatistics(assignmentId);
+    return ApiResponseDto.success(
+      statistics,
+      'Assignment statistics retrieved successfully',
+    );
+  }
 }

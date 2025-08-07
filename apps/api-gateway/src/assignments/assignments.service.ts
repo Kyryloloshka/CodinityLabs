@@ -10,6 +10,7 @@ import {
 } from './dto/assignment.dto';
 import { SubmissionDto, CreateSubmissionDto } from './dto/submission.dto';
 import { CheckDto, CheckResultDto } from './dto/checker.dto';
+import { AuthService } from '../auth/auth.service';
 
 interface ApiResponse<T> {
   data: T;
@@ -46,6 +47,7 @@ export class AssignmentsService {
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
+    private readonly authService: AuthService,
   ) {
     const url = this.configService.get<string>('ASSIGNMENT_SERVICE_URL');
     if (!url) {
@@ -318,6 +320,74 @@ export class AssignmentsService {
     } catch {
       throw new HttpException(
         'Failed to fetch assignment submissions',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getAssignmentStatistics(assignmentId: string): Promise<any> {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get<ApiResponse<any>>(
+          `${this.assignmentServiceUrl}/submissions/assignment/${assignmentId}/statistics`,
+        ),
+      );
+      return response.data.data;
+    } catch {
+      throw new HttpException(
+        'Failed to fetch assignment statistics',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getAssignmentStatisticsWithUsers(assignmentId: string): Promise<any> {
+    try {
+      // Отримуємо статистику
+      const statistics = await this.getAssignmentStatistics(assignmentId);
+
+      // Отримуємо інформацію про користувачів
+      const userIds = statistics.userStatistics.map((stat: any) => stat.userId);
+      const users = await Promise.all(
+        userIds.map(async (userId: string) => {
+          try {
+            return await this.authService.findUserById(userId);
+          } catch {
+            // Якщо користувача не знайдено, повертаємо базову інформацію
+            return {
+              id: userId,
+              name: `Студент ${userId.slice(0, 8)}`,
+              email: 'unknown@example.com',
+              role: 'STUDENT',
+              createdAt: new Date().toISOString(),
+            };
+          }
+        }),
+      );
+
+      // Додаємо інформацію про користувачів до статистики
+      const userMap: any = {};
+      users.forEach((user: any) => {
+        userMap[user.id] = user;
+      });
+
+      statistics.userStatistics = statistics.userStatistics.map(
+        (stat: any) => ({
+          ...stat,
+          user: userMap[stat.userId] || {
+            id: stat.userId,
+            name: `Студент ${stat.userId.slice(0, 8)}`,
+            email: 'unknown@example.com',
+            role: 'STUDENT',
+            createdAt: new Date().toISOString(),
+          },
+        }),
+      );
+
+      return statistics;
+    } catch (error) {
+      throw new HttpException(
+        'Failed to fetch assignment statistics with users',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
