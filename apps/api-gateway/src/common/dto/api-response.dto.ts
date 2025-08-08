@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { ErrorDetails } from '../types';
 
 export class ApiSuccessResponseDto<T = unknown> {
   @ApiProperty({
@@ -30,11 +31,7 @@ export class ApiErrorResponseDto {
     description: 'Код помилки',
     example: 'VALIDATION_ERROR',
   })
-  error: {
-    code: string;
-    message: string;
-    details?: string[];
-  };
+  error: ErrorDetails;
 
   @ApiProperty({
     description: 'HTTP статус код',

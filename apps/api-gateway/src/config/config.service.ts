@@ -16,4 +16,12 @@ export class AppConfigService {
   get authServiceUrl(): string {
     return this.configService.get<string>('AUTH_SERVICE_URL')!;
   }
+
+  get assignmentServiceUrl(): string {
+    return this.configService.get<string>('ASSIGNMENT_SERVICE_URL')!;
+  }
+
+  get checkerServiceUrl(): string {
+    return this.configService.get<string>('CHECKER_SERVICE_URL')!;
+  }
 }

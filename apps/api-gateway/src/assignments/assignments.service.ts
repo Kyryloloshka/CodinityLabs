@@ -11,63 +11,17 @@ import { CheckResultDto } from './dto/checker.dto';
 import { AssignmentDto } from './dto/assignment.dto';
 import { SubmissionDto } from './dto/submission.dto';
 import type { AxiosError } from 'axios';
-
-interface ApiResponse<T> {
-  data: T;
-  message?: string;
-}
-
-interface PaginatedApiResponse<T> {
-  data: {
-    data: T[];
-    meta: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-      hasNext: boolean;
-      hasPrev: boolean;
-    };
-  };
-  message?: string;
-}
-
-interface ErrorResponse {
-  message?: string;
-}
-
-interface UserStatistics {
-  userId: string;
-  totalSubmissions: number;
-  successfulSubmissions: number;
-  averageScore: number;
-  lastSubmissionDate?: string;
-}
-
-interface AssignmentStatistics {
-  assignmentId: string;
-  totalSubmissions: number;
-  uniqueUsers: number;
-  averageScore: number;
-  userStatistics: UserStatistics[];
-}
-
-interface UserInfo {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  createdAt: string;
-}
-
-interface UserStatisticsWithUser extends UserStatistics {
-  user: UserInfo;
-}
-
-interface AssignmentStatisticsWithUsers
-  extends Omit<AssignmentStatistics, 'userStatistics'> {
-  userStatistics: UserStatisticsWithUser[];
-}
+import {
+  ApiResponse,
+  PaginatedApiResponse,
+  ErrorResponse,
+  AssignmentStatistics,
+  UserInfo,
+  UserStatisticsWithUser,
+  AssignmentStatisticsWithUsers,
+  MaxAttemptsCheck,
+  UserRole,
+} from '../common/types';
 
 function isAxiosError(error: unknown): error is AxiosError<unknown> {
   return typeof error === 'object' && error !== null && 'isAxiosError' in error;
@@ -392,7 +346,7 @@ export class AssignmentsService {
               id: userId,
               name: `Студент ${userId.slice(0, 8)}`,
               email: 'unknown@example.com',
-              role: 'STUDENT',
+              role: UserRole.STUDENT,
               createdAt: new Date().toISOString(),
             };
           }
@@ -412,7 +366,7 @@ export class AssignmentsService {
             id: stat.userId,
             name: `Студент ${stat.userId.slice(0, 8)}`,
             email: 'unknown@example.com',
-            role: 'STUDENT',
+            role: UserRole.STUDENT,
             createdAt: new Date().toISOString(),
           },
         }));
@@ -562,11 +516,7 @@ export class AssignmentsService {
   async checkMaxAttempts(
     userId: string,
     assignmentId: string,
-  ): Promise<{
-    canSubmit: boolean;
-    currentAttempts: number;
-    maxAttempts: number | null;
-  }> {
+  ): Promise<MaxAttemptsCheck> {
     try {
       const response = await firstValueFrom(
         this.httpService.get<

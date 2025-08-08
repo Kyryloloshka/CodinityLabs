@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsString, MinLength, IsEnum } from 'class-validator';
-
-export enum UserRole {
-  STUDENT = 'STUDENT',
-  TEACHER = 'TEACHER',
-}
+import {
+  UserRole,
+  UserInfo,
+  AuthResponse,
+  ClientAuthResponse,
+} from '../../common/types';
 
 export class LoginDto {
   @ApiProperty({
@@ -57,7 +58,7 @@ export class RegisterDto {
   role: UserRole;
 }
 
-export class AuthResponseDto {
+export class AuthResponseDto implements AuthResponse {
   @ApiProperty({
     description: 'JWT токен доступу',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
@@ -85,15 +86,10 @@ export class AuthResponseDto {
   @ApiProperty({
     description: 'Інформація про користувача',
   })
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    role: UserRole;
-  };
+  user: UserInfo;
 }
 
-export class ClientAuthResponseDto {
+export class ClientAuthResponseDto implements ClientAuthResponse {
   @ApiProperty({
     description: 'JWT токен доступу',
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
@@ -115,12 +111,7 @@ export class ClientAuthResponseDto {
   @ApiProperty({
     description: 'Інформація про користувача',
   })
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    role: UserRole;
-  };
+  user: UserInfo;
 }
 
 export class VerifyTokenDto {

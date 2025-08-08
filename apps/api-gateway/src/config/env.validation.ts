@@ -5,4 +5,5 @@ export const envValidationSchema = Joi.object({
   PORT: Joi.number().required(),
   AUTH_SERVICE_URL: Joi.string().uri().required(),
   ASSIGNMENT_SERVICE_URL: Joi.string().uri().required(),
+  CHECKER_SERVICE_URL: Joi.string().uri().required(),
 });

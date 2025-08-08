@@ -9,19 +9,10 @@ import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { AxiosError } from 'axios';
 import { Request } from 'express';
+import { UserInfo } from '../../common/types';
 
 interface AuthenticatedRequest extends Request {
-  user: {
-    id: string;
-    email: string;
-    role: string;
-  };
-}
-
-interface AuthResponse {
-  id: string;
-  email: string;
-  role: string;
+  user: UserInfo;
 }
 
 function isAxiosError(error: unknown): error is AxiosError<unknown> {
@@ -54,14 +45,11 @@ export class JwtAuthGuard implements CanActivate {
     try {
       // Перевіряємо токен через auth service
       const response = await firstValueFrom(
-        this.httpService.get<AuthResponse>(
-          `${this.authServiceUrl}/auth/profile`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+        this.httpService.get<UserInfo>(`${this.authServiceUrl}/auth/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
-        ),
+        }),
       );
 
       // Додаємо користувача до request

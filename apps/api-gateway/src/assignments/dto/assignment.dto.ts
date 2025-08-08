@@ -12,8 +12,18 @@ import {
   IsNumber,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import {
+  AssignmentSettings,
+  TestCase,
+  Assignment,
+  CreateAssignment,
+  UpdateAssignment,
+  CreateAssignmentSettings,
+  CreateTestCase,
+  AssignmentCount,
+} from '../../common/types';
 
-export class AssignmentSettingsDto {
+export class AssignmentSettingsDto implements AssignmentSettings {
   @ApiProperty({
     description: 'Унікальний ідентифікатор налаштувань',
     example: '72dc290e-6d96-4abd-ac3e-b03f6a921baf',
@@ -70,7 +80,7 @@ export class AssignmentSettingsDto {
   updatedAt: string;
 }
 
-export class TestCaseDto {
+export class TestCaseDto implements TestCase {
   @ApiProperty({
     description: 'Унікальний ідентифікатор тестового випадку',
     example: '72dc290e-6d96-4abd-ac3e-b03f6a921baf',
@@ -120,7 +130,7 @@ export class TestCaseDto {
   updatedAt: string;
 }
 
-export class AssignmentDto {
+export class AssignmentDto implements Assignment {
   @ApiProperty({
     description: 'Унікальний ідентифікатор завдання',
     example: 'a82940b0-cff0-42df-b4c4-0ff66a2a30fc',
@@ -188,12 +198,10 @@ export class AssignmentDto {
     description: 'Кількість подань',
     example: { submissions: 0 },
   })
-  _count: {
-    submissions: number;
-  };
+  _count: AssignmentCount;
 }
 
-export class CreateAssignmentSettingsDto {
+export class CreateAssignmentSettingsDto implements CreateAssignmentSettings {
   @ApiProperty({
     description: 'Таймаут виконання коду в мілісекундах',
     example: 2000,
@@ -253,7 +261,7 @@ export class CreateAssignmentSettingsDto {
   strictMode?: boolean;
 }
 
-export class CreateTestCaseDto {
+export class CreateTestCaseDto implements CreateTestCase {
   @ApiProperty({
     description: 'Вхідні дані для тесту',
     example: '5',
@@ -284,7 +292,7 @@ export class CreateTestCaseDto {
   isPublic: boolean = true;
 }
 
-export class CreateAssignmentDto {
+export class CreateAssignmentDto implements CreateAssignment {
   @ApiProperty({
     description: 'Назва завдання',
     example: 'Функція для обчислення факторіалу',
@@ -344,7 +352,7 @@ export class CreateAssignmentDto {
   settings?: CreateAssignmentSettingsDto;
 }
 
-export class UpdateAssignmentDto {
+export class UpdateAssignmentDto implements UpdateAssignment {
   @ApiProperty({
     description: 'Назва завдання',
     example: 'Оновлена назва завдання',
