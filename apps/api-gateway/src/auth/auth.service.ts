@@ -13,12 +13,7 @@ import {
   AuthResponseDto,
   VerifyTokenDto,
 } from './dto/auth.dto';
-
-interface ErrorResponse {
-  error?: {
-    message?: string;
-  };
-}
+import { ErrorResponse } from '../common/types';
 
 @Injectable()
 export class AuthService {

@@ -40,6 +40,7 @@ import {
   ApiErrorResponseDto,
 } from '../common/dto/api-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { UserInfo } from '../common/types';
 
 interface RequestWithCookies extends Request {
   cookies: {
@@ -244,7 +245,7 @@ export class AuthController {
     type: ApiErrorResponseDto,
   })
   async logout(
-    @Req() req: Request & { user: UserResponseDto },
+    @Req() req: Request & { user: UserInfo },
   ): Promise<{ message: string }> {
     const token = req.headers.authorization?.replace('Bearer ', '') || '';
     return await this.authService.logout(token);
@@ -267,7 +268,7 @@ export class AuthController {
     description: 'Invalid or missing token',
     type: ApiErrorResponseDto,
   })
-  getProfile(@Req() req: Request & { user: UserResponseDto }): UserResponseDto {
+  getProfile(@Req() req: Request & { user: UserInfo }): UserResponseDto {
     console.log('API Gateway /users/profile req.user:', req.user);
     return req.user;
   }
@@ -326,7 +327,7 @@ export class AuthController {
     type: ApiErrorResponseDto,
   })
   async updateProfile(
-    @Req() req: Request & { user: UserResponseDto },
+    @Req() req: Request & { user: UserInfo },
     @Body() updateProfileDto: any,
   ): Promise<{ user: UserResponseDto; accessToken: string }> {
     const token = req.headers.authorization?.replace('Bearer ', '') || '';

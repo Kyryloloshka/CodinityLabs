@@ -7,11 +7,7 @@ import {
   IsString,
   MinLength,
 } from 'class-validator';
-
-export enum UserRole {
-  STUDENT = 'STUDENT',
-  TEACHER = 'TEACHER',
-}
+import { UserRole, UserInfo } from '../types';
 
 export class CreateUserDto {
   @ApiProperty({
@@ -91,7 +87,7 @@ export class UpdateUserDto {
   name?: string;
 }
 
-export class UserResponseDto {
+export class UserResponseDto implements UserInfo {
   @ApiProperty({
     description: 'Унікальний ідентифікатор користувача',
     example: '3e8ba423-72cc-4aa0-a0db-93ef0b3c34b1',

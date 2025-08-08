@@ -1,7 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import {
+  Submission,
+  CreateSubmission,
+  SubmissionStatus,
+} from '../../common/types';
 
-export class SubmissionDto {
+export class SubmissionDto implements Submission {
   @ApiProperty({
     description: 'Унікальний ідентифікатор подання',
     example: '89d47645-d28e-480c-8de7-a41b556fa93c',
@@ -58,9 +63,9 @@ export class SubmissionDto {
   @ApiProperty({
     description: 'Статус подання',
     example: 'PENDING',
-    enum: ['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'],
+    enum: SubmissionStatus,
   })
-  status: string;
+  status: SubmissionStatus;
 
   @ApiProperty({
     description: 'Дата створення',
@@ -82,7 +87,7 @@ export class SubmissionDto {
   assignment: any;
 }
 
-export class CreateSubmissionDto {
+export class CreateSubmissionDto implements CreateSubmission {
   @ApiProperty({
     description: 'ID користувача',
     example: 'user123',

@@ -143,7 +143,6 @@ const handleLogin = async () => {
   })
 
   if (result.success) {
-    // Перевіряємо чи є збережена сторінка для редіректу
     const redirectPath = import.meta.client ? sessionStorage.getItem('redirectAfterAuth') : null
     if (redirectPath) {
       sessionStorage.removeItem('redirectAfterAuth')

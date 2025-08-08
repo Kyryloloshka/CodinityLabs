@@ -1,21 +1,14 @@
 <template>
   <div class="">
-    <div v-if="loading" class="flex justify-center py-12">
-      <div class="text-center">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-primary mx-auto"></div>
-        <p class="mt-4 text-sm text-theme-secondary">Завантаження завдання...</p>
-      </div>
-    </div>
+    <UiLoadingSpinner 
+      v-if="loading" 
+      message="Завантаження завдання..." 
+    />
 
-    <div v-else-if="error" class="bg-error border border-error rounded-lg p-4">
-      <div class="flex">
-        <UIcon name="i-heroicons-exclamation-triangle" class="h-5 w-5 text-error" />
-        <div class="ml-3">
-          <h3 class="text-sm font-medium text-error">Помилка завантаження</h3>
-          <p class="mt-1 text-sm text-error-light">{{ error }}</p>
-        </div>
-      </div>
-    </div>
+    <UiErrorMessage 
+      v-else-if="error" 
+      :message="error" 
+    />
 
     <div v-else-if="assignment" class="max-w-4xl mx-auto">
       <div class="mb-8">
@@ -74,54 +67,10 @@
         </div>
       </div>
 
-      <div class="bg-theme-card shadow rounded-lg p-6 mb-6 border border-theme-primary">
-        <h2 class="text-xl font-semibold text-theme-primary mb-4">Опис завдання</h2>
-        <div class="prose max-w-none">
-          <p class="text-theme-primary whitespace-pre-wrap">{{ assignment.description }}</p>
-          
-          <!-- Налаштування завдання (інтегровані в опис) -->
-          <div v-if="assignment.settings" class="mt-4 pt-4 border-t border-theme-secondary">
-            <div class="flex flex-wrap gap-4 text-sm text-theme-secondary">
-              <span>⏱ {{ (assignment.settings.timeout / 1000).toFixed(1) }}с</span>
-              <span>📝 {{ assignment.settings.maxAttempts === null ? 'Необмежено подань' : `Макс. ${assignment.settings.maxAttempts} подань` }}</span>
-              <span>📊 {{ assignment.settings.passingThreshold }}% для проходження</span>
-              <span>{{ assignment.settings.allowPartialScore ? '✅' : '❌' }} часткові бали</span>
-              <span>{{ assignment.settings.strictMode ? '🔒' : '🔓' }} {{ assignment.settings.strictMode ? 'строгий' : 'звичайний' }} режим</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="bg-theme-card shadow rounded-lg p-6 mb-6 border border-theme-primary">
-        <h2 class="text-xl font-semibold text-theme-primary mb-4">Тестові випадки</h2>
-        <div class="grid gap-4">
-          <div
-            v-for="(testCase, index) in assignment.testCases"
-            :key="testCase.id"
-            class="border border-theme-primary rounded-lg p-4 bg-theme-secondary"
-          >
-            <div class="flex items-center justify-between mb-2">
-              <h3 class="font-medium text-theme-primary">Тест {{ index + 1 }}</h3>
-              <UBadge color="primary" variant="subtle">Тестовий випадок</UBadge>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-              <div>
-                <label class="block text-sm font-medium text-theme-secondary mb-1">Опис</label>
-                <div class="bg-theme-input p-2 rounded border border-theme-primary text-theme-primary">{{ testCase.description }}</div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-theme-secondary mb-1">Вхідні дані</label>
-                <div class="bg-theme-input p-2 rounded border border-theme-primary font-mono text-theme-primary">{{ testCase.input }}</div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-theme-secondary mb-1">Очікуваний результат</label>
-                <div class="bg-theme-input p-2 rounded border border-theme-primary font-mono text-theme-primary">{{ testCase.expected }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <AssignmentDetails
+        :assignment="assignment"
+        :show-settings="isTeacher"
+      />
 
       <!-- Налаштування перевірки (тільки для викладачів) -->
       <div v-if="isTeacher && assignment.settings" class="bg-theme-card shadow rounded-lg p-6 mb-6 border border-theme-primary">
@@ -176,17 +125,13 @@
           </UButton>
         </div>
         
-        <div class="text-center py-8">
-          <UIcon name="i-heroicons-chart-bar" class="mx-auto h-12 w-12 text-theme-muted" />
-          <h3 class="mt-2 text-sm font-medium text-theme-primary">Статистика подань</h3>
-          <p class="mt-1 text-sm text-theme-secondary">
-            Натисніть кнопку вище, щоб переглянути детальну статистику по всім студентам
-          </p>
-        </div>
+        <UiEmptyState
+          icon="i-heroicons-chart-bar"
+          title="Статистика подань"
+          description="Натисніть кнопку вище, щоб переглянути детальну статистику по всім студентам"
+        />
       </div>
     </div>
-
-
   </div>
 </template>
 
@@ -273,7 +218,6 @@ const loginToSubmit = () => {
   }
   navigateTo('/login')
 }
-
 
 // Завантаження даних при монтуванні
 onMounted(() => {

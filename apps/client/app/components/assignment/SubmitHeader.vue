@@ -2,11 +2,11 @@
   <div class="bg-theme-card border-b border-theme-primary px-4 py-3 transition-colors duration-300">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <UButton to="/assignments" variant="ghost" color="neutral" size="lg" class="p-2 hover:bg-theme-hover">
+        <UButton :to="`/assignments/${props.assignment?.id ?? ''}`" variant="ghost" color="neutral" size="lg" class="p-2 hover:bg-theme-hover">
           <UIcon name="i-heroicons-arrow-left" class="h-4 w-4 text-theme-primary" />
         </UButton>
         <div>
-          <h1 class="text-base font-semibold text-theme-primary">{{ assignment?.title || 'Завантаження...' }}</h1>
+          <h1 class="text-base font-semibold text-theme-primary">{{ props.assignment?.title || 'Завантаження...' }}</h1>
           <p class="text-xs text-theme-secondary">Здати рішення</p>
         </div>
       </div>
@@ -14,7 +14,7 @@
       <div class="flex items-center gap-2">
         <ThemeSwitcher />
         <select
-          :value="selectedLanguage"
+          :value="props.selectedLanguage"
           @change="handleLanguageChange"
           class="px-2 py-1 text-xs border border-theme-secondary rounded-md bg-theme-input text-theme-primary focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-accent-primary transition-colors duration-200"
         >
@@ -37,8 +37,10 @@
 </template>
 
 <script setup lang="ts">
+import type { Assignment } from '~/lib/types'
+
 interface Props {
-  assignment?: any
+  assignment?: Assignment
   selectedLanguage: string
 }
 

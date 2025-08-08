@@ -55,7 +55,7 @@
         class="relative flex-1"
         :style="{ width: `${rightPanelWidth}px` }"
       >
-        <CodeEditorPanel
+        <EditorCodePanel
           :submission-code="submissionCode"
           :selected-language="selectedLanguage"
           :testing="testing"
@@ -64,7 +64,7 @@
           @update:language="selectedLanguage = $event"
           @file-upload-start="() => { isFileUploading = true }"
           @file-upload-end="() => { isFileUploading = false }"
-          @programmatic-language-change="(newLanguage) => { isProgrammaticLanguageChange = true; selectedLanguage = newLanguage; nextTick(() => { isProgrammaticLanguageChange = false }) }"
+          @programmatic-language-change="(newLanguage: string) => { isProgrammaticLanguageChange = true; selectedLanguage = newLanguage; nextTick(() => { isProgrammaticLanguageChange = false }) }"
           @test-code="testCode"
           @submit-solution="submitSolution"
         />
@@ -74,6 +74,8 @@
 </template>
 
 <script setup lang="ts">
+import type { Assignment } from '~/lib/types'
+
 definePageMeta({
   layout: 'no-container',
   middleware: 'student-only',
@@ -85,7 +87,7 @@ const authStore = useAuthStore()
 const { getAssignment, getAssignmentForStudent, createSubmission, checkCode, getUserAssignmentSubmissions } = useAssignments()
 const toast = useToast()
 
-const assignment = ref<any>(null)
+const assignment = ref<Assignment>()
 const loading = ref(true)
 const error = ref('')
 const submitting = ref(false)

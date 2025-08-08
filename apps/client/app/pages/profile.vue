@@ -46,7 +46,6 @@
       </div>
     </div>
 
-    <!-- Форма оновлення імені -->
     <div class="bg-theme-card overflow-hidden shadow rounded-lg border border-theme-primary">
       <div class="px-4 py-5 sm:p-6">
         <h3 class="text-lg font-medium text-theme-primary mb-4">
@@ -83,7 +82,6 @@
       </div>
     </div>
 
-    <!-- Форма зміни паролю -->
     <div class="bg-theme-card overflow-hidden shadow rounded-lg border border-theme-primary">
       <div class="px-4 py-5 sm:p-6">
         <h3 class="text-lg font-medium text-theme-primary mb-4">
@@ -154,7 +152,6 @@
       </div>
     </div>
 
-    <!-- Повідомлення про успіх/помилку -->
     <div
       v-if="alert.show"
       class="mb-4 p-4 rounded-lg border"
@@ -199,13 +196,11 @@ definePageMeta({
 
 const authStore = useAuthStore()
 
-// Форма для оновлення імені
 const nameForm = ref({
   name: '',
   loading: false
 })
 
-// Форма для оновлення паролю
 const passwordForm = ref({
   currentPassword: '',
   newPassword: '',
@@ -213,7 +208,6 @@ const passwordForm = ref({
   loading: false
 })
 
-// Алерт для повідомлень
 const alert = ref({
   show: false,
   title: '',
@@ -221,7 +215,6 @@ const alert = ref({
   type: 'success' as 'success' | 'error'
 })
 
-// Валідація форми паролю
 const isPasswordFormValid = computed(() => {
   return passwordForm.value.currentPassword &&
          passwordForm.value.newPassword &&
@@ -230,7 +223,6 @@ const isPasswordFormValid = computed(() => {
          passwordForm.value.newPassword === passwordForm.value.confirmPassword
 })
 
-// Функція для показу повідомлення
 const showAlert = (type: 'success' | 'error', title: string, message: string) => {
   alert.value = {
     show: true,
@@ -239,13 +231,11 @@ const showAlert = (type: 'success' | 'error', title: string, message: string) =>
     message
   }
   
-  // Автоматично приховуємо повідомлення через 5 секунд
   setTimeout(() => {
     alert.value.show = false
   }, 5000)
 }
 
-// Оновлення імені
 const updateName = async () => {
   if (!nameForm.value.name || nameForm.value.name.length < 2) {
     showAlert('error', 'Помилка', 'Ім\'я має бути не менше 2 символів')
@@ -272,7 +262,6 @@ const updateName = async () => {
   }
 }
 
-// Оновлення паролю
 const updatePassword = async () => {
   if (!isPasswordFormValid.value) {
     showAlert('error', 'Помилка', 'Перевірте правильність введених даних')
@@ -290,7 +279,6 @@ const updatePassword = async () => {
     
     if (result.success) {
       showAlert('success', 'Успіх', 'Пароль успішно змінено')
-      // Очищаємо форму
       passwordForm.value.currentPassword = ''
       passwordForm.value.newPassword = ''
       passwordForm.value.confirmPassword = ''

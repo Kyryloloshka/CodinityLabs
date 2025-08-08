@@ -11,8 +11,17 @@ import {
   Max,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import {
+  CheckSettings,
+  BaseTestCase,
+  LintError,
+  TestResult,
+  CheckResult,
+  TestStats,
+  CheckRequest,
+} from '../../common/types';
 
-export class CheckSettingsDto {
+export class CheckSettingsDto implements CheckSettings {
   @ApiProperty({
     description: 'Таймаут виконання коду в мілісекундах',
     example: 2000,
@@ -72,7 +81,7 @@ export class CheckSettingsDto {
   strictMode?: boolean;
 }
 
-export class TestCaseDto {
+export class TestCaseDto implements BaseTestCase {
   @ApiProperty({
     description: 'Вхідні дані для тесту',
     example: '5',
@@ -98,7 +107,7 @@ export class TestCaseDto {
   description: string;
 }
 
-export class CheckDto {
+export class CheckDto implements CheckRequest {
   @ApiProperty({
     description: 'Code to check',
     example: 'function main(input) { return input * 2; }',
@@ -141,7 +150,7 @@ export class CheckDto {
   @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => TestCaseDto)
-  testCases?: TestCaseDto[];
+  testCases?: BaseTestCase[];
 
   @ApiProperty({
     description: 'Налаштування перевірки коду',
@@ -154,7 +163,7 @@ export class CheckDto {
   settings?: CheckSettingsDto;
 }
 
-export class LintErrorDto {
+export class LintErrorDto implements LintError {
   @ApiProperty({
     description: 'ID правила',
     example: 'missing-main-function',
@@ -186,7 +195,7 @@ export class LintErrorDto {
   column: number;
 }
 
-export class TestResultDto {
+export class TestResultDto implements TestResult {
   @ApiProperty({
     description: 'Чи пройшов тест',
     example: true,
@@ -218,7 +227,7 @@ export class TestResultDto {
   input: string;
 }
 
-export class CheckResultDto {
+export class CheckResultDto implements CheckResult {
   @ApiProperty({
     description: 'Помилки lint',
     type: [LintErrorDto],
@@ -247,13 +256,7 @@ export class CheckResultDto {
       public: 5,
     },
   })
-  testStats: {
-    total: number;
-    passed: number;
-    failed: number;
-    timeout: number;
-    public: number;
-  };
+  testStats: TestStats;
 
   @ApiProperty({
     description: 'Чи пройшов поріг проходження',
