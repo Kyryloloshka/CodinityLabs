@@ -1,5 +1,5 @@
 import tailwindcss from "@tailwindcss/vite";
-import { validateEnv } from './config/env.validation';
+import { validateEnv } from './app/config/env.validation';
 
 // Validate environment variables
 const envVars = validateEnv();

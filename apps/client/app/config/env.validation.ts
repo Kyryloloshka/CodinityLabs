@@ -3,7 +3,7 @@ import Joi from 'joi';
 // Validation schema for environment variables
 export const envSchema = Joi.object({
   API_BASE_URL: Joi.string().uri().required(),
-  TOKEN_REFRESH_INTERVAL_MS: Joi.number().integer().min(1000).max(300000).required(), // 1s to 5m
+  TOKEN_REFRESH_INTERVAL_MS: Joi.number().integer().min(1000).max(300000).required(),
 });
 
 // Validate environment variables

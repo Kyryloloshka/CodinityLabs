@@ -1,6 +1,5 @@
 <template>
-  <AppLoader v-if="!authStore.isInitialized" />
-  
+  <LayoutAppLoader v-if="!authStore.isInitialized" />
   <slot v-else />
 </template>
 

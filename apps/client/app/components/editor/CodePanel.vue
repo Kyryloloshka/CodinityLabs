@@ -27,7 +27,7 @@
 
     <div class="flex-1">
       <ClientOnly>
-        <CodeEditor
+        <EditorCode
           ref="codeEditor"
           :model-value="submissionCode"
           @update:model-value="$emit('update:submissionCode', $event)"

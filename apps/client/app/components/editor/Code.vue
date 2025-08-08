@@ -1,11 +1,18 @@
 <template>
   <div class="code-editor-container h-full">
     <div ref="editorContainer" class="editor-wrapper h-full"></div>
+    <EditorMonacoThemeManager ref="themeManager" :monaco-instance="monacoInstance" />
+    <EditorMonacoEditorConfig 
+      ref="configManager"
+      :language="language"
+      :theme="theme"
+      :read-only="readOnly"
+      :placeholder="placeholder"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-// Робимо компонент клієнтським
 definePageMeta({
   ssr: false
 })
@@ -32,77 +39,45 @@ const emit = defineEmits<{
 }>()
 
 const editorContainer = ref<HTMLElement>()
-let editor: any = null
-let monacoInstance: any = null
+const themeManager = ref<{
+  initializeThemes(): void
+  setTheme(theme: string): void
+}>()
 
-// Ініціалізація редактора
+const configManager = ref<{
+  getEditorConfig(container: HTMLElement, value: string): any
+  setupLanguageSupport(monaco: MonacoInstance): void
+}>()
+
+let editor: MonacoEditor | null = null
+let monacoInstance: MonacoInstance | null = null
+
+type MonacoEditor = any
+type MonacoInstance = any
+
 const initEditor = async () => {
-  if (!editorContainer.value) return
+  if (!editorContainer.value) {
+    console.error('Editor container not found')
+    return
+  }
 
   try {
     console.log('Initializing Monaco Editor...')
     
-    // Динамічно імпортуємо Monaco Editor тільки на клієнті
     monacoInstance = await import('monaco-editor')
+    console.log('Monaco instance loaded:', !!monacoInstance)
 
-    // Налаштування Monaco Editor з підтримкою тем
-    const isDark = appTheme.value === 'dark'
-    
-    // Dark theme
-    monacoInstance.editor.defineTheme('vs-dark', {
-      base: 'vs-dark',
-      inherit: true,
-      rules: [
-        { token: 'comment', foreground: '6A9955' },
-        { token: 'keyword', foreground: '569CD6' },
-        { token: 'string', foreground: 'CE9178' },
-        { token: 'number', foreground: 'B5CEA8' },
-        { token: 'function', foreground: 'DCDCAA' },
-        { token: 'variable', foreground: '9CDCFE' },
-        { token: 'type', foreground: '4EC9B0' }
-      ],
-      colors: {
-        'editor.background': '#0f1419',
-        'editor.foreground': '#e2e8f0',
-        'editor.lineHighlightBackground': '#1a1f2e',
-        'editor.selectionBackground': '#374151',
-        'editor.inactiveSelectionBackground': '#252b3d',
-        'editor.lineNumbers': '#71717a',
-        'editor.lineNumbers.active': '#a1a1aa'
-      }
-    })
+    themeManager.value?.initializeThemes()
 
-    // Light theme
-    monacoInstance.editor.defineTheme('vs-light', {
-      base: 'vs',
-      inherit: true,
-      rules: [
-        { token: 'comment', foreground: '6A9955' },
-        { token: 'keyword', foreground: '569CD6' },
-        { token: 'string', foreground: 'CE9178' },
-        { token: 'number', foreground: 'B5CEA8' },
-        { token: 'function', foreground: 'DCDCAA' },
-        { token: 'variable', foreground: '9CDCFE' },
-        { token: 'type', foreground: '4EC9B0' }
-      ],
-      colors: {
-        'editor.background': '#ffffff',
-        'editor.foreground': '#1e293b',
-        'editor.lineHighlightBackground': '#f8fafc',
-        'editor.selectionBackground': '#e2e8f0',
-        'editor.inactiveSelectionBackground': '#f1f5f9',
-        'editor.lineNumbers': '#64748b',
-        'editor.lineNumbers.active': '#1e293b'
-      }
-    })
+    await nextTick()
 
     console.log('Creating editor with language:', props.language)
 
-    // Визначаємо тему на основі поточної теми додатку
+    const isDark = appTheme.value === 'dark'
     const editorTheme = isDark ? 'vs-dark' : 'vs-light'
+    console.log('Editor theme:', editorTheme)
 
-    // Створення редактора
-    editor = monacoInstance.editor.create(editorContainer.value, {
+    const editorConfig = configManager.value?.getEditorConfig(editorContainer.value, props.modelValue) || {
       value: props.modelValue || props.placeholder,
       language: props.language,
       theme: editorTheme,
@@ -125,29 +100,36 @@ const initEditor = async () => {
       tabSize: 2,
       insertSpaces: true,
       detectIndentation: false
+    }
+
+    console.log('Editor config:', editorConfig)
+
+    editor = monacoInstance.editor.create(editorContainer.value, editorConfig)
+    console.log('Editor created successfully:', !!editor)
+
+    nextTick(() => {
+      const editorElement = editorContainer.value?.querySelector('.monaco-editor')
+      if (editorElement) {
+        console.log('Editor element found, applying styles')
+        editorElement.classList.add('monaco-editor-styled')
+      } else {
+        console.warn('Editor element not found')
+      }
     })
 
-    console.log('Editor created successfully')
-
-    // Підписка на зміни
     editor.onDidChangeModelContent(() => {
       const value = editor?.getValue() || ''
       emit('update:modelValue', value)
     })
 
-    // Налаштування для JavaScript/TypeScript
-    if (props.language === 'javascript' || props.language === 'typescript') {
-      monacoInstance.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
-        noSemanticValidation: false,
-        noSyntaxValidation: false
-      })
+    if (configManager.value && monacoInstance) {
+      configManager.value.setupLanguageSupport(monacoInstance)
     }
   } catch (error) {
     console.error('Error initializing Monaco Editor:', error)
   }
 }
 
-// Очищення редактора
 const disposeEditor = () => {
   if (editor) {
     editor.dispose()
@@ -155,20 +137,17 @@ const disposeEditor = () => {
   }
 }
 
-// Отримання значення з редактора
-const getValue = () => {
+const getValue = (): string => {
   return editor?.getValue() || ''
 }
 
-// Встановлення значення в редактор
-const setValue = (value: string) => {
+const setValue = (value: string): void => {
   if (editor) {
     editor.setValue(value)
   }
 }
 
-// Встановлення мови та значення одночасно
-const setLanguageAndValue = (language: string, value: string) => {
+const setLanguageAndValue = (language: string, value: string): void => {
   if (editor && monacoInstance) {
     try {
       const model = editor.getModel()
@@ -182,14 +161,12 @@ const setLanguageAndValue = (language: string, value: string) => {
   }
 }
 
-// Експорт методів
 defineExpose({
   getValue,
   setValue,
   setLanguageAndValue
 })
 
-// Життєвий цикл
 onMounted(() => {
   nextTick(() => {
     initEditor()
@@ -200,7 +177,6 @@ onBeforeUnmount(() => {
   disposeEditor()
 })
 
-// Спостерігач за змінами props
 watch(() => props.modelValue, (newValue) => {
   if (editor && newValue !== editor.getValue()) {
     editor.setValue(newValue)
@@ -208,13 +184,11 @@ watch(() => props.modelValue, (newValue) => {
 })
 
 watch(() => props.language, async (newLanguage) => {
-  console.log('Language changed to:', newLanguage)
   if (editor && monacoInstance) {
     try {
       const model = editor.getModel()
       if (model) {
         monacoInstance.editor.setModelLanguage(model, newLanguage)
-        console.log('Language updated successfully')
       }
     } catch (error) {
       console.error('Error updating language:', error)
@@ -222,13 +196,8 @@ watch(() => props.language, async (newLanguage) => {
   }
 })
 
-// Watch for theme changes
 watch(() => appTheme.value, (newTheme) => {
-  if (editor && monacoInstance) {
-    const editorTheme = newTheme === 'dark' ? 'vs-dark' : 'vs-light'
-    monacoInstance.editor.setTheme(editorTheme)
-    console.log('Editor theme updated to:', editorTheme)
-  }
+  themeManager.value?.setTheme(newTheme as string)
 })
 </script>
 
@@ -250,6 +219,13 @@ watch(() => appTheme.value, (newTheme) => {
 :deep(.monaco-editor) { 
   border-radius: 8px; 
   height: 100% !important;
+  width: 100% !important;
+}
+
+:deep(.monaco-editor-styled) {
+  border-radius: 8px !important;
+  height: 100% !important;
+  width: 100% !important;
 }
 
 [data-theme="dark"] :deep(.monaco-editor .margin) { 

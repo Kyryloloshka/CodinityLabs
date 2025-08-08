@@ -5,7 +5,6 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev --host 0.0.0.0 --port 3000",
-    "predev": "node -e \"if (!require('fs').existsSync('.env')) { console.error('❌ .env file is missing! Please create it with required environment variables.'); process.exit(1); }\"",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
