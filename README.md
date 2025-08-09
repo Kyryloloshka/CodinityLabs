@@ -119,7 +119,7 @@ graph TB
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd kpi-course-work
+cd codilityLabs
 
 # Start all services
 ./scripts/dev.sh
@@ -192,7 +192,7 @@ POST   /assignments/check                     # Check code execution
 ## 📁 Project Structure
 
 ```
-kpi-course-work/
+codilityLabs/
 ├── apps/
 │   ├── api-gateway/          # 🌐 API Gateway & Routing
 │   │   ├── src/
