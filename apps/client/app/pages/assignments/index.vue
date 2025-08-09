@@ -52,8 +52,10 @@
         :key="assignment.id"
         :assignment="assignment"
         :is-authenticated="authStore.isAuthenticated"
+        :user-role="authStore.userRole"
         @view="() => viewAssignment(assignment)"
         @submit="() => submitAssignment(assignment)"
+        @edit="() => editAssignment(assignment)"
         @login="() => loginToSubmit(assignment)"
       />
     </div>
@@ -193,6 +195,10 @@ const viewAssignment = (assignment: any) => {
 
 const submitAssignment = (assignment: any) => {
   navigateTo(`/assignments/${assignment.id}/submit`)
+}
+
+const editAssignment = (assignment: any) => {
+  navigateTo(`/assignments/${assignment.id}/edit`)
 }
 
 const loginToSubmit = (assignment: any) => {
