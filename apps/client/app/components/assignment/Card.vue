@@ -14,8 +14,10 @@
         
         <AssignmentActions 
           :is-authenticated="isAuthenticated"
+          :user-role="userRole"
           @view="$emit('view')"
           @submit="$emit('submit')"
+          @edit="$emit('edit')"
           @login="$emit('login')"
         />
       </div>
@@ -29,11 +31,13 @@ import type { Assignment } from '~/lib/types'
 interface Props {
   assignment: Assignment
   isAuthenticated: boolean
+  userRole?: string | null
 }
 
 interface Emits {
   (e: 'view'): void
   (e: 'submit'): void
+  (e: 'edit'): void
   (e: 'login'): void
 }
 

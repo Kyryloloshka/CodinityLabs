@@ -71,9 +71,7 @@
         :assignment="assignment"
         :show-settings="isTeacher"
       />
-
-      <!-- Налаштування перевірки (тільки для викладачів) -->
-      <div v-if="isTeacher && assignment.settings" class="bg-theme-card shadow rounded-lg p-6 mb-6 border border-theme-primary">
+      <div v-if="isTeacher && assignment.settings" class="bg-theme-card shadow rounded-lg p-6 mb-6 border border-theme-primary mt-6">
         <h2 class="text-xl font-semibold text-theme-primary mb-4">Налаштування перевірки</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
@@ -110,15 +108,13 @@
         </div>
       </div>
 
-      <!-- Історія подань (тільки для викладачів) -->
       <div v-if="isTeacher" class="bg-theme-card shadow rounded-lg p-6 border border-theme-primary">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-xl font-semibold text-theme-primary">Статистика подань</h2>
           <UButton
             :to="`/assignments/${assignmentId}/user-submissions`"
             variant="solid"
-            color="info"
-            class="text-theme-primary"
+            class="bg-theme-secondary text-primary border border-theme-primary"
           >
             <UIcon name="i-heroicons-chart-bar" class="mr-2 h-4 w-4" />
             Переглянути статистику
@@ -132,6 +128,14 @@
         />
       </div>
     </div>
+    <!-- Модальне вікно підтвердження видалення -->
+    <AssignmentDeleteModal
+      :is-open="showDeleteModal"
+      :assignment-title="assignment?.title || ''"
+      :deleting="deleting"
+      :is-teacher="isTeacher"
+      @confirm="deleteAssignment"
+    />
   </div>
 </template>
 
@@ -143,12 +147,14 @@ definePageMeta({
 
 const route = useRoute()
 const authStore = useAuthStore()
-const { getAssignment, getAssignmentForStudent, getAssignmentForTeacher } = useAssignments()
+const { getAssignment, getAssignmentForStudent, getAssignmentForTeacher, deleteAssignment: deleteAssignmentApi } = useAssignments()
 const toast = useToast()
 
 const assignment = ref<any>(null)
 const loading = ref(true)
 const error = ref('')
+const showDeleteModal = ref(false)
+const deleting = ref(false)
 
 const isTeacher = computed(() => authStore.user?.role === 'TEACHER')
 const assignmentId = computed(() => route.params.id as string)
@@ -209,6 +215,32 @@ const formatDate = (dateString: string) => {
 
 const editAssignment = () => {
       navigateTo(`/assignments/${assignmentId.value}/edit`)
+}
+
+const deleteAssignment = async () => {
+  try {
+    deleting.value = true
+    await deleteAssignmentApi(assignmentId.value)
+    
+    toast.add({
+      title: 'Успіх',
+      description: 'Завдання успішно видалено',
+      color: 'success'
+    })
+    
+    // Перенаправляємо на список завдань
+    await navigateTo('/assignments')
+  } catch (err: any) {
+    console.error('Error deleting assignment:', err)
+    toast.add({
+      title: 'Помилка',
+      description: 'Не вдалося видалити завдання',
+      color: 'error'
+    })
+  } finally {
+    deleting.value = false
+    showDeleteModal.value = false
+  }
 }
 
 const loginToSubmit = () => {
