@@ -237,17 +237,33 @@ codilityLabs/
 
 ## 📱 Screenshots
 
-### Student Dashboard
-![Dashboard](docs/images/dashboard.png)
-*Modern dashboard with assignment overview and progress tracking*
+### 🏠 Modern Dashboard & Welcome Page
+![Dashboard](public/photos/1.jpg)
+*Beautiful landing page with feature highlights and smooth animations*
 
-### Interactive Code Editor
-![Code Editor](docs/images/editor.png)
-*Monaco Editor with syntax highlighting and real-time feedback*
+### 📚 Assignment Management Interface
+![Assignment List](public/photos/2.jpg)
+*Comprehensive assignment listing with filtering and search capabilities*
 
-### Teacher Analytics
-![Analytics](docs/images/analytics.png)
-*Comprehensive student progress and performance insights*
+### 📝 Assignment Details & Student View
+![Assignment Details](public/photos/3.jpg)
+*Detailed assignment view with test cases and submission interface*
+
+### 💻 Interactive Code Editor
+![Code Editor](public/photos/7.jpg)
+*Monaco Editor with syntax highlighting, real-time validation, and instant feedback*
+
+### ⚡ Edit Assignment & Teacher View
+![Test Results](public/photos/4.jpg)
+*Rich assignment editing interface with test case management*
+
+### 👨‍🏫 Statistics & Analytics & Teacher View
+![Assignment Creation](public/photos/5.jpg)
+*Comprehensive statistics and analytics for assignments*
+
+### 🎯 Statistics & Analytics & Student View
+![Statistics](public/photos/6.jpg)
+*Comprehensive statistics and analytics for students*
 
 ## 🔐 Security Features
 
